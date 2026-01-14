@@ -5,7 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configuration } from './settings/config';
 import { PrismaModule } from './prisma/prisma.module';
-import { EmployeeModule } from './modules/employee/employee.module';
+import { AuthModule } from './modules/regulation/auth/auth.module';
+import { AccessControlModule } from './modules/regulation/access-control/access-control.module';
+import { EmployeeModule } from './modules/regulation/employee/employee.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { EmployeeModule } from './modules/employee/employee.module';
       isGlobal: true,
     }),
     PrismaModule,
+    AuthModule,
+    AccessControlModule,
     EmployeeModule,
   ],
   controllers: [AppController],
