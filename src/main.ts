@@ -20,9 +20,8 @@ async function bootstrap() {
       .setVersion('1.0')
       .addBearerAuth(
         {
-          name: 'Authorization',
           type: 'http',
-          scheme: 'Bearer',
+          scheme: 'bearer',
           bearerFormat: 'JWT',
           in: 'header',
           description: 'Paste your access token',

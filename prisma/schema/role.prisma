@@ -1,13 +1,13 @@
 model Role {
-    id       String @id @default(cuid(2))
-    tenantId String
-    tenant   Tenant @relation(fields: [tenantId], references: [id])
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-    name  String
-    users UserRole[]
-    perms RolePermission[]
+  name  String
+  users UserRole[]
+  perms RolePermission[]
 
-    @@unique([tenantId, name])
-    @@index([tenantId])
-    @@map("role")
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("role")
 }

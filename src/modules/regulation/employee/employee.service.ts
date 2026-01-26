@@ -4,12 +4,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { EmployeeRepositoryService } from '../../../common/repository/index';
+import {
+  EmployeeRepositoryService,
+  UserRepositoryService,
+} from '../../../common/repository/index';
 import { CreateEmployeeDto, UpdateEmployeeDto } from './dtos/index';
 
 @Injectable()
 export class EmployeeService {
-  constructor(private readonly employeeRepository: EmployeeRepositoryService) {}
+  constructor(
+    private readonly employeeRepository: EmployeeRepositoryService,
+    private readonly userRepository: UserRepositoryService,
+  ) {}
 
   private buildFullName(input: {
     firstName: string;
@@ -29,7 +35,7 @@ export class EmployeeService {
       .trim();
   }
 
-  async createEmployee(dto: CreateEmployeeDto) {
+  async createEmployee(tenantId: string, dto: CreateEmployeeDto) {
     // 1) quick business validations
     const birthdate = new Date(dto.birthdate);
     const entryDate = new Date(dto.entryDate);
@@ -58,9 +64,7 @@ export class EmployeeService {
     }
 
     // 2) verify active tenant
-    const tenant = await this.employeeRepository.checkTenantActive(
-      dto.tenantId,
-    );
+    const tenant = await this.userRepository.checkTenantActive(tenantId);
 
     if (!tenant) throw new NotFoundException('Tenant not found or inactive.');
 
@@ -100,18 +104,30 @@ export class EmployeeService {
     return employee;
   }
 
-  async findActiveByDocument(document: string) {
-    return await this.employeeRepository.findActiveByDocument(document);
+  async findActiveByDocument(tenantId: string, document: string) {
+    return await this.employeeRepository.findActiveByDocument(
+      document,
+      tenantId,
+    );
   }
 
-  async findAnyEmployeeById(id: string) {
-    const employee = await this.employeeRepository.findAnyById(id);
+  async findAnyEmployeeById(tenantId: string, id: string) {
+    const employee = await this.employeeRepository.findAnyById(tenantId, id);
+
+    if (!employee) throw new NotFoundException('Employee not found.');
 
     return employee;
   }
 
-  async updateEmployee(employeeId: string, dto: UpdateEmployeeDto) {
-    const current = await this.employeeRepository.findAnyById(employeeId);
+  async updateEmployee(
+    tenantId: string,
+    employeeId: string,
+    dto: UpdateEmployeeDto,
+  ) {
+    const current = await this.employeeRepository.findAnyById(
+      tenantId,
+      employeeId,
+    );
 
     if (!current) throw new NotFoundException('Employee not found.');
 
@@ -230,12 +246,14 @@ export class EmployeeService {
     }
 
     // 5) perform update
-    return this.employeeRepository.updateEmployee(employeeId, patch);
+    return this.employeeRepository.updateEmployee(tenantId, employeeId, patch);
   }
 
-  async softDeleteEmployee(employeeId: string) {
-    const current = await this.employeeRepository.findAnyById(employeeId);
-
+  async softDeleteEmployee(tenantId: string, employeeId: string) {
+    const current = await this.employeeRepository.findAnyById(
+      tenantId,
+      employeeId,
+    );
     if (!current) throw new NotFoundException('Employee not found.');
 
     // Idempotency: if already deleted, return the same data
@@ -251,6 +269,6 @@ export class EmployeeService {
       };
     }
 
-    return this.employeeRepository.softDeleteEmployee(employeeId);
+    return this.employeeRepository.softDeleteEmployee(tenantId, employeeId);
   }
 }

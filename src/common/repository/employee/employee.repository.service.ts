@@ -56,22 +56,19 @@ export class EmployeeRepositoryService {
     }
   }
 
-  async checkTenantActive(tenantId: string) {
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { id: tenantId, isActive: true },
-      select: { id: true },
+  async findAnyById(tenantId: string, id: string) {
+    return this.prisma.employee.findFirst({
+      where: { id, tenantId, tenant: { isActive: true } },
     });
-
-    return tenant;
   }
 
-  async findAnyById(id: string) {
-    return this.prisma.employee.findUnique({ where: { id } });
-  }
-
-  async findActiveByDocument(document: string) {
+  async findActiveByDocument(document: string, tenantId: string) {
     return await this.prisma.employee.findFirst({
-      where: { document, isActive: true, tenant: { isActive: true } },
+      where: {
+        document,
+        isActive: true,
+        tenant: { isActive: true, id: tenantId },
+      },
       select: {
         id: true,
         tenantId: true,
@@ -91,14 +88,19 @@ export class EmployeeRepositoryService {
   }
 
   async updateEmployee(
+    tenantId: string,
     id: string,
     data: Prisma.EmployeeUpdateInput,
-  ): Promise<Employee> {
+  ) {
     try {
-      return await this.prisma.employee.update({
-        where: { id },
+      const res = await this.prisma.employee.updateMany({
+        where: { id, tenantId },
         data,
       });
+
+      if (res.count === 0) throw new NotFoundException('Employee not found.');
+
+      return this.prisma.employee.findFirst({ where: { id, tenantId } });
     } catch (e: any) {
       if (e?.code === 'P2002') {
         const target =
@@ -117,29 +119,25 @@ export class EmployeeRepositoryService {
     }
   }
 
-  async softDeleteEmployee(id: string) {
-    try {
-      return await this.prisma.employee.update({
-        where: { id },
-        data: {
-          deletedAt: new Date(),
-          isActive: false,
-        },
-        select: {
-          id: true,
-          tenantId: true,
-          fullName: true,
-          document: true,
-          isActive: true,
-          deletedAt: true,
-          updatedAt: true,
-        },
-      });
-    } catch (e: any) {
-      // Prisma P2025: record not found
-      if (e?.code === 'P2025')
-        throw new NotFoundException('Employee not found.');
-      throw e;
-    }
+  async softDeleteEmployee(tenantId: string, id: string) {
+    const res = await this.prisma.employee.updateMany({
+      where: { id, tenantId },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+
+    if (res.count === 0) throw new NotFoundException('Employee not found.');
+
+    return this.prisma.employee.findFirst({
+      where: { id, tenantId },
+      select: {
+        id: true,
+        tenantId: true,
+        fullName: true,
+        document: true,
+        isActive: true,
+        deletedAt: true,
+        updatedAt: true,
+      },
+    });
   }
 }

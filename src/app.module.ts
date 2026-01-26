@@ -5,9 +5,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { configuration } from './settings/config';
 import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './modules/regulation/auth/auth.module';
-import { AccessControlModule } from './modules/regulation/access-control/access-control.module';
-import { EmployeeModule } from './modules/regulation/employee/employee.module';
+import {
+  AuthModule,
+  AccessControlModule,
+  EmployeeModule,
+  UserModule,
+  PermissionModule,
+  RoleModule,
+} from './modules/index';
 
 @Module({
   imports: [
@@ -21,6 +26,9 @@ import { EmployeeModule } from './modules/regulation/employee/employee.module';
     AuthModule,
     AccessControlModule,
     EmployeeModule,
+    UserModule,
+    PermissionModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

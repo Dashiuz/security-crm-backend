@@ -3,14 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { AuthRefreshController } from './auth-refresh.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from 'src/modules/regulation/auth/strategies/jwt.strategy';
 import { requireEnv } from 'src/settings/env';
-import { UserModule, UserService } from 'src/modules/index';
-import {
-  UserRepositoryModule,
-  EmployeeRepositoryModule,
-} from '../../../common/repository/index';
+import { UserRepositoryModule } from '../../../common/repository/index';
 
 @Module({
   imports: [
@@ -23,12 +20,10 @@ import {
         },
       }),
     }),
-    UserModule,
     UserRepositoryModule,
-    //EmployeeRepositoryModule,
   ],
-  controllers: [AuthController],
-  providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
+  controllers: [AuthController, AuthRefreshController],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

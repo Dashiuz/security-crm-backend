@@ -1,14 +1,17 @@
 model Tenant {
-    id        String   @id @default(cuid(2))
-    name      String
-    slug      String   @unique
-    isActive  Boolean  @default(true)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid(2))
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
 
-    employees Employee[]
-    users User[]
-    roles Role[]
+  employees   Employee[]
+  users       User[]
+  roles       Role[]
+  departments Department[]
+  positions   Position[]
 
-    @@map("tenant")
+  @@map("tenant")
 }

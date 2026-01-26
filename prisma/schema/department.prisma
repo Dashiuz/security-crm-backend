@@ -1,0 +1,13 @@
+model Department {
+  id       String  @id @default(cuid(2))
+  tenantId String
+  name     String
+  isActive Boolean @default(true)
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  employees Employee[] @relation("EmployeeDepartment")
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("department")
+}

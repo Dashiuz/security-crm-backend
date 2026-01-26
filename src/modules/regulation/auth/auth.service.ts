@@ -7,28 +7,24 @@ import { JwtService } from '@nestjs/jwt';
 import type { CookieOptions } from 'express';
 import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import * as argon2 from 'argon2';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { UserService } from '../user/user.service';
+import { UserRepositoryService } from '../../../common/repository/index';
 import { JwtPayload } from './types/jwt-payload';
 import { LoginResult } from './types/login-result';
 import { RefreshResult } from './types/refresh-result';
+import { SessionObjectInterface } from '../../../common/interfaces/index';
 
 @Injectable()
 export class AuthService {
   private readonly refreshCookieName = 'refresh_token';
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly users: UserService,
+    private readonly userRepository: UserRepositoryService,
     private readonly jwt: JwtService,
   ) {}
 
-  // ----- Password verification (LocalStrategy uses this)
+  // Password verification (LocalStrategy uses this)
   async validateUser(document: string, password: string) {
-    const user = await this.users.findActiveByDocument(document);
-
-    console.log('user data');
-    console.log(user);
+    const user = await this.userRepository.findActiveByDocument(document);
 
     if (!user) return null;
 
@@ -44,12 +40,12 @@ export class AuthService {
     };
   }
 
-  // ----- Login issues access + refresh (rotating sessions)
+  // Login issues access + refresh (rotating sessions)
   async login(
     user: { id: string; tenantId: string },
     meta: { ip?: string; userAgent?: string },
   ): Promise<LoginResult> {
-    const permissions = await this.users.getUserPermissions(user.id);
+    const permissions = await this.userRepository.getUserPermissions(user.id);
 
     const accessToken = await this.signAccessToken({
       sub: user.id,
@@ -69,7 +65,7 @@ export class AuthService {
     };
   }
 
-  // ----- Refresh rotation
+  // Refresh rotation
   async refresh(
     refreshTokenRaw: string | undefined,
     meta: { ip?: string; userAgent?: string },
@@ -78,49 +74,38 @@ export class AuthService {
       throw new UnauthorizedException('Missing refresh token');
 
     const parsed = this.parseRefreshToken(refreshTokenRaw);
+
     if (!parsed)
       throw new UnauthorizedException('Invalid refresh token format');
 
     const { sessionId, secret } = parsed;
 
-    const session = await this.prisma.userSession.findUnique({
-      where: { id: sessionId },
-      select: {
-        id: true,
-        userId: true,
-        expiresAt: true,
-        revokedAt: true,
-        refreshTokenHash: true,
-        user: {
-          select: {
-            id: true,
-            tenantId: true,
-            isActive: true,
-            tenant: { select: { isActive: true } },
-          },
-        },
-      },
-    });
+    const session = await this.userRepository.findUserSession(sessionId);
 
     if (!session) throw new UnauthorizedException('Session not found');
+
     if (session.revokedAt) throw new UnauthorizedException('Session revoked');
+
     if (session.expiresAt.getTime() <= Date.now())
       throw new UnauthorizedException('Session expired');
+
     if (!session.user.isActive || !session.user.tenant.isActive)
       throw new ForbiddenException('User/Tenant inactive');
 
     const secretHash = this.hashRefreshSecret(secret);
+
     if (!this.safeEqual(secretHash, session.refreshTokenHash)) {
       // Potential token theft: revoke session (and optionally all sessions for that user).
-      await this.prisma.userSession.update({
-        where: { id: session.id },
-        data: { revokedAt: new Date() },
-      });
+      await this.userRepository.tokenThiefRevokeSession(session.id);
+
       throw new UnauthorizedException('Refresh token mismatch');
     }
 
     // Rotate: revoke old session + create new
-    const permissions = await this.users.getUserPermissions(session.userId);
+    const permissions = await this.userRepository.getUserPermissions(
+      session.userId,
+    );
+
     const accessToken = await this.signAccessToken({
       sub: session.userId,
       tenantId: session.user.tenantId,
@@ -131,10 +116,7 @@ export class AuthService {
     const { refreshToken: newRefreshToken, sessionId: newSessionId } =
       await this.createRefreshSession(session.userId, meta);
 
-    await this.prisma.userSession.update({
-      where: { id: session.id },
-      data: { revokedAt: new Date(), replacedById: newSessionId },
-    });
+    await this.userRepository.refreshUserSession(session.id, newSessionId);
 
     return {
       accessToken,
@@ -142,17 +124,19 @@ export class AuthService {
     };
   }
 
-  // ----- Logout: revoke current session
+  // Logout: revoke current session with cookie
   async logout(refreshTokenRaw: string | undefined) {
     if (!refreshTokenRaw) return;
 
     const parsed = this.parseRefreshToken(refreshTokenRaw);
     if (!parsed) return;
 
-    await this.prisma.userSession.updateMany({
-      where: { id: parsed.sessionId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+    await this.userRepository.revokeSession(parsed.sessionId);
+  }
+
+  // Logout: revoke all sessions for user
+  async logoutAllSessions(userId: string) {
+    await this.userRepository.revokeAllSessionsForUser(userId);
   }
 
   // =========================
@@ -176,25 +160,23 @@ export class AuthService {
       Date.now() + sessionTtlDays * 24 * 60 * 60 * 1000,
     );
 
-    const session = await this.prisma.userSession.create({
-      data: {
-        userId,
-        refreshTokenHash: 'placeholder', // set below
-        ip: meta.ip,
-        userAgent: meta.userAgent,
-        expiresAt,
-      },
-      select: { id: true },
-    });
+    const sessionData: SessionObjectInterface = {
+      userId,
+      refreshTokenHash: 'placeholder', // set below
+      ip: meta.ip,
+      userAgent: meta.userAgent,
+      expiresAt,
+    };
 
+    const session = await this.userRepository.createUserSession(sessionData);
     const secret = randomBytes(32).toString('hex');
     const refreshToken = `${session.id}.${secret}`;
     const refreshTokenHash = this.hashRefreshSecret(secret);
 
-    await this.prisma.userSession.update({
-      where: { id: session.id },
-      data: { refreshTokenHash },
-    });
+    await this.userRepository.updateUserSessionTokenHash(
+      session.id,
+      refreshTokenHash,
+    );
 
     return { refreshToken, sessionId: session.id };
   }
@@ -214,13 +196,12 @@ export class AuthService {
   }
 
   private safeEqual(a: string, b: string): boolean {
-    // Constant-ish time compare for equal-length strings
-    // if (a.length !== b.length) return false;
-    // let res = 0;
-    // for (let i = 0; i < a.length; i++) res |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    // return res === 0;
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
 
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+    if (bufA.length !== bufB.length) return false;
+
+    return timingSafeEqual(bufA, bufB);
   }
 
   private buildRefreshCookie(value: string) {

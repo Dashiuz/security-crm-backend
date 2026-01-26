@@ -1,11 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { SessionObjectInterface } from '../../../common/interfaces/index';
 
 @Injectable()
 export class UserRepositoryService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // tenant table operation
+  async checkTenantActive(tenantId: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { id: tenantId, isActive: true },
+      select: { id: true },
+    });
+
+    return tenant;
+  }
+
+  // ##### USER DATA OPERATIONS ##### //
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     const user = await this.prisma.user.create({
       data: {
@@ -14,16 +26,6 @@ export class UserRepositoryService {
     });
 
     return user;
-  }
-
-  async findEmployeeByDocument(document: string) {
-    return await this.prisma.employee.findFirst({
-      where: { document, isActive: true, tenant: { isActive: true } },
-      select: {
-        id: true,
-        tenantId: true,
-      },
-    });
   }
 
   async findActiveByDocument(document: string) {
@@ -38,6 +40,21 @@ export class UserRepositoryService {
         position: true,
         passwordHash: true,
         isActive: true,
+      },
+    });
+  }
+
+  async getMe(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        tenantId: true,
+        isActive: true,
+        tenant: {
+          select: { id: true, name: true, slug: true, isActive: true },
+        },
       },
     });
   }
@@ -60,18 +77,77 @@ export class UserRepositoryService {
     return Array.from(new Set(keys));
   }
 
-  async getMe(userId: string) {
-    return this.prisma.user.findUnique({
+  // ##### USER SESSION OPERATIONS ##### //
+  async createUserSession(sessionData: SessionObjectInterface) {
+    return await this.prisma.userSession.create({
+      data: sessionData,
+      select: { id: true },
+    });
+  }
+
+  async updateUserSessionTokenHash(
+    sessionId: string,
+    refreshTokenHash: string,
+  ) {
+    return await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: { refreshTokenHash },
+    });
+  }
+
+  async updateUserPassword(userId: string, newPasswordHash: string) {
+    return await this.prisma.user.update({
       where: { id: userId },
+      data: { passwordHash: newPasswordHash },
+    });
+  }
+
+  async findUserSession(sessionId: string) {
+    return await this.prisma.userSession.findUnique({
+      where: { id: sessionId },
       select: {
         id: true,
-        fullName: true,
-        tenantId: true,
-        isActive: true,
-        tenant: {
-          select: { id: true, name: true, slug: true, isActive: true },
+        userId: true,
+        expiresAt: true,
+        revokedAt: true,
+        refreshTokenHash: true,
+        user: {
+          select: {
+            id: true,
+            tenantId: true,
+            isActive: true,
+            tenant: { select: { isActive: true } },
+          },
         },
       },
+    });
+  }
+
+  async refreshUserSession(sessionId: string, newSessionId: string) {
+    return await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date(), replacedById: newSessionId },
+    });
+  }
+
+  async revokeSession(sessionId: string) {
+    return await this.prisma.userSession.updateMany({
+      where: { id: sessionId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async tokenThiefRevokeSession(sessionId: string) {
+    return await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async revokeAllSessionsForUser(userId: string) {
+    return await this.prisma.userSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
     });
   }
 }

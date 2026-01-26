@@ -1,32 +1,44 @@
 model Employee {
-    id       String @id @default(cuid(2))
-    tenantId String
-    tenant   Tenant @relation(fields: [tenantId], references: [id])
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-    firstName       String
-    secondName      String?
-    lastName        String
-    maternalSurname String?
-    fullName        String
-    documentType    String
-    document        String
-    birthdate       DateTime  @db.Date
-    gender          String
-    department      String
-    position        String
-    email           String?
-    phone           String?
-    entryDate       DateTime  @db.Date
-    isRetired       Boolean   @default(false)
-    isActive        Boolean   @default(true)
-    createdAt       DateTime  @default(now())
-    updatedAt       DateTime  @updatedAt
-    retiredAt       DateTime? @db.Date
-    deletedAt       DateTime?
+  firstName       String
+  secondName      String?
+  lastName        String
+  maternalSurname String?
+  fullName        String
+  documentType    String
+  document        String
+  birthdate       DateTime @db.Date
+  gender          String
 
-    @@unique([tenantId, document])
-    @@unique([tenantId, email])
-    @@index([tenantId])
-    @@index([document])
-    @@map("employee")
+  // legacy fields
+  department String
+  position   String
+
+  departmentId           String?
+  departmentNameSnapshot String?
+  positionId             String?
+  email                  String?
+  phone                  String?
+  entryDate              DateTime  @db.Date
+  isRetired              Boolean   @default(false)
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  createdBy              String?
+  updatedAt              DateTime  @updatedAt
+  retiredAt              DateTime? @db.Date
+  deletedAt              DateTime?
+
+  departmentRef Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  positionRef   Position?   @relation("EmployeePosition", fields: [positionId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, document])
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([document])
+  @@index([departmentId])
+  @@index([positionId])
+  @@map("employee")
 }

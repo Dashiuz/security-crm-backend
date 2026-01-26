@@ -1,8 +1,9 @@
 model Permission {
-    id    String           @id @default(cuid(2))
-    key   String           @unique
-    desc  String?
-    roles RolePermission[]
+  id   String  @id @default(cuid(2))
+  key  String  @unique
+  desc String?
 
-    @@map("permission")
+  roles RolePermission[]
+
+  @@map("permission")
 }

@@ -10,10 +10,10 @@ import {
 } from 'class-validator';
 
 export class CreateEmployeeDto {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ example: '1' })
-  tenantId!: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // @ApiProperty({ example: 'test_01' })
+  // tenantId!: string;
 
   @IsString()
   @IsNotEmpty()
