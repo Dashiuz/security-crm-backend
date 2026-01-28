@@ -10,11 +10,6 @@ import {
 } from 'class-validator';
 
 export class CreateEmployeeDto {
-  // @IsString()
-  // @IsNotEmpty()
-  // @ApiProperty({ example: 'test_01' })
-  // tenantId!: string;
-
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -60,13 +55,18 @@ export class CreateEmployeeDto {
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: 'Operaciones' })
-  department!: string;
+  @ApiProperty({ example: 'Calle 123' })
+  address!: string;
 
   @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ example: 'Guarda de Seguridad' })
-  position!: string;
+  @IsOptional()
+  @ApiProperty({ example: 'nxthvhdl3b2jfbvdr825mapd' })
+  departmentId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ example: 'dnxbiihgnsdfss9btas86392' })
+  positionId?: string | null;
 
   @IsOptional()
   @IsEmail()

@@ -51,6 +51,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('all-sessions-logout')
+  @ApiOkResponse({ schema: { properties: { ok: { type: 'boolean' } } } })
   async logoutByAccessToken(
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
@@ -69,6 +70,15 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Get('me')
+  @ApiOkResponse({
+    schema: {
+      properties: {
+        user: { type: 'object' },
+        tenantId: { type: 'string' },
+        permissions: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  })
   async me(@Req() req: any) {
     const userId = req.user.sub as string;
     const me = await this.userRepository.getMe(userId);

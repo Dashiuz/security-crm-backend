@@ -11,6 +11,42 @@ import { PrismaService } from '../../../prisma/prisma.service';
 export class EmployeeRepositoryService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly employeeSelect = {
+    id: true,
+    tenantId: true,
+    fullName: true,
+    documentType: true,
+    document: true,
+    gender: true,
+    departmentRef: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+    positionRef: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+    email: true,
+    phone: true,
+    birthdate: true,
+    entryDate: true,
+    isActive: true,
+  } as const;
+
+  private readonly deletedEmployeeSelect = {
+    id: true,
+    tenantId: true,
+    fullName: true,
+    document: true,
+    isActive: true,
+    deletedAt: true,
+    updatedAt: true,
+  } as const;
+
   async createEmployee(
     tenantId: string,
     data: Prisma.EmployeeCreateInput,
@@ -28,8 +64,8 @@ export class EmployeeRepositoryService {
           document: data.document,
           birthdate: data.birthdate,
           gender: data.gender,
-          department: data.department,
-          position: data.position,
+          departmentRef: data.departmentRef,
+          positionRef: data.positionRef,
           email: data.email,
           phone: data.phone,
           entryDate: data.entryDate,
@@ -37,9 +73,10 @@ export class EmployeeRepositoryService {
           isActive: data.isActive,
           retiredAt: data.retiredAt,
         },
+        select: this.employeeSelect,
       });
 
-      return employee;
+      return employee as any;
     } catch (e: any) {
       // Prisma unique violation
       if (e?.code === 'P2002') {
@@ -62,6 +99,13 @@ export class EmployeeRepositoryService {
     });
   }
 
+  async findWithRefsById(tenantId: string, id: string) {
+    return this.prisma.employee.findFirst({
+      where: { id, tenantId, tenant: { isActive: true } },
+      select: this.employeeSelect,
+    });
+  }
+
   async findActiveByDocument(document: string, tenantId: string) {
     return await this.prisma.employee.findFirst({
       where: {
@@ -69,21 +113,7 @@ export class EmployeeRepositoryService {
         isActive: true,
         tenant: { isActive: true, id: tenantId },
       },
-      select: {
-        id: true,
-        tenantId: true,
-        fullName: true,
-        documentType: true,
-        document: true,
-        gender: true,
-        department: true,
-        position: true,
-        email: true,
-        phone: true,
-        birthdate: true,
-        entryDate: true,
-        isActive: true,
-      },
+      select: this.employeeSelect,
     });
   }
 
@@ -100,7 +130,15 @@ export class EmployeeRepositoryService {
 
       if (res.count === 0) throw new NotFoundException('Employee not found.');
 
-      return this.prisma.employee.findFirst({ where: { id, tenantId } });
+      const updated = await this.prisma.employee.findFirst({
+        where: { id, tenantId },
+        select: this.employeeSelect,
+      });
+
+      if (!updated)
+        throw new NotFoundException('Employee not found after update.');
+
+      return updated;
     } catch (e: any) {
       if (e?.code === 'P2002') {
         const target =
@@ -127,17 +165,14 @@ export class EmployeeRepositoryService {
 
     if (res.count === 0) throw new NotFoundException('Employee not found.');
 
-    return this.prisma.employee.findFirst({
+    const findDeleted = await this.prisma.employee.findFirst({
       where: { id, tenantId },
-      select: {
-        id: true,
-        tenantId: true,
-        fullName: true,
-        document: true,
-        isActive: true,
-        deletedAt: true,
-        updatedAt: true,
-      },
+      select: this.deletedEmployeeSelect,
     });
+
+    if (!findDeleted)
+      throw new NotFoundException('Employee not found after delete.');
+
+    return findDeleted;
   }
 }

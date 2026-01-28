@@ -150,4 +150,42 @@ export class UserRepositoryService {
       data: { revokedAt: new Date() },
     });
   }
+
+  // ##### USER ROLE OPERATIONS ##### //
+
+  async findUserInTenant(userId: string, tenantId: string) {
+    return this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+      select: { id: true },
+    });
+  }
+
+  async validateRolesInTenant(roleIds: string[], tenantId: string) {
+    return this.prisma.role.findMany({
+      where: { id: { in: roleIds }, tenantId },
+      select: { id: true },
+    });
+  }
+
+  async deleteUserRoles(userId: string, roleIds: string[]) {
+    return this.prisma.userRole.deleteMany({
+      where: { userId, roleId: { in: roleIds } },
+    });
+  }
+
+  async addUserRoles(userId: string, roleIds: string[]) {
+    return this.prisma.userRole.createMany({
+      data: roleIds.map((roleId) => ({ userId, roleId })),
+      skipDuplicates: true,
+    });
+  }
+
+  async getUserRolesDetailed(userId: string) {
+    return this.prisma.userRole.findMany({
+      where: { userId },
+      select: {
+        role: { select: { id: true, name: true } },
+      },
+    });
+  }
 }

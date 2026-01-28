@@ -4,30 +4,110 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { RoleRepositoryService } from '../../../common/repository/index';
-import { CreateRoleDto } from './dtos/create-role.dto';
-import { PatchRolePermissionsDto } from './dtos/patch-role-permissions.dto';
+import {
+  CreateRoleDto,
+  UpdateRoleDto,
+  PatchRolePermissionsDto,
+  RoleResponseDto,
+} from './dtos/index';
 
 @Injectable()
 export class RoleService {
   constructor(private readonly roleRepository: RoleRepositoryService) {}
 
-  async create(tenantId: string, dto: CreateRoleDto) {
+  private mapRoleToResponse(row: any): RoleResponseDto {
+    return {
+      id: row.id,
+      name: row.name,
+      tenantId: row.tenantId,
+      permissions:
+        row.perms?.map((p: any) => ({
+          key: p.permission.key,
+          desc: p.permission.desc,
+        })) ?? [],
+    };
+  }
+
+  async create(tenantId: string, dto: CreateRoleDto): Promise<RoleResponseDto> {
     const name = dto.name.trim();
 
     if (!name) throw new BadRequestException('Role name is required');
 
-    return await this.roleRepository.createRole(tenantId, name);
+    try {
+      const row = await this.roleRepository.createRole(tenantId, name);
+      return this.mapRoleToResponse(row);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new BadRequestException(
+          `Role with name "${name}" already exists for this tenant`,
+        );
+      }
+      throw e;
+    }
   }
 
-  async list(tenantId: string) {
-    return await this.roleRepository.listRoles(tenantId);
+  async list(tenantId: string): Promise<RoleResponseDto[]> {
+    const rows = await this.roleRepository.listRoles(tenantId);
+    return rows.map((r) => this.mapRoleToResponse(r));
+  }
+
+  async findOne(tenantId: string, roleId: string): Promise<RoleResponseDto> {
+    const role = await this.roleRepository.findRoleById(tenantId, roleId);
+    if (!role) throw new NotFoundException('Role not found');
+    return this.mapRoleToResponse(role);
+  }
+
+  async update(
+    tenantId: string,
+    roleId: string,
+    dto: UpdateRoleDto,
+  ): Promise<RoleResponseDto> {
+    const role = await this.roleRepository.findRoleId(tenantId, roleId);
+    if (!role) throw new NotFoundException('Role not found');
+
+    if (dto.name) {
+      const name = dto.name.trim();
+      try {
+        const updated = await this.roleRepository.updateRole(
+          tenantId,
+          roleId,
+          name,
+        );
+        return this.mapRoleToResponse(updated);
+      } catch (e: any) {
+        if (e?.code === 'P2002') {
+          throw new BadRequestException(
+            `Role with name "${name}" already exists for this tenant`,
+          );
+        }
+        throw e;
+      }
+    }
+    return this.findOne(tenantId, roleId);
+  }
+
+  async remove(tenantId: string, roleId: string): Promise<RoleResponseDto> {
+    const role = await this.roleRepository.findRoleId(tenantId, roleId);
+    if (!role) throw new NotFoundException('Role not found');
+
+    try {
+      const deleted = await this.roleRepository.deleteRole(tenantId, roleId);
+      return this.mapRoleToResponse(deleted);
+    } catch (e: any) {
+      if (e?.code === 'P2003') {
+        throw new BadRequestException(
+          'Cannot delete role as it is assigned to users or has permissions',
+        );
+      }
+      throw e;
+    }
   }
 
   async patchPermissions(
     tenantId: string,
     roleId: string,
     dto: PatchRolePermissionsDto,
-  ) {
+  ): Promise<any> {
     const role = await this.roleRepository.findRoleId(tenantId, roleId);
 
     if (!role) throw new NotFoundException('Role not found');

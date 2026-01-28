@@ -34,6 +34,51 @@ export class RoleRepositoryService {
     });
   }
 
+  async findRoleById(tenantId: string, roleId: string) {
+    return this.prisma.role.findFirst({
+      where: { id: roleId, tenantId },
+      select: {
+        id: true,
+        name: true,
+        perms: {
+          select: {
+            permission: { select: { id: true, key: true, desc: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async updateRole(
+    tenantId: string,
+    roleId: string,
+    name: string,
+  ): Promise<Role> {
+    return this.prisma.role.update({
+      where: { id: roleId, tenantId },
+      data: { name },
+    });
+  }
+
+  async deleteRole(tenantId: string, roleId: string): Promise<Role> {
+    return this.prisma.role.delete({
+      where: { id: roleId, tenantId },
+    });
+  }
+
+  async getCurrentState(tenantId: string, roleId: string) {
+    return await this.prisma.role.findFirst({
+      where: { id: roleId, tenantId },
+      select: {
+        id: true,
+        name: true,
+        perms: { select: { permission: { select: { key: true } } } },
+      },
+    });
+  }
+
+  // ##### ROLE PERMISSION OPERATIONS ##### //
+
   async findPermissionIdByKeys(keys: string[]) {
     return this.prisma.permission.findMany({
       where: { key: { in: keys } },
@@ -61,17 +106,6 @@ export class RoleRepositoryService {
       where: {
         roleId,
         permissionId: { in: removeKeys.map((k) => byKey.get(k)!) },
-      },
-    });
-  }
-
-  async getCurrentState(tenantId: string, roleId: string) {
-    return await this.prisma.role.findFirst({
-      where: { id: roleId, tenantId },
-      select: {
-        id: true,
-        name: true,
-        perms: { select: { permission: { select: { key: true } } } },
       },
     });
   }

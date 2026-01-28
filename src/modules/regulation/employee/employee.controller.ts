@@ -23,7 +23,12 @@ import { EmployeeService } from './employee.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
 import { RequirePermissions } from '../access-control/permissions.decorator';
-import { CreateEmployeeDto, UpdateEmployeeDto } from './dtos/index';
+import {
+  CreateEmployeeDto,
+  UpdateEmployeeDto,
+  EmployeeResponseDto,
+  DeletedEmployeeDto,
+} from './dtos/index';
 
 @ApiTags('Employee')
 @ApiBearerAuth('access-token')
@@ -35,6 +40,12 @@ export class EmployeeController {
   @Post()
   @RequirePermissions('employee:create')
   @ApiBody({ type: CreateEmployeeDto })
+  @ApiOkResponse({
+    description: 'Employee created successfully.',
+    type: EmployeeResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Employee not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   create(@Req() req: any, @Body() dto: CreateEmployeeDto) {
     const tenantId = req.user.tenantId;
     return this.employeeService.createEmployee(tenantId, dto);
@@ -43,7 +54,10 @@ export class EmployeeController {
   @Get('/active/:document')
   @RequirePermissions('employee:read')
   @ApiOperation({ summary: 'Get active employee by document' })
-  @ApiOkResponse({ description: 'Employee found successfully.' })
+  @ApiOkResponse({
+    description: 'Employee found successfully.',
+    type: EmployeeResponseDto,
+  })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   getByDocument(@Req() req: any, @Param('document') document: string) {
@@ -54,7 +68,10 @@ export class EmployeeController {
   @Get('/any/:id')
   @RequirePermissions('employee:read')
   @ApiOperation({ summary: 'Get active or inactive employee by id' })
-  @ApiOkResponse({ description: 'Employee found successfully.' })
+  @ApiOkResponse({
+    description: 'Employee found successfully.',
+    type: EmployeeResponseDto,
+  })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   getAnyById(@Req() req: any, @Param('id') id: string) {
@@ -65,6 +82,12 @@ export class EmployeeController {
   @Patch(':id')
   @RequirePermissions('employee:update')
   @ApiBody({ type: UpdateEmployeeDto })
+  @ApiOkResponse({
+    description: 'Employee updated successfully.',
+    type: EmployeeResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Employee not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   update(
     @Req() req: any,
     @Param('id') id: string,
@@ -76,6 +99,12 @@ export class EmployeeController {
 
   @Delete(':id')
   @RequirePermissions('employee:delete')
+  @ApiOkResponse({
+    description: 'Employee deleted successfully.',
+    type: DeletedEmployeeDto,
+  })
+  @ApiNotFoundResponse({ description: 'Employee not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   softDelete(@Req() req: any, @Param('id') id: string) {
     const tenantId = req.user.tenantId;
     return this.employeeService.softDeleteEmployee(tenantId, id);

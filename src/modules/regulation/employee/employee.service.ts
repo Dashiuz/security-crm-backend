@@ -8,7 +8,14 @@ import {
   EmployeeRepositoryService,
   UserRepositoryService,
 } from '../../../common/repository/index';
-import { CreateEmployeeDto, UpdateEmployeeDto } from './dtos/index';
+import {
+  CreateEmployeeDto,
+  UpdateEmployeeDto,
+  EmployeeResponseDto,
+  DeletedEmployeeDto,
+} from './dtos/index';
+import { toDateOnlyIso } from '../../../common/utils/convertDate';
+import { EmployeeWithRefs } from './types/employee-with-refs';
 
 @Injectable()
 export class EmployeeService {
@@ -35,7 +42,28 @@ export class EmployeeService {
       .trim();
   }
 
-  async createEmployee(tenantId: string, dto: CreateEmployeeDto) {
+  private mapEmployeeToResponse(row: EmployeeWithRefs): EmployeeResponseDto {
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      fullName: row.fullName,
+      documentType: row.documentType,
+      document: row.document,
+      gender: row.gender,
+      email: row.email,
+      phone: row.phone,
+      birthdate: toDateOnlyIso(row.birthdate),
+      entryDate: toDateOnlyIso(row.entryDate),
+      isActive: row.isActive,
+      departmentName: row.departmentRef?.name ?? null,
+      positionName: row.positionRef?.name ?? null,
+    };
+  }
+
+  async createEmployee(
+    tenantId: string,
+    dto: CreateEmployeeDto,
+  ): Promise<EmployeeResponseDto> {
     // 1) quick business validations
     const birthdate = new Date(dto.birthdate);
     const entryDate = new Date(dto.entryDate);
@@ -91,8 +119,12 @@ export class EmployeeService {
       document,
       birthdate,
       gender: dto.gender.trim(),
-      department: dto.department.trim(),
-      position: dto.position.trim(),
+      departmentRef: dto.departmentId
+        ? { connect: { id: dto.departmentId } }
+        : undefined,
+      positionRef: dto.positionId
+        ? { connect: { id: dto.positionId } }
+        : undefined,
       email: email ?? null,
       phone: dto.phone?.trim() ?? null,
       entryDate,
@@ -101,29 +133,42 @@ export class EmployeeService {
       retiredAt: retiredAt,
     });
 
-    return employee;
+    return this.mapEmployeeToResponse(employee);
   }
 
-  async findActiveByDocument(tenantId: string, document: string) {
-    return await this.employeeRepository.findActiveByDocument(
+  async findActiveByDocument(
+    tenantId: string,
+    document: string,
+  ): Promise<EmployeeResponseDto | null> {
+    const employee = await this.employeeRepository.findActiveByDocument(
       document,
       tenantId,
     );
+
+    if (!employee) return null;
+
+    return this.mapEmployeeToResponse(employee);
   }
 
-  async findAnyEmployeeById(tenantId: string, id: string) {
-    const employee = await this.employeeRepository.findAnyById(tenantId, id);
+  async findAnyEmployeeById(
+    tenantId: string,
+    id: string,
+  ): Promise<EmployeeResponseDto | null> {
+    const employeeWithRefs = await this.employeeRepository.findWithRefsById(
+      tenantId,
+      id,
+    );
 
-    if (!employee) throw new NotFoundException('Employee not found.');
+    if (!employeeWithRefs) return null;
 
-    return employee;
+    return this.mapEmployeeToResponse(employeeWithRefs);
   }
 
   async updateEmployee(
     tenantId: string,
     employeeId: string,
     dto: UpdateEmployeeDto,
-  ) {
+  ): Promise<EmployeeResponseDto> {
     const current = await this.employeeRepository.findAnyById(
       tenantId,
       employeeId,
@@ -155,8 +200,8 @@ export class EmployeeService {
     setString('documentType');
     setString('document');
     setString('gender');
-    setString('department');
-    setString('position');
+    setString('departmentId');
+    setString('positionId');
 
     if (dto.email !== undefined) {
       patch.email = dto.email === null ? null : dto.email.trim().toLowerCase();
@@ -246,10 +291,19 @@ export class EmployeeService {
     }
 
     // 5) perform update
-    return this.employeeRepository.updateEmployee(tenantId, employeeId, patch);
+    const updatedEmployee = await this.employeeRepository.updateEmployee(
+      tenantId,
+      employeeId,
+      patch,
+    );
+
+    return this.mapEmployeeToResponse(updatedEmployee);
   }
 
-  async softDeleteEmployee(tenantId: string, employeeId: string) {
+  async softDeleteEmployee(
+    tenantId: string,
+    employeeId: string,
+  ): Promise<DeletedEmployeeDto> {
     const current = await this.employeeRepository.findAnyById(
       tenantId,
       employeeId,
@@ -269,6 +323,11 @@ export class EmployeeService {
       };
     }
 
-    return this.employeeRepository.softDeleteEmployee(tenantId, employeeId);
+    const deletedEmployee = await this.employeeRepository.softDeleteEmployee(
+      tenantId,
+      employeeId,
+    );
+
+    return deletedEmployee;
   }
 }

@@ -1,7 +1,7 @@
 import { Controller, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller('auth/refresh')
@@ -9,6 +9,11 @@ export class AuthRefreshController {
   constructor(private readonly authService: AuthService) {}
 
   @Post()
+  @ApiOkResponse({
+    schema: {
+      example: { accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+    },
+  })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -35,6 +40,7 @@ export class AuthRefreshController {
 
   // Cookie-based logout
   @Post('cookie-logout')
+  @ApiOkResponse({ schema: { properties: { ok: { type: 'boolean' } } } })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = (req as any).cookies?.refresh_token as
       | string

@@ -12,4 +12,35 @@ export class PermissionRepositoryService {
       select: { id: true, key: true, desc: true },
     });
   }
+
+  async createPermission(data: {
+    key: string;
+    desc?: string;
+  }): Promise<Permission> {
+    return await this.prisma.permission.create({
+      data,
+    });
+  }
+
+  async updatePermission(
+    id: string,
+    data: { key?: string; desc?: string },
+  ): Promise<Permission> {
+    return await this.prisma.permission.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deletePermission(id: string): Promise<Permission> {
+    return await this.prisma.permission.delete({
+      where: { id },
+    });
+  }
+
+  async findPermissionById(id: string): Promise<Permission | null> {
+    return await this.prisma.permission.findUnique({
+      where: { id },
+    });
+  }
 }
