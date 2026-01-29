@@ -7,6 +7,11 @@ model Role {
   users UserRole[]
   perms RolePermission[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  createdBy String?
+  updatedBy String?
+
   @@unique([tenantId, name])
   @@index([tenantId])
   @@map("role")

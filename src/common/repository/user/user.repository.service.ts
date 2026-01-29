@@ -19,7 +19,7 @@ export class UserRepositoryService {
 
   // ##### USER DATA OPERATIONS ##### //
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    const user = await this.prisma.user.create({
+    const user = await (this.prisma.user as any).create({
       data: {
         ...data,
       },
@@ -79,7 +79,7 @@ export class UserRepositoryService {
 
   // ##### USER SESSION OPERATIONS ##### //
   async createUserSession(sessionData: SessionObjectInterface) {
-    return await this.prisma.userSession.create({
+    return await (this.prisma.userSession as any).create({
       data: sessionData,
       select: { id: true },
     });
@@ -153,16 +153,16 @@ export class UserRepositoryService {
 
   // ##### USER ROLE OPERATIONS ##### //
 
-  async findUserInTenant(userId: string, tenantId: string) {
+  async findUserInTenant(userId: string) {
     return this.prisma.user.findFirst({
-      where: { id: userId, tenantId },
+      where: { id: userId },
       select: { id: true },
     });
   }
 
-  async validateRolesInTenant(roleIds: string[], tenantId: string) {
+  async validateRolesInTenant(roleIds: string[]) {
     return this.prisma.role.findMany({
-      where: { id: { in: roleIds }, tenantId },
+      where: { id: { in: roleIds } },
       select: { id: true },
     });
   }

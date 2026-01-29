@@ -14,7 +14,12 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiTags,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
+  ApiNotFoundResponse,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
@@ -36,7 +41,10 @@ export class RoleController {
 
   @RequirePermissions('role:manage')
   @Post()
+  @ApiOperation({ summary: 'Create role' })
   @ApiCreatedResponse({ type: RoleResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid role name or already exists' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBody({ type: CreateRoleDto })
   async create(
     @Req() req: any,
@@ -47,14 +55,19 @@ export class RoleController {
 
   @RequirePermissions('role:manage')
   @Get()
+  @ApiOperation({ summary: 'List roles' })
   @ApiOkResponse({ type: [RoleResponseDto] })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   async list(@Req() req: any): Promise<RoleResponseDto[]> {
     return this.roleService.list(req.user.tenantId);
   }
 
   @RequirePermissions('role:manage')
   @Get(':roleId')
+  @ApiOperation({ summary: 'Find role by id' })
   @ApiOkResponse({ type: RoleResponseDto })
+  @ApiNotFoundResponse({ description: 'Role not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   async findOne(
     @Req() req: any,
     @Param('roleId') roleId: string,
@@ -64,7 +77,11 @@ export class RoleController {
 
   @RequirePermissions('role:manage')
   @Patch(':roleId')
+  @ApiOperation({ summary: 'Update role' })
   @ApiOkResponse({ type: RoleResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid name or already exists' })
+  @ApiNotFoundResponse({ description: 'Role not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBody({ type: UpdateRoleDto })
   async update(
     @Req() req: any,
@@ -76,7 +93,11 @@ export class RoleController {
 
   @RequirePermissions('role:manage')
   @Delete(':roleId')
+  @ApiOperation({ summary: 'Delete role' })
   @ApiOkResponse({ type: RoleResponseDto })
+  @ApiBadRequestResponse({ description: 'Role in use' })
+  @ApiNotFoundResponse({ description: 'Role not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   async remove(
     @Req() req: any,
     @Param('roleId') roleId: string,
@@ -86,6 +107,7 @@ export class RoleController {
 
   @RequirePermissions('role:manage')
   @Patch(':roleId/permissions')
+  @ApiOperation({ summary: 'Patch role permissions' })
   @ApiOkResponse({
     schema: {
       properties: {
@@ -94,6 +116,9 @@ export class RoleController {
       },
     },
   })
+  @ApiBadRequestResponse({ description: 'Unknown permission keys or empty' })
+  @ApiNotFoundResponse({ description: 'Role not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBody({ type: PatchRolePermissionsDto })
   async patchPermissions(
     @Req() req: any,

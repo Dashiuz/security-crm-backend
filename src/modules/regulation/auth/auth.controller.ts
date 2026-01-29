@@ -8,6 +8,7 @@ import {
   ApiNotFoundResponse,
   ApiInternalServerErrorResponse,
   ApiBearerAuth,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response, Request } from 'express';
@@ -26,6 +27,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
+  @ApiOperation({ summary: 'Login' })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
     schema: {
@@ -51,7 +53,11 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('all-sessions-logout')
+  @ApiOperation({
+    summary: 'Logout by access token (Revoke all user sessions)',
+  })
   @ApiOkResponse({ schema: { properties: { ok: { type: 'boolean' } } } })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async logoutByAccessToken(
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
@@ -70,6 +76,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Get('me')
+  @ApiOperation({ summary: 'Get current user session info' })
   @ApiOkResponse({
     schema: {
       properties: {
@@ -79,6 +86,7 @@ export class AuthController {
       },
     },
   })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async me(@Req() req: any) {
     const userId = req.user.sub as string;
     const me = await this.userRepository.getMe(userId);

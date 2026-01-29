@@ -15,7 +15,7 @@ export class UsersRolesService {
     userId: string,
     dto: PatchUserRolesDto,
   ): Promise<any> {
-    const user = await this.userRepository.findUserInTenant(userId, tenantId);
+    const user = await this.userRepository.findUserInTenant(userId);
 
     if (!user) throw new NotFoundException('User not found in this tenant');
 
@@ -31,10 +31,7 @@ export class UsersRolesService {
     // Validar que los roleIds pertenecen al tenant
     const roleIds = Array.from(new Set([...add, ...remove]));
     if (roleIds.length) {
-      const roles = await this.userRepository.validateRolesInTenant(
-        roleIds,
-        tenantId,
-      );
+      const roles = await this.userRepository.validateRolesInTenant(roleIds);
       const okIds = new Set(roles.map((r) => r.id));
       const missing = roleIds.filter((id) => !okIds.has(id));
       if (missing.length)

@@ -1,8 +1,40 @@
-import { Injectable, OnModuleInit, OnApplicationShutdown } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { auditExtension } from '../common/prisma-extension/audit-extension';
+import { RequestContextService } from '../common/context/request-context.service';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnApplicationShutdown {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnApplicationShutdown
+{
+  private _extendedClient: any;
+
+  constructor(private readonly contextService: RequestContextService) {
+    super();
+    this._extendedClient = this.$extends(auditExtension(this.contextService));
+
+    // Return a proxy that prioritizes the extended client for all calls (like .user, .employee, etc.)
+    return new Proxy(this, {
+      get: (target, prop) => {
+        // Return the extended client's property if it exists (all models and prisma methods)
+        if (prop in target._extendedClient) {
+          const value = target._extendedClient[prop];
+          return typeof value === 'function'
+            ? value.bind(target._extendedClient)
+            : value;
+        }
+        // Fallback to original PrismaService (e.g., onModuleInit, etc.)
+        const value = (target as any)[prop];
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    }) as any;
+  }
+
   async onModuleInit() {
     await this.$connect();
   }

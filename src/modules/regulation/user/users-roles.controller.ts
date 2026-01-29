@@ -4,6 +4,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiTags,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
@@ -20,6 +21,7 @@ export class UsersRolesController {
 
   @RequirePermissions('user:manage')
   @Patch(':userId/roles')
+  @ApiOperation({ summary: 'Patch user roles' })
   @ApiOkResponse({
     schema: {
       properties: {

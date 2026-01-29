@@ -23,6 +23,7 @@ model Employee {
   createdAt       DateTime  @default(now())
   createdBy       String?   @default("")
   updatedAt       DateTime  @updatedAt
+  updatedBy       String?   @default("")
   retiredAt       DateTime? @db.Date
   deletedAt       DateTime?
 

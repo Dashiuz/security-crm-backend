@@ -46,44 +46,40 @@ export class UserService {
     return hash; // store this in DB as passwordHash
   }
 
-  async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
-    // 1) verify tenant exists and is active
-    const tenant = await this.userRepository.checkTenantActive(dto.tenantId);
-
-    if (!tenant) {
-      throw new NotFoundException('Tenant not found or inactive.');
-    }
-
-    // 2) verify an existing active employee with same document
+  async createUser(
+    adminTenantId: string,
+    dto: CreateUserDto,
+  ): Promise<UserResponseDto> {
+    // 1) Business validation: verify an existing active employee with same document
+    // tenantId is handled by Prisma Extension
     const existingEmployee = await this.employeeRepository.findActiveByDocument(
       dto.document,
-      dto.tenantId,
     );
 
     if (!existingEmployee) {
       throw new BadRequestException(
-        'This user document is not registered as an active employee.',
+        'This user document is not registered as an active employee in this tenant.',
       );
     }
 
-    // 3) hash password
+    // 2) hash password
     const passwordHash = await this.hashPassword(dto.password);
 
-    // 4) create user record
+    // 3) create user record - tenantId is handled by Prisma Extension
     const user = await this.userRepository.createUser({
-      tenant: { connect: { id: dto.tenantId } },
       passwordHash,
       fullName: dto.fullName,
       document: dto.document,
       department: dto.department,
       position: dto.position,
       isActive: dto.isActive,
-    });
+    } as any);
 
     return this.mapUserToResponse(user);
   }
 
   async changeUserPassword(
+    tenantId: string,
     document: string,
     oldPassword: string,
     newPassword: string,
@@ -91,13 +87,7 @@ export class UserService {
     const user = await this.userRepository.findActiveByDocument(document);
 
     if (!user) {
-      throw new NotFoundException('User not found or inactive.');
-    }
-
-    const tenant = await this.userRepository.checkTenantActive(user.tenantId);
-
-    if (!tenant) {
-      throw new NotFoundException('Tenant not found or inactive.');
+      throw new NotFoundException('User not found or inactive in this tenant.');
     }
 
     const isPasswordValid = await argon2.verify(user.passwordHash, oldPassword);
@@ -115,6 +105,7 @@ export class UserService {
 
   async findActiveByDocument(
     document: string,
+    tenantId: string,
   ): Promise<UserResponseDto | null> {
     const user = await this.userRepository.findActiveByDocument(document);
     return user ? this.mapUserToResponse(user) : null;

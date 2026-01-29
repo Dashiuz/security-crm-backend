@@ -18,6 +18,8 @@ import {
   ApiNotFoundResponse,
   ApiInternalServerErrorResponse,
   ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -39,16 +41,18 @@ export class EmployeeController {
 
   @Post()
   @RequirePermissions('employee:create')
+  @ApiOperation({ summary: 'Create employee' })
   @ApiBody({ type: CreateEmployeeDto })
   @ApiOkResponse({
     description: 'Employee created successfully.',
     type: EmployeeResponseDto,
   })
-  @ApiNotFoundResponse({ description: 'Employee not found.' })
+  @ApiBadRequestResponse({ description: 'Invalid data or duplicate document' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiNotFoundResponse({ description: 'Tenant not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   create(@Req() req: any, @Body() dto: CreateEmployeeDto) {
-    const tenantId = req.user.tenantId;
-    return this.employeeService.createEmployee(tenantId, dto);
+    return this.employeeService.createEmployee(req.user.tenantId, dto);
   }
 
   @Get('/active/:document')
@@ -58,11 +62,11 @@ export class EmployeeController {
     description: 'Employee found successfully.',
     type: EmployeeResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   getByDocument(@Req() req: any, @Param('document') document: string) {
-    const tenantId = req.user.tenantId;
-    return this.employeeService.findActiveByDocument(tenantId, document);
+    return this.employeeService.findActiveByDocument(document);
   }
 
   @Get('/any/:id')
@@ -72,20 +76,23 @@ export class EmployeeController {
     description: 'Employee found successfully.',
     type: EmployeeResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   getAnyById(@Req() req: any, @Param('id') id: string) {
-    const tenantId = req.user.tenantId;
-    return this.employeeService.findAnyEmployeeById(tenantId, id);
+    return this.employeeService.findAnyEmployeeById(id);
   }
 
   @Patch(':id')
   @RequirePermissions('employee:update')
+  @ApiOperation({ summary: 'Update employee' })
   @ApiBody({ type: UpdateEmployeeDto })
   @ApiOkResponse({
     description: 'Employee updated successfully.',
     type: EmployeeResponseDto,
   })
+  @ApiBadRequestResponse({ description: 'Invalid data' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   update(
@@ -93,20 +100,20 @@ export class EmployeeController {
     @Param('id') id: string,
     @Body() dto: UpdateEmployeeDto,
   ) {
-    const tenantId = req.user.tenantId;
-    return this.employeeService.updateEmployee(tenantId, id, dto);
+    return this.employeeService.updateEmployee(id, dto);
   }
 
   @Delete(':id')
   @RequirePermissions('employee:delete')
+  @ApiOperation({ summary: 'Soft delete employee' })
   @ApiOkResponse({
     description: 'Employee deleted successfully.',
     type: DeletedEmployeeDto,
   })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   softDelete(@Req() req: any, @Param('id') id: string) {
-    const tenantId = req.user.tenantId;
-    return this.employeeService.softDeleteEmployee(tenantId, id);
+    return this.employeeService.softDeleteEmployee(id);
   }
 }

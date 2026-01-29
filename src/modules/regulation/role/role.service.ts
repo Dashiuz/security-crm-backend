@@ -34,7 +34,8 @@ export class RoleService {
     if (!name) throw new BadRequestException('Role name is required');
 
     try {
-      const row = await this.roleRepository.createRole(tenantId, name);
+      // tenantId is now automatically handled by the repository extension
+      const row = await this.roleRepository.createRole(name);
       return this.mapRoleToResponse(row);
     } catch (e: any) {
       if (e?.code === 'P2002') {
@@ -47,12 +48,12 @@ export class RoleService {
   }
 
   async list(tenantId: string): Promise<RoleResponseDto[]> {
-    const rows = await this.roleRepository.listRoles(tenantId);
+    const rows = await this.roleRepository.listRoles();
     return rows.map((r) => this.mapRoleToResponse(r));
   }
 
   async findOne(tenantId: string, roleId: string): Promise<RoleResponseDto> {
-    const role = await this.roleRepository.findRoleById(tenantId, roleId);
+    const role = await this.roleRepository.findRoleById(roleId);
     if (!role) throw new NotFoundException('Role not found');
     return this.mapRoleToResponse(role);
   }
@@ -62,17 +63,13 @@ export class RoleService {
     roleId: string,
     dto: UpdateRoleDto,
   ): Promise<RoleResponseDto> {
-    const role = await this.roleRepository.findRoleId(tenantId, roleId);
+    const role = await this.roleRepository.findRoleId(roleId);
     if (!role) throw new NotFoundException('Role not found');
 
     if (dto.name) {
       const name = dto.name.trim();
       try {
-        const updated = await this.roleRepository.updateRole(
-          tenantId,
-          roleId,
-          name,
-        );
+        const updated = await this.roleRepository.updateRole(roleId, name);
         return this.mapRoleToResponse(updated);
       } catch (e: any) {
         if (e?.code === 'P2002') {
@@ -87,11 +84,11 @@ export class RoleService {
   }
 
   async remove(tenantId: string, roleId: string): Promise<RoleResponseDto> {
-    const role = await this.roleRepository.findRoleId(tenantId, roleId);
+    const role = await this.roleRepository.findRoleId(roleId);
     if (!role) throw new NotFoundException('Role not found');
 
     try {
-      const deleted = await this.roleRepository.deleteRole(tenantId, roleId);
+      const deleted = await this.roleRepository.deleteRole(roleId);
       return this.mapRoleToResponse(deleted);
     } catch (e: any) {
       if (e?.code === 'P2003') {
@@ -108,7 +105,7 @@ export class RoleService {
     roleId: string,
     dto: PatchRolePermissionsDto,
   ): Promise<any> {
-    const role = await this.roleRepository.findRoleId(tenantId, roleId);
+    const role = await this.roleRepository.findRoleId(roleId);
 
     if (!role) throw new NotFoundException('Role not found');
 
@@ -146,7 +143,7 @@ export class RoleService {
     }
 
     // 4) Return current state
-    const updated = await this.roleRepository.getCurrentState(tenantId, roleId);
+    const updated = await this.roleRepository.getCurrentState(roleId);
 
     return {
       roleId,

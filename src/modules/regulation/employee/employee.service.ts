@@ -91,7 +91,7 @@ export class EmployeeService {
       throw new BadRequestException('Invalid retiredAt.');
     }
 
-    // 2) verify active tenant
+    // 2) verify active tenant (keeping this for safety/business check if needed, but tenantId is already in context)
     const tenant = await this.userRepository.checkTenantActive(tenantId);
 
     if (!tenant) throw new NotFoundException('Tenant not found or inactive.');
@@ -107,9 +107,8 @@ export class EmployeeService {
       maternalSurname: dto.maternalSurname,
     });
 
-    // 4) Create employee
-    const employee = await this.employeeRepository.createEmployee(tenant.id, {
-      tenant: { connect: { id: tenant.id } },
+    // 4) Create employee - tenantId is handled by Prisma Extension
+    const employee = await this.employeeRepository.createEmployee({
       firstName: dto.firstName.trim(),
       secondName: dto.secondName?.trim() ?? null,
       lastName: dto.lastName.trim(),
@@ -131,48 +130,35 @@ export class EmployeeService {
       isRetired: dto.isRetired ?? false,
       isActive: dto.isActive ?? true,
       retiredAt: retiredAt,
-    });
+    } as any);
 
-    return this.mapEmployeeToResponse(employee);
+    return this.mapEmployeeToResponse(employee as any);
   }
 
   async findActiveByDocument(
-    tenantId: string,
     document: string,
   ): Promise<EmployeeResponseDto | null> {
-    const employee = await this.employeeRepository.findActiveByDocument(
-      document,
-      tenantId,
-    );
+    const employee =
+      await this.employeeRepository.findActiveByDocument(document);
 
     if (!employee) return null;
 
-    return this.mapEmployeeToResponse(employee);
+    return this.mapEmployeeToResponse(employee as any);
   }
 
-  async findAnyEmployeeById(
-    tenantId: string,
-    id: string,
-  ): Promise<EmployeeResponseDto | null> {
-    const employeeWithRefs = await this.employeeRepository.findWithRefsById(
-      tenantId,
-      id,
-    );
+  async findAnyEmployeeById(id: string): Promise<EmployeeResponseDto | null> {
+    const employeeWithRefs = await this.employeeRepository.findWithRefsById(id);
 
     if (!employeeWithRefs) return null;
 
-    return this.mapEmployeeToResponse(employeeWithRefs);
+    return this.mapEmployeeToResponse(employeeWithRefs as any);
   }
 
   async updateEmployee(
-    tenantId: string,
     employeeId: string,
     dto: UpdateEmployeeDto,
   ): Promise<EmployeeResponseDto> {
-    const current = await this.employeeRepository.findAnyById(
-      tenantId,
-      employeeId,
-    );
+    const current = await this.employeeRepository.findAnyById(employeeId);
 
     if (!current) throw new NotFoundException('Employee not found.');
 
@@ -291,23 +277,15 @@ export class EmployeeService {
     }
 
     // 5) perform update
-    const updatedEmployee = await this.employeeRepository.updateEmployee(
-      tenantId,
-      employeeId,
-      patch,
-    );
+    const updatedEmployee = await (
+      this.employeeRepository as any
+    ).updateEmployee(employeeId, patch);
 
-    return this.mapEmployeeToResponse(updatedEmployee);
+    return this.mapEmployeeToResponse(updatedEmployee as any);
   }
 
-  async softDeleteEmployee(
-    tenantId: string,
-    employeeId: string,
-  ): Promise<DeletedEmployeeDto> {
-    const current = await this.employeeRepository.findAnyById(
-      tenantId,
-      employeeId,
-    );
+  async softDeleteEmployee(employeeId: string): Promise<DeletedEmployeeDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
     if (!current) throw new NotFoundException('Employee not found.');
 
     // Idempotency: if already deleted, return the same data
@@ -323,11 +301,9 @@ export class EmployeeService {
       };
     }
 
-    const deletedEmployee = await this.employeeRepository.softDeleteEmployee(
-      tenantId,
-      employeeId,
-    );
+    const deletedEmployee =
+      await this.employeeRepository.softDeleteEmployee(employeeId);
 
-    return deletedEmployee;
+    return deletedEmployee as any;
   }
 }

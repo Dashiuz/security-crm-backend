@@ -6,16 +6,14 @@ import { PrismaService } from '../../../prisma/prisma.service';
 export class RoleRepositoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createRole(tenantId: string, name: string): Promise<Role> {
-    return this.prisma.role.create({
-      data: { tenantId, name },
-      select: { id: true, tenantId: true, name: true },
+  async createRole(name: string): Promise<Role> {
+    return (this.prisma.role as any).create({
+      data: { name },
     });
   }
 
-  async listRoles(tenantId: string) {
+  async listRoles() {
     return this.prisma.role.findMany({
-      where: { tenantId },
       orderBy: { name: 'asc' },
       select: {
         id: true,
@@ -27,16 +25,16 @@ export class RoleRepositoryService {
     });
   }
 
-  async findRoleId(tenantId: string, roleId: string) {
+  async findRoleId(roleId: string) {
     return this.prisma.role.findFirst({
-      where: { id: roleId, tenantId },
+      where: { id: roleId },
       select: { id: true },
     });
   }
 
-  async findRoleById(tenantId: string, roleId: string) {
+  async findRoleById(roleId: string) {
     return this.prisma.role.findFirst({
-      where: { id: roleId, tenantId },
+      where: { id: roleId },
       select: {
         id: true,
         name: true,
@@ -49,26 +47,22 @@ export class RoleRepositoryService {
     });
   }
 
-  async updateRole(
-    tenantId: string,
-    roleId: string,
-    name: string,
-  ): Promise<Role> {
-    return this.prisma.role.update({
-      where: { id: roleId, tenantId },
+  async updateRole(roleId: string, name: string): Promise<Role> {
+    return (this.prisma.role as any).update({
+      where: { id: roleId },
       data: { name },
     });
   }
 
-  async deleteRole(tenantId: string, roleId: string): Promise<Role> {
+  async deleteRole(roleId: string): Promise<Role> {
     return this.prisma.role.delete({
-      where: { id: roleId, tenantId },
+      where: { id: roleId },
     });
   }
 
-  async getCurrentState(tenantId: string, roleId: string) {
+  async getCurrentState(roleId: string) {
     return await this.prisma.role.findFirst({
-      where: { id: roleId, tenantId },
+      where: { id: roleId },
       select: {
         id: true,
         name: true,

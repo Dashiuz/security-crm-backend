@@ -23,7 +23,7 @@ export class AuthService {
   ) {}
 
   // Password verification (LocalStrategy uses this)
-  async validateUser(document: string, password: string) {
+  async validateUser(document: string, password: string, tenantId: string) {
     const user = await this.userRepository.findActiveByDocument(document);
 
     if (!user) return null;

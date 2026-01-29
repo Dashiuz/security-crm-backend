@@ -15,8 +15,8 @@ async function bootstrap() {
   const swaggerConfig = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
-      .setTitle('Security CRM Backend')
-      .setDescription(`API documentation for Security CRM Backend`)
+      .setTitle('Noxia CRM Backend')
+      .setDescription(`API documentation for Noxia CRM Backend`)
       .setVersion('1.0')
       .addBearerAuth(
         {
