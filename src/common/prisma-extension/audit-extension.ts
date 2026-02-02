@@ -39,7 +39,14 @@ export const auditExtension = (contextService: RequestContextService) => {
             // --- MULTI-TENANCY LOGIC ---
             // If tenantId is present in context and model is multitenant, and not bypassed
             const anyArgs = args as any;
-            if (tenantId && isMultiTenant && !anyArgs?.bypassTenant) {
+            const isGodlike = contextService.isGodlike;
+
+            if (
+              tenantId &&
+              isMultiTenant &&
+              !anyArgs?.bypassTenant &&
+              !isGodlike
+            ) {
               if (
                 [
                   'findMany',

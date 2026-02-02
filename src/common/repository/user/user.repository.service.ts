@@ -144,6 +144,14 @@ export class UserRepositoryService {
     });
   }
 
+  async getUserRoles(userId: string): Promise<string[]> {
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: { role: true },
+    });
+    return userRoles.map((ur) => ur.role.name);
+  }
+
   async revokeAllSessionsForUser(userId: string) {
     return await this.prisma.userSession.updateMany({
       where: { userId, revokedAt: null },
@@ -152,6 +160,14 @@ export class UserRepositoryService {
   }
 
   // ##### USER ROLE OPERATIONS ##### //
+
+  async getTenantFeatures(tenantId: string): Promise<string[]> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { enabledFeatures: true },
+    });
+    return tenant?.enabledFeatures ?? [];
+  }
 
   async findUserInTenant(userId: string) {
     return this.prisma.user.findFirst({

@@ -21,3 +21,6 @@ export * from './regulation/role/role.service';
 // Permission
 export * from './regulation/permission/permission.module';
 export * from './regulation/permission/permission.service';
+
+// Tenant
+export * from './regulation/tenant/tenant.module';

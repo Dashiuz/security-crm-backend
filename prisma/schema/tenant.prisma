@@ -8,11 +8,12 @@ model Tenant {
   createdBy String?
   updatedBy String?
 
-  employees   Employee[]
-  users       User[]
-  roles       Role[]
-  departments Department[]
-  positions   Position[]
+  employees       Employee[]
+  users           User[]
+  roles           Role[]
+  departments     Department[]
+  positions       Position[]
+  enabledFeatures String[]     @default([])
 
   @@map("tenant")
 }

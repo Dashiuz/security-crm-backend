@@ -15,6 +15,7 @@ import {
   UserModule,
   PermissionModule,
   RoleModule,
+  TenantModule,
 } from './modules/index';
 
 @Module({
@@ -33,6 +34,7 @@ import {
     UserModule,
     PermissionModule,
     RoleModule,
+    TenantModule,
   ],
   controllers: [AppController],
   providers: [

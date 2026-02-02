@@ -14,6 +14,6 @@ export * from './user/user.repository.service';
 export * from './employee/employee.repository.module';
 export * from './employee/employee.repository.service';
 
-// Minuta
-//export * from './minuta/minuta.repository.module';
-//export * from './minuta/minuta.repository.service';
+// Tenant
+export * from './tenant/tenant.repository.module';
+export * from './tenant/tenant.repository.service';
