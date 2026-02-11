@@ -24,3 +24,11 @@ export * from './regulation/permission/permission.service';
 
 // Tenant
 export * from './regulation/tenant/tenant.module';
+
+// Department
+export * from './regulation/department/department.module';
+export * from './regulation/department/department.service';
+
+// Position
+export * from './regulation/position/position.module';
+export * from './regulation/position/position.service';

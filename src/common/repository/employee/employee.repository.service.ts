@@ -74,8 +74,8 @@ export class EmployeeRepositoryService {
           document: data.document,
           birthdate: data.birthdate,
           gender: data.gender,
-          departmentRef: data.departmentRef,
-          positionRef: data.positionRef,
+          departmentId: (data as any).departmentId,
+          positionId: (data as any).positionId,
           email: data.email,
           phone: data.phone,
           entryDate: data.entryDate,
@@ -106,6 +106,7 @@ export class EmployeeRepositoryService {
   async findAnyById(id: string) {
     return this.prisma.employee.findFirst({
       where: { id, tenant: { isActive: true } },
+      select: this.employeeSelect,
     });
   }
 
@@ -180,5 +181,23 @@ export class EmployeeRepositoryService {
       throw new NotFoundException('Employee not found after delete.');
 
     return findDeleted;
+  }
+
+  async retireEmployee(id: string) {
+    const res = await this.prisma.employee.updateMany({
+      where: { id },
+      data: {
+        isRetired: true,
+        retiredAt: new Date(),
+        isActive: false,
+      },
+    });
+
+    if (res.count === 0) throw new NotFoundException('Employee not found.');
+
+    return this.prisma.employee.findFirst({
+      where: { id },
+      select: this.employeeSelect,
+    });
   }
 }

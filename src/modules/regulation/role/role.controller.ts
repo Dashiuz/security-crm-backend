@@ -39,7 +39,7 @@ import {
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
-  @RequirePermissions('role:manage')
+  @RequirePermissions('role:manage', 'role:create')
   @Post()
   @ApiOperation({ summary: 'Create role' })
   @ApiCreatedResponse({ type: RoleResponseDto })
@@ -53,7 +53,7 @@ export class RoleController {
     return this.roleService.create(req.user.tenantId, dto);
   }
 
-  @RequirePermissions('role:manage')
+  @RequirePermissions('role:manage', 'role:read')
   @Get()
   @ApiOperation({ summary: 'List roles' })
   @ApiOkResponse({ type: [RoleResponseDto] })
@@ -62,7 +62,7 @@ export class RoleController {
     return this.roleService.list(req.user.tenantId);
   }
 
-  @RequirePermissions('role:manage')
+  @RequirePermissions('role:manage', 'role:read')
   @Get(':roleId')
   @ApiOperation({ summary: 'Find role by id' })
   @ApiOkResponse({ type: RoleResponseDto })
@@ -75,7 +75,7 @@ export class RoleController {
     return this.roleService.findOne(req.user.tenantId, roleId);
   }
 
-  @RequirePermissions('role:manage')
+  @RequirePermissions('role:manage', 'role:update')
   @Patch(':roleId')
   @ApiOperation({ summary: 'Update role' })
   @ApiOkResponse({ type: RoleResponseDto })
@@ -91,7 +91,7 @@ export class RoleController {
     return this.roleService.update(req.user.tenantId, roleId, dto);
   }
 
-  @RequirePermissions('role:manage')
+  @RequirePermissions('role:manage', 'role:delete')
   @Delete(':roleId')
   @ApiOperation({ summary: 'Delete role' })
   @ApiOkResponse({ type: RoleResponseDto })
@@ -105,7 +105,7 @@ export class RoleController {
     return this.roleService.remove(req.user.tenantId, roleId);
   }
 
-  @RequirePermissions('role:manage')
+  @RequirePermissions('role:manage', 'role:update')
   @Patch(':roleId/permissions')
   @ApiOperation({ summary: 'Patch role permissions' })
   @ApiOkResponse({

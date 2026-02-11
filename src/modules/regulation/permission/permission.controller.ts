@@ -37,7 +37,7 @@ import {
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
-  @RequirePermissions('permission:read')
+  @RequirePermissions('permission:manage', 'permission:read')
   @Get()
   @ApiOperation({ summary: 'List permissions' })
   @ApiOkResponse({ type: [PermissionResponseDto] })
@@ -46,7 +46,7 @@ export class PermissionController {
     return this.permissionService.list();
   }
 
-  @RequirePermissions('permission:read')
+  @RequirePermissions('permission:manage', 'permission:read')
   @Get(':id')
   @ApiOperation({ summary: 'Find permission by id' })
   @ApiOkResponse({ type: PermissionResponseDto })
@@ -56,7 +56,7 @@ export class PermissionController {
     return this.permissionService.findOne(id);
   }
 
-  @RequirePermissions('permission:manage')
+  @RequirePermissions('permission:manage', 'permission:create')
   @Post()
   @ApiOperation({ summary: 'Create permission' })
   @ApiCreatedResponse({ type: PermissionResponseDto })
@@ -69,7 +69,7 @@ export class PermissionController {
     return this.permissionService.create(dto);
   }
 
-  @RequirePermissions('permission:manage')
+  @RequirePermissions('permission:manage', 'permission:update')
   @Patch(':id')
   @ApiOperation({ summary: 'Update permission' })
   @ApiOkResponse({ type: PermissionResponseDto })
@@ -84,7 +84,7 @@ export class PermissionController {
     return this.permissionService.update(id, dto);
   }
 
-  @RequirePermissions('permission:manage')
+  @RequirePermissions('permission:manage', 'permission:delete')
   @Delete(':id')
   @ApiOperation({ summary: 'Delete permission' })
   @ApiOkResponse({ type: PermissionResponseDto })

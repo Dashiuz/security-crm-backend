@@ -38,18 +38,15 @@ import { RequirePermissions } from '../access-control/permissions.decorator';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @RequirePermissions('user:manage')
+  @RequirePermissions('user:manage', 'user:create')
   @Post()
   @ApiOperation({ summary: 'Create user' })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid data or user already exists' })
   @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBody({ type: CreateUserDto })
-  async create(
-    @Req() req: any,
-    @Body() dto: CreateUserDto,
-  ): Promise<UserResponseDto> {
-    return this.userService.createUser(req.user.tenantId, dto);
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
+    return this.userService.createUser(dto);
   }
 
   @Get('me')
@@ -57,9 +54,10 @@ export class UserController {
   @ApiOkResponse({ type: UserResponseDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getMe(@Req() req: any): Promise<UserResponseDto> {
-    return this.userService.getMe(req.user.id);
+    return this.userService.getMe(req.user.sub);
   }
 
+  @RequirePermissions('user:manage', 'user:passwordchange')
   @Patch('password')
   @ApiOperation({ summary: 'Update user password' })
   @ApiOkResponse({
@@ -71,12 +69,8 @@ export class UserController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBody({ type: UpdateUserPasswordDto })
-  async update(
-    @Req() req: any,
-    @Body() dto: UpdateUserPasswordDto,
-  ): Promise<any> {
+  async update(@Body() dto: UpdateUserPasswordDto): Promise<any> {
     return this.userService.changeUserPassword(
-      req.user.tenantId,
       dto.document,
       dto.oldPassword,
       dto.newPassword,

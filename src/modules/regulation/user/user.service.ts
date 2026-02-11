@@ -46,40 +46,44 @@ export class UserService {
     return hash; // store this in DB as passwordHash
   }
 
-  async createUser(
-    adminTenantId: string,
-    dto: CreateUserDto,
-  ): Promise<UserResponseDto> {
+  async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     // 1) Business validation: verify an existing active employee with same document
     // tenantId is handled by Prisma Extension
-    const existingEmployee = await this.employeeRepository.findActiveByDocument(
+    const employee = await this.employeeRepository.findActiveByDocument(
       dto.document,
     );
 
-    if (!existingEmployee) {
+    if (!employee) {
       throw new BadRequestException(
-        'This user document is not registered as an active employee in this tenant.',
+        'No active employee found with the provided document.',
       );
     }
 
-    // 2) hash password
+    // 2) Check if user already exists
+    const existingUser = await this.userRepository.findActiveByDocument(
+      dto.document,
+    );
+
+    if (existingUser) {
+      throw new BadRequestException('User already exists for this employee.');
+    }
+
+    // 3) Hash password
     const passwordHash = await this.hashPassword(dto.password);
 
-    // 3) create user record - tenantId is handled by Prisma Extension
+    // 4) create user record - tenantId is handled by Prisma Extension
     const user = await this.userRepository.createUser({
       passwordHash,
-      fullName: dto.fullName,
+      fullName: employee.fullName,
       document: dto.document,
-      department: dto.department,
-      position: dto.position,
-      isActive: dto.isActive,
+      department: employee.departmentRef?.name || 'N/A',
+      position: employee.positionRef?.name || 'N/A',
     } as any);
 
     return this.mapUserToResponse(user);
   }
 
   async changeUserPassword(
-    tenantId: string,
     document: string,
     oldPassword: string,
     newPassword: string,

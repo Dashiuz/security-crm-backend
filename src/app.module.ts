@@ -16,6 +16,8 @@ import {
   PermissionModule,
   RoleModule,
   TenantModule,
+  DepartmentModule,
+  PositionModule,
 } from './modules/index';
 
 @Module({
@@ -30,11 +32,13 @@ import {
     PrismaModule,
     AuthModule,
     AccessControlModule,
+    TenantModule,
+    RoleModule,
+    PermissionModule,
+    DepartmentModule,
+    PositionModule,
     EmployeeModule,
     UserModule,
-    PermissionModule,
-    RoleModule,
-    TenantModule,
   ],
   controllers: [AppController],
   providers: [

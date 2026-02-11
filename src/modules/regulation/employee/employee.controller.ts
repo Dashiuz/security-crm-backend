@@ -40,7 +40,7 @@ export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Post()
-  @RequirePermissions('employee:create')
+  @RequirePermissions('employee:manage', 'employee:create')
   @ApiOperation({ summary: 'Create employee' })
   @ApiBody({ type: CreateEmployeeDto })
   @ApiOkResponse({
@@ -56,7 +56,7 @@ export class EmployeeController {
   }
 
   @Get('/active/:document')
-  @RequirePermissions('employee:read')
+  @RequirePermissions('employee:manage', 'employee:read')
   @ApiOperation({ summary: 'Get active employee by document' })
   @ApiOkResponse({
     description: 'Employee found successfully.',
@@ -70,7 +70,7 @@ export class EmployeeController {
   }
 
   @Get('/any/:id')
-  @RequirePermissions('employee:read')
+  @RequirePermissions('employee:manage', 'employee:read')
   @ApiOperation({ summary: 'Get active or inactive employee by id' })
   @ApiOkResponse({
     description: 'Employee found successfully.',
@@ -84,7 +84,7 @@ export class EmployeeController {
   }
 
   @Patch(':id')
-  @RequirePermissions('employee:update')
+  @RequirePermissions('employee:manage', 'employee:update')
   @ApiOperation({ summary: 'Update employee' })
   @ApiBody({ type: UpdateEmployeeDto })
   @ApiOkResponse({
@@ -104,7 +104,7 @@ export class EmployeeController {
   }
 
   @Delete(':id')
-  @RequirePermissions('employee:delete')
+  @RequirePermissions('employee:manage', 'employee:delete')
   @ApiOperation({ summary: 'Soft delete employee' })
   @ApiOkResponse({
     description: 'Employee deleted successfully.',
@@ -113,7 +113,18 @@ export class EmployeeController {
   @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiNotFoundResponse({ description: 'Employee not found.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
-  softDelete(@Req() req: any, @Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<DeletedEmployeeDto> {
     return this.employeeService.softDeleteEmployee(id);
+  }
+
+  @Patch(':id/retire')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({ summary: 'Retire employee' })
+  @ApiOkResponse({
+    description: 'Employee retired successfully.',
+    type: EmployeeResponseDto,
+  })
+  async retire(@Param('id') id: string): Promise<EmployeeResponseDto> {
+    return this.employeeService.retireEmployee(id);
   }
 }

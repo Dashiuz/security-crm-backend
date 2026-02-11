@@ -83,6 +83,30 @@ async function main() {
   const employees = [
     {
       tenantId: 'test_01',
+      firstName: 'Josua',
+      secondName: 'Jacob',
+      lastName: 'Guaramato',
+      fullName: 'Josua Jacob Guaramato',
+      documentType: 'CC',
+      document: '12345678',
+      birthdate: new Date('1990-08-02'),
+      gender: 'Masculino',
+      address: '456 Oak Ave',
+      departmentId: 'a5dq2c4qf62t4ipf7851td2i',
+      positionId: 'kli6052hvujei7yu4cvwremm',
+      email: 'josua.guaramato@example.com',
+      phone: '3102101010',
+      entryDate: new Date('2021-03-15'),
+      isRetired: false,
+      isActive: true,
+      createdAt: new Date(),
+      createdBy: 'mock_user',
+      updatedAt: new Date(),
+      retiredAt: null,
+      deletedAt: null,
+    },
+    {
+      tenantId: 'test_01',
       firstName: 'Rosa',
       secondName: null,
       lastName: 'Coral',
@@ -133,6 +157,22 @@ async function main() {
     },
   ];
 
+  const users = [
+    {
+      id: 'seed_id_01',
+      tenantId: 'test_01',
+      passwordHash:
+        '$argon2id$v=19$m=19456,t=2,p=1$Z1FUny0yCRNJOsEgQv7MoA$X9sdmn4w7ur0IcWLXVqZcFaSe1Q4sclpEEJZjdKvKAo',
+      fullName: 'Josua Jacob Guaramato',
+      document: '12345678',
+      department: 'Administrativo',
+      position: 'Gerente Bogota',
+      isRetired: false,
+      isActive: true,
+      isFirstLogin: false,
+    },
+  ];
+
   const permissions = [
     { key: 'employee:create', desc: 'Create employees' },
     { key: 'employee:read', desc: 'Read employees' },
@@ -154,6 +194,7 @@ async function main() {
     { tableName: 'department', data: departments },
     { tableName: 'position', data: positions },
     { tableName: 'employee', data: employees },
+    { tableName: 'users', data: users },
   ];
 
   for (const table of tablesData) {
@@ -214,9 +255,13 @@ async function seedThatTableUp(tableName: string, data: any) {
         gender: data.gender,
         address: data.address,
         departmentId:
-          data.firstName == 'Rosa' ? 'ADMINISTRATIVO' : 'OPERACIONES',
+          data.firstName == 'Rosa' || 'Josua'
+            ? 'a5dq2c4qf62t4ipf7851td2i'
+            : 'nxthvhdl3b2jfbvdr825mapd',
         positionId:
-          data.firstName == 'Rosa' ? 'GERENTE BOGOTA' : 'GUARDA DE SEGURIDAD',
+          data.firstName == 'Rosa' || 'Josua'
+            ? 'kli6052hvujei7yu4cvwremm'
+            : 'dnxbiihgnsdfss9btas86392',
         email: data.email,
         phone: data.phone,
         entryDate: data.entryDate,
@@ -232,6 +277,24 @@ async function seedThatTableUp(tableName: string, data: any) {
     });
 
     console.log('✅ Employees seeded');
+  } else if (tableName == 'users') {
+    await prisma.user.upsert({
+      where: { id: data.id },
+      update: {
+        tenantId: data.tenantId,
+        passwordHash: data.passwordHash,
+        fullName: data.fullName,
+        document: data.document,
+        department: data.department,
+        position: data.position,
+        isRetired: data.isRetired,
+        isActive: data.isActive,
+        isFirstLogin: data.isFirstLogin,
+      },
+      create: data,
+    });
+
+    console.log('✅ Users seeded');
   } else if (tableName == 'permission') {
     await prisma.permission.upsert({
       where: { key: data.key },

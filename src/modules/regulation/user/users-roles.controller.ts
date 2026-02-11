@@ -19,7 +19,7 @@ import { PatchUserRolesDto } from './dtos/patch-user-roles.dto';
 export class UsersRolesController {
   constructor(private readonly usersRolesService: UsersRolesService) {}
 
-  @RequirePermissions('user:manage')
+  @RequirePermissions('user:manage', 'user:update')
   @Patch(':userId/roles')
   @ApiOperation({ summary: 'Patch user roles' })
   @ApiOkResponse({

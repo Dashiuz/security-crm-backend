@@ -118,12 +118,8 @@ export class EmployeeService {
       document,
       birthdate,
       gender: dto.gender.trim(),
-      departmentRef: dto.departmentId
-        ? { connect: { id: dto.departmentId } }
-        : undefined,
-      positionRef: dto.positionId
-        ? { connect: { id: dto.positionId } }
-        : undefined,
+      departmentId: dto.departmentId || null,
+      positionId: dto.positionId || null,
       email: email ?? null,
       phone: dto.phone?.trim() ?? null,
       entryDate,
@@ -188,6 +184,7 @@ export class EmployeeService {
     setString('gender');
     setString('departmentId');
     setString('positionId');
+    setString('address');
 
     if (dto.email !== undefined) {
       patch.email = dto.email === null ? null : dto.email.trim().toLowerCase();
@@ -305,5 +302,17 @@ export class EmployeeService {
       await this.employeeRepository.softDeleteEmployee(employeeId);
 
     return deletedEmployee as any;
+  }
+
+  async retireEmployee(employeeId: string): Promise<EmployeeResponseDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
+    if (!current) throw new NotFoundException('Employee not found.');
+
+    if (current.isRetired) {
+      throw new BadRequestException('Employee is already retired.');
+    }
+
+    const retired = await this.employeeRepository.retireEmployee(employeeId);
+    return this.mapEmployeeToResponse(retired as any);
   }
 }

@@ -17,3 +17,11 @@ export * from './employee/employee.repository.service';
 // Tenant
 export * from './tenant/tenant.repository.module';
 export * from './tenant/tenant.repository.service';
+
+// Department
+export * from './department/department.repository.module';
+export * from './department/department.repository.service';
+
+// Position
+export * from './position/position.repository.module';
+export * from './position/position.repository.service';

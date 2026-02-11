@@ -24,9 +24,6 @@ export const auditExtension = (contextService: RequestContextService) => {
               'Role',
               'Department',
               'Position',
-              'UserRole',
-              'RolePermission',
-              'UserSession',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -37,16 +34,11 @@ export const auditExtension = (contextService: RequestContextService) => {
             }
 
             // --- MULTI-TENANCY LOGIC ---
-            // If tenantId is present in context and model is multitenant, and not bypassed
             const anyArgs = args as any;
             const isGodlike = contextService.isGodlike;
+            const bypassTenant = anyArgs?.bypassTenant || isGodlike;
 
-            if (
-              tenantId &&
-              isMultiTenant &&
-              !anyArgs?.bypassTenant &&
-              !isGodlike
-            ) {
+            if (tenantId && isMultiTenant) {
               if (
                 [
                   'findMany',
@@ -55,27 +47,36 @@ export const auditExtension = (contextService: RequestContextService) => {
                   'count',
                   'aggregate',
                   'groupBy',
+                  'updateMany',
+                  'deleteMany',
+                  'update',
+                  'delete',
                 ].includes(operation)
               ) {
-                anyArgs.where = { ...(anyArgs.where || {}), tenantId };
-              } else if (
-                ['updateMany', 'deleteMany', 'update', 'delete'].includes(
-                  operation,
-                )
-              ) {
-                anyArgs.where = { ...(anyArgs.where || {}), tenantId };
+                // For search and targeted updates/deletes, Godlike users bypass the filter
+                if (!bypassTenant) {
+                  anyArgs.where = { ...(anyArgs.where || {}), tenantId };
+                }
               } else if (operation === 'create') {
-                anyArgs.data = { ...(anyArgs.data || {}), tenantId };
+                // For creation, we ALWAYS need a tenantId for multitenant models.
+                // We inject it from context if it's not present in data.
+                if (!anyArgs.data?.tenantId && !anyArgs.data?.tenant) {
+                  anyArgs.data = { ...(anyArgs.data || {}), tenantId };
+                }
               } else if (operation === 'createMany') {
                 if (Array.isArray(anyArgs.data)) {
                   anyArgs.data = anyArgs.data.map((item: any) => ({
+                    tenantId: item.tenantId || tenantId,
                     ...item,
-                    tenantId,
                   }));
                 }
               } else if (operation === 'upsert') {
-                anyArgs.create = { ...(anyArgs.create || {}), tenantId };
-                anyArgs.where = { ...(anyArgs.where || {}), tenantId };
+                if (!anyArgs.create?.tenantId && !anyArgs.create?.tenant) {
+                  anyArgs.create = { ...(anyArgs.create || {}), tenantId };
+                }
+                if (!bypassTenant) {
+                  anyArgs.where = { ...(anyArgs.where || {}), tenantId };
+                }
               }
             }
 
