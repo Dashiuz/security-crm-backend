@@ -3,22 +3,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { UserRepositoryService } from '../../../common/repository/index';
 import { PatchUserRolesDto } from './dtos/patch-user-roles.dto';
 
 @Injectable()
 export class UsersRolesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly userRepository: UserRepositoryService) {}
 
   async patchUserRoles(
     tenantId: string,
     userId: string,
     dto: PatchUserRolesDto,
-  ) {
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId, tenantId },
-      select: { id: true },
-    });
+  ): Promise<any> {
+    const user = await this.userRepository.findUserInTenant(userId);
+
     if (!user) throw new NotFoundException('User not found in this tenant');
 
     const add = (dto.addRoleIds ?? []).map((s) => s.trim()).filter(Boolean);
@@ -33,10 +31,7 @@ export class UsersRolesService {
     // Validar que los roleIds pertenecen al tenant
     const roleIds = Array.from(new Set([...add, ...remove]));
     if (roleIds.length) {
-      const roles = await this.prisma.role.findMany({
-        where: { id: { in: roleIds }, tenantId },
-        select: { id: true },
-      });
+      const roles = await this.userRepository.validateRolesInTenant(roleIds);
       const okIds = new Set(roles.map((r) => r.id));
       const missing = roleIds.filter((id) => !okIds.has(id));
       if (missing.length)
@@ -46,23 +41,15 @@ export class UsersRolesService {
     }
 
     if (remove.length) {
-      await this.prisma.userRole.deleteMany({
-        where: { userId, roleId: { in: remove } },
-      });
+      await this.userRepository.deleteUserRoles(userId, remove);
     }
 
     if (add.length) {
-      await this.prisma.userRole.createMany({
-        data: add.map((roleId) => ({ userId, roleId })),
-        skipDuplicates: true,
-      });
+      await this.userRepository.addUserRoles(userId, add);
     }
 
     // devolver roles actuales
-    const current = await this.prisma.userRole.findMany({
-      where: { userId },
-      select: { role: { select: { id: true, name: true } } },
-    });
+    const current = await this.userRepository.getUserRolesDetailed(userId);
 
     return {
       userId,

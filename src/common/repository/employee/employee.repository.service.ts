@@ -11,14 +11,60 @@ import { PrismaService } from '../../../prisma/prisma.service';
 export class EmployeeRepositoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createEmployee(
-    tenantId: string,
-    data: Prisma.EmployeeCreateInput,
-  ): Promise<Employee> {
+  private readonly employeeSelect = {
+    id: true,
+    tenantId: true,
+    departmentId: true,
+    positionId: true,
+    firstName: true,
+    secondName: true,
+    lastName: true,
+    maternalSurname: true,
+    fullName: true,
+    documentType: true,
+    document: true,
+    address: true,
+    gender: true,
+    departmentRef: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+    positionRef: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+    email: true,
+    phone: true,
+    birthdate: true,
+    entryDate: true,
+    isRetired: true,
+    isActive: true,
+    createdAt: true,
+    createdBy: true,
+    updatedAt: true,
+    updatedBy: true,
+    retiredAt: true,
+    deletedAt: true,
+  } as const;
+
+  private readonly deletedEmployeeSelect = {
+    id: true,
+    tenantId: true,
+    fullName: true,
+    document: true,
+    isActive: true,
+    deletedAt: true,
+    updatedAt: true,
+  } as const;
+
+  async createEmployee(data: Prisma.EmployeeCreateInput): Promise<Employee> {
     try {
-      const employee = await this.prisma.employee.create({
+      const employee = await (this.prisma.employee as any).create({
         data: {
-          tenant: { connect: { id: tenantId } },
           firstName: data.firstName,
           secondName: data.secondName,
           lastName: data.lastName,
@@ -28,8 +74,8 @@ export class EmployeeRepositoryService {
           document: data.document,
           birthdate: data.birthdate,
           gender: data.gender,
-          department: data.department,
-          position: data.position,
+          departmentId: (data as any).departmentId,
+          positionId: (data as any).positionId,
           email: data.email,
           phone: data.phone,
           entryDate: data.entryDate,
@@ -37,6 +83,7 @@ export class EmployeeRepositoryService {
           isActive: data.isActive,
           retiredAt: data.retiredAt,
         },
+        select: this.employeeSelect,
       });
 
       return employee;
@@ -56,51 +103,49 @@ export class EmployeeRepositoryService {
     }
   }
 
-  async findAnyById(tenantId: string, id: string) {
+  async findAnyById(id: string) {
     return this.prisma.employee.findFirst({
-      where: { id, tenantId, tenant: { isActive: true } },
+      where: { id, tenant: { isActive: true } },
+      select: this.employeeSelect,
     });
   }
 
-  async findActiveByDocument(document: string, tenantId: string) {
+  async findWithRefsById(id: string) {
+    return this.prisma.employee.findFirst({
+      where: { id, tenant: { isActive: true } },
+      select: this.employeeSelect,
+    });
+  }
+
+  async findActiveByDocument(document: string) {
     return await this.prisma.employee.findFirst({
       where: {
         document,
         isActive: true,
-        tenant: { isActive: true, id: tenantId },
+        tenant: { isActive: true },
       },
-      select: {
-        id: true,
-        tenantId: true,
-        fullName: true,
-        documentType: true,
-        document: true,
-        gender: true,
-        department: true,
-        position: true,
-        email: true,
-        phone: true,
-        birthdate: true,
-        entryDate: true,
-        isActive: true,
-      },
+      select: this.employeeSelect,
     });
   }
 
-  async updateEmployee(
-    tenantId: string,
-    id: string,
-    data: Prisma.EmployeeUpdateInput,
-  ) {
+  async updateEmployee(id: string, data: Prisma.EmployeeUpdateInput) {
     try {
       const res = await this.prisma.employee.updateMany({
-        where: { id, tenantId },
+        where: { id },
         data,
       });
 
       if (res.count === 0) throw new NotFoundException('Employee not found.');
 
-      return this.prisma.employee.findFirst({ where: { id, tenantId } });
+      const updated = await this.prisma.employee.findFirst({
+        where: { id },
+        select: this.employeeSelect,
+      });
+
+      if (!updated)
+        throw new NotFoundException('Employee not found after update.');
+
+      return updated;
     } catch (e: any) {
       if (e?.code === 'P2002') {
         const target =
@@ -119,25 +164,40 @@ export class EmployeeRepositoryService {
     }
   }
 
-  async softDeleteEmployee(tenantId: string, id: string) {
+  async softDeleteEmployee(id: string) {
     const res = await this.prisma.employee.updateMany({
-      where: { id, tenantId },
+      where: { id },
       data: { deletedAt: new Date(), isActive: false },
     });
 
     if (res.count === 0) throw new NotFoundException('Employee not found.');
 
-    return this.prisma.employee.findFirst({
-      where: { id, tenantId },
-      select: {
-        id: true,
-        tenantId: true,
-        fullName: true,
-        document: true,
-        isActive: true,
-        deletedAt: true,
-        updatedAt: true,
+    const findDeleted = await this.prisma.employee.findFirst({
+      where: { id },
+      select: this.deletedEmployeeSelect,
+    });
+
+    if (!findDeleted)
+      throw new NotFoundException('Employee not found after delete.');
+
+    return findDeleted;
+  }
+
+  async retireEmployee(id: string) {
+    const res = await this.prisma.employee.updateMany({
+      where: { id },
+      data: {
+        isRetired: true,
+        retiredAt: new Date(),
+        isActive: false,
       },
+    });
+
+    if (res.count === 0) throw new NotFoundException('Employee not found.');
+
+    return this.prisma.employee.findFirst({
+      where: { id },
+      select: this.employeeSelect,
     });
   }
 }

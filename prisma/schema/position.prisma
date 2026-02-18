@@ -8,6 +8,11 @@ model Position {
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   employees Employee[] @relation("EmployeePosition")
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  createdBy String?
+  updatedBy String?
+
   @@unique([tenantId, name])
   @@index([tenantId])
   @@map("position")

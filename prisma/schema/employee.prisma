@@ -10,26 +10,22 @@ model Employee {
   fullName        String
   documentType    String
   document        String
-  birthdate       DateTime @db.Date
+  birthdate       DateTime  @db.Date
   gender          String
-
-  // legacy fields
-  department String
-  position   String
-
-  departmentId           String?
-  departmentNameSnapshot String?
-  positionId             String?
-  email                  String?
-  phone                  String?
-  entryDate              DateTime  @db.Date
-  isRetired              Boolean   @default(false)
-  isActive               Boolean   @default(true)
-  createdAt              DateTime  @default(now())
-  createdBy              String?
-  updatedAt              DateTime  @updatedAt
-  retiredAt              DateTime? @db.Date
-  deletedAt              DateTime?
+  address         String    @default("")
+  departmentId    String?
+  positionId      String?
+  email           String?
+  phone           String?
+  entryDate       DateTime  @db.Date
+  isRetired       Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  createdBy       String?   @default("")
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?   @default("")
+  retiredAt       DateTime? @db.Date
+  deletedAt       DateTime?
 
   departmentRef Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   positionRef   Position?   @relation("EmployeePosition", fields: [positionId], references: [id], onDelete: SetNull)

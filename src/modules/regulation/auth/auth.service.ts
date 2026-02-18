@@ -23,7 +23,7 @@ export class AuthService {
   ) {}
 
   // Password verification (LocalStrategy uses this)
-  async validateUser(document: string, password: string) {
+  async validateUser(document: string, password: string, tenantId: string) {
     const user = await this.userRepository.findActiveByDocument(document);
 
     if (!user) return null;
@@ -45,12 +45,18 @@ export class AuthService {
     user: { id: string; tenantId: string },
     meta: { ip?: string; userAgent?: string },
   ): Promise<LoginResult> {
-    const permissions = await this.userRepository.getUserPermissions(user.id);
+    const [permissions, roles, features] = await Promise.all([
+      this.userRepository.getUserPermissions(user.id),
+      this.userRepository.getUserRoles(user.id),
+      this.userRepository.getTenantFeatures(user.tenantId),
+    ]);
 
     const accessToken = await this.signAccessToken({
       sub: user.id,
       tenantId: user.tenantId,
       permissions,
+      roles,
+      features,
       jti: this.newJti(),
     });
 
@@ -102,14 +108,18 @@ export class AuthService {
     }
 
     // Rotate: revoke old session + create new
-    const permissions = await this.userRepository.getUserPermissions(
-      session.userId,
-    );
+    const [permissions, roles, features] = await Promise.all([
+      this.userRepository.getUserPermissions(session.userId),
+      this.userRepository.getUserRoles(session.userId),
+      this.userRepository.getTenantFeatures(session.user.tenantId),
+    ]);
 
     const accessToken = await this.signAccessToken({
       sub: session.userId,
       tenantId: session.user.tenantId,
       permissions,
+      roles,
+      features,
       jti: this.newJti(),
     });
 

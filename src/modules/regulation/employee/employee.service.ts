@@ -8,7 +8,14 @@ import {
   EmployeeRepositoryService,
   UserRepositoryService,
 } from '../../../common/repository/index';
-import { CreateEmployeeDto, UpdateEmployeeDto } from './dtos/index';
+import {
+  CreateEmployeeDto,
+  UpdateEmployeeDto,
+  EmployeeResponseDto,
+  DeletedEmployeeDto,
+} from './dtos/index';
+import { toDateOnlyIso } from '../../../common/utils/convertDate';
+import { EmployeeWithRefs } from './types/employee-with-refs';
 
 @Injectable()
 export class EmployeeService {
@@ -35,7 +42,28 @@ export class EmployeeService {
       .trim();
   }
 
-  async createEmployee(tenantId: string, dto: CreateEmployeeDto) {
+  private mapEmployeeToResponse(row: EmployeeWithRefs): EmployeeResponseDto {
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      fullName: row.fullName,
+      documentType: row.documentType,
+      document: row.document,
+      gender: row.gender,
+      email: row.email,
+      phone: row.phone,
+      birthdate: toDateOnlyIso(row.birthdate),
+      entryDate: toDateOnlyIso(row.entryDate),
+      isActive: row.isActive,
+      departmentName: row.departmentRef?.name ?? null,
+      positionName: row.positionRef?.name ?? null,
+    };
+  }
+
+  async createEmployee(
+    tenantId: string,
+    dto: CreateEmployeeDto,
+  ): Promise<EmployeeResponseDto> {
     // 1) quick business validations
     const birthdate = new Date(dto.birthdate);
     const entryDate = new Date(dto.entryDate);
@@ -63,7 +91,7 @@ export class EmployeeService {
       throw new BadRequestException('Invalid retiredAt.');
     }
 
-    // 2) verify active tenant
+    // 2) verify active tenant (keeping this for safety/business check if needed, but tenantId is already in context)
     const tenant = await this.userRepository.checkTenantActive(tenantId);
 
     if (!tenant) throw new NotFoundException('Tenant not found or inactive.');
@@ -79,9 +107,8 @@ export class EmployeeService {
       maternalSurname: dto.maternalSurname,
     });
 
-    // 4) Create employee
-    const employee = await this.employeeRepository.createEmployee(tenant.id, {
-      tenant: { connect: { id: tenant.id } },
+    // 4) Create employee - tenantId is handled by Prisma Extension
+    const employee = await this.employeeRepository.createEmployee({
       firstName: dto.firstName.trim(),
       secondName: dto.secondName?.trim() ?? null,
       lastName: dto.lastName.trim(),
@@ -91,43 +118,43 @@ export class EmployeeService {
       document,
       birthdate,
       gender: dto.gender.trim(),
-      department: dto.department.trim(),
-      position: dto.position.trim(),
+      departmentId: dto.departmentId || null,
+      positionId: dto.positionId || null,
       email: email ?? null,
       phone: dto.phone?.trim() ?? null,
       entryDate,
       isRetired: dto.isRetired ?? false,
       isActive: dto.isActive ?? true,
       retiredAt: retiredAt,
-    });
+    } as any);
 
-    return employee;
+    return this.mapEmployeeToResponse(employee as any);
   }
 
-  async findActiveByDocument(tenantId: string, document: string) {
-    return await this.employeeRepository.findActiveByDocument(
-      document,
-      tenantId,
-    );
+  async findActiveByDocument(
+    document: string,
+  ): Promise<EmployeeResponseDto | null> {
+    const employee =
+      await this.employeeRepository.findActiveByDocument(document);
+
+    if (!employee) return null;
+
+    return this.mapEmployeeToResponse(employee as any);
   }
 
-  async findAnyEmployeeById(tenantId: string, id: string) {
-    const employee = await this.employeeRepository.findAnyById(tenantId, id);
+  async findAnyEmployeeById(id: string): Promise<EmployeeResponseDto | null> {
+    const employeeWithRefs = await this.employeeRepository.findWithRefsById(id);
 
-    if (!employee) throw new NotFoundException('Employee not found.');
+    if (!employeeWithRefs) return null;
 
-    return employee;
+    return this.mapEmployeeToResponse(employeeWithRefs as any);
   }
 
   async updateEmployee(
-    tenantId: string,
     employeeId: string,
     dto: UpdateEmployeeDto,
-  ) {
-    const current = await this.employeeRepository.findAnyById(
-      tenantId,
-      employeeId,
-    );
+  ): Promise<EmployeeResponseDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
 
     if (!current) throw new NotFoundException('Employee not found.');
 
@@ -155,8 +182,9 @@ export class EmployeeService {
     setString('documentType');
     setString('document');
     setString('gender');
-    setString('department');
-    setString('position');
+    setString('departmentId');
+    setString('positionId');
+    setString('address');
 
     if (dto.email !== undefined) {
       patch.email = dto.email === null ? null : dto.email.trim().toLowerCase();
@@ -246,14 +274,15 @@ export class EmployeeService {
     }
 
     // 5) perform update
-    return this.employeeRepository.updateEmployee(tenantId, employeeId, patch);
+    const updatedEmployee = await (
+      this.employeeRepository as any
+    ).updateEmployee(employeeId, patch);
+
+    return this.mapEmployeeToResponse(updatedEmployee as any);
   }
 
-  async softDeleteEmployee(tenantId: string, employeeId: string) {
-    const current = await this.employeeRepository.findAnyById(
-      tenantId,
-      employeeId,
-    );
+  async softDeleteEmployee(employeeId: string): Promise<DeletedEmployeeDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
     if (!current) throw new NotFoundException('Employee not found.');
 
     // Idempotency: if already deleted, return the same data
@@ -269,6 +298,21 @@ export class EmployeeService {
       };
     }
 
-    return this.employeeRepository.softDeleteEmployee(tenantId, employeeId);
+    const deletedEmployee =
+      await this.employeeRepository.softDeleteEmployee(employeeId);
+
+    return deletedEmployee as any;
+  }
+
+  async retireEmployee(employeeId: string): Promise<EmployeeResponseDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
+    if (!current) throw new NotFoundException('Employee not found.');
+
+    if (current.isRetired) {
+      throw new BadRequestException('Employee is already retired.');
+    }
+
+    const retired = await this.employeeRepository.retireEmployee(employeeId);
+    return this.mapEmployeeToResponse(retired as any);
   }
 }

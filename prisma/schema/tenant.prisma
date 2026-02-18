@@ -6,12 +6,14 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
+  updatedBy String?
 
-  employees   Employee[]
-  users       User[]
-  roles       Role[]
-  departments Department[]
-  positions   Position[]
+  employees       Employee[]
+  users           User[]
+  roles           Role[]
+  departments     Department[]
+  positions       Position[]
+  enabledFeatures String[]     @default([])
 
   @@map("tenant")
 }
