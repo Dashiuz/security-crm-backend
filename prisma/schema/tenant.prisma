@@ -15,5 +15,10 @@ model Tenant {
   positions       Position[]
   enabledFeatures String[]     @default([])
 
+  minutas                        Minuta[]
+  parkingResidentVehicleControls ParkingResidentVehicleControl[]
+  visitorEntryControls           VisitorEntryControl[]
+  correspondenceReceivedControls CorrespondenceReceivedControl[]
+
   @@map("tenant")
 }

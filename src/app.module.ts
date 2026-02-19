@@ -18,6 +18,7 @@ import {
   TenantModule,
   DepartmentModule,
   PositionModule,
+  MinutaModule,
 } from './modules/index';
 
 @Module({
@@ -39,6 +40,7 @@ import {
     PositionModule,
     EmployeeModule,
     UserModule,
+    MinutaModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,0 +1,35 @@
+enum RecordStatus {
+    ACTIVE
+    CORRECTED
+    VOIDED
+}
+
+enum RecordSource {
+    WEB
+    MOBILE
+    IMPORT
+    API
+}
+
+enum VehicleCondition {
+    GOOD
+    BAD
+}
+
+enum VisitorMode {
+    PEDESTRIAN
+    VEHICLE
+}
+
+enum CorrespondenceType {
+    BOX
+    ENVELOPE
+    OTHER
+}
+
+enum CorrespondenceStatus {
+    RECEIVED
+    DELIVERED
+    RETURNED
+    VOIDED
+}

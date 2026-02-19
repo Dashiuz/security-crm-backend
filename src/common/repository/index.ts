@@ -25,3 +25,19 @@ export * from './department/department.repository.service';
 // Position
 export * from './position/position.repository.module';
 export * from './position/position.repository.service';
+
+// Operation: Minuta
+export * from './minuta/minuta/minuta.repository.module';
+export * from './minuta/minuta/minuta.repository.service';
+
+// Operation: Parking
+export * from './minuta/parking-control/parking-control.repository.module';
+export * from './minuta/parking-control/parking-control.repository.service';
+
+// Operation: Visitor
+export * from './minuta/visitor-control/visitor-control.repository.module';
+export * from './minuta/visitor-control/visitor-control.repository.service';
+
+// Operation: Correspondence
+export * from './minuta/correspondence-control/correspondence-control.repository.module';
+export * from './minuta/correspondence-control/correspondence-control.repository.service';
