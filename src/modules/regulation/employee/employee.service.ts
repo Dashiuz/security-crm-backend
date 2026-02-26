@@ -131,6 +131,11 @@ export class EmployeeService {
     return this.mapEmployeeToResponse(employee as any);
   }
 
+  async findAll(): Promise<EmployeeResponseDto[]> {
+    const employees = await this.employeeRepository.findAll();
+    return employees.map((emp) => this.mapEmployeeToResponse(emp as any));
+  }
+
   async findActiveByDocument(
     document: string,
   ): Promise<EmployeeResponseDto | null> {

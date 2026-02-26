@@ -115,6 +115,11 @@ export class UserService {
     return user ? this.mapUserToResponse(user) : null;
   }
 
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.findAll();
+    return users.map((u) => this.mapUserToResponse(u));
+  }
+
   async getUserPermissions(userId: string): Promise<string[]> {
     return await this.userRepository.getUserPermissions(userId);
   }

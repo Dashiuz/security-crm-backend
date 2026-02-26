@@ -44,6 +44,22 @@ export class UserRepositoryService {
     });
   }
 
+  async findAll() {
+    return await this.prisma.user.findMany({
+      where: { tenant: { isActive: true } },
+      select: {
+        id: true,
+        tenantId: true,
+        fullName: true,
+        document: true,
+        department: true,
+        position: true,
+        isActive: true,
+      },
+      orderBy: { id: 'desc' },
+    });
+  }
+
   async getMe(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },

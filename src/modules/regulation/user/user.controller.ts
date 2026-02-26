@@ -57,6 +57,15 @@ export class UserController {
     return this.userService.getMe(req.user.sub);
   }
 
+  @RequirePermissions('user:manage', 'user:read')
+  @Get()
+  @ApiOperation({ summary: 'List all users' })
+  @ApiOkResponse({ type: [UserResponseDto] })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  async findAll(): Promise<UserResponseDto[]> {
+    return this.userService.findAll();
+  }
+
   @RequirePermissions('user:manage', 'user:passwordchange')
   @Patch('password')
   @ApiOperation({ summary: 'Update user password' })
