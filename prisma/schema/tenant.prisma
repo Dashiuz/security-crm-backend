@@ -19,6 +19,7 @@ model Tenant {
   parkingResidentVehicleControls ParkingResidentVehicleControl[]
   visitorEntryControls           VisitorEntryControl[]
   correspondenceReceivedControls CorrespondenceReceivedControl[]
+  clients                        Client[]
 
   @@map("tenant")
 }

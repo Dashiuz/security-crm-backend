@@ -1,72 +1,72 @@
 model ParkingResidentVehicleControl {
-    id       String @id @default(cuid(2))
-    tenantId String
-    tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
-    // Base
-    date       DateTime @db.Date
-    time       DateTime @db.Time
-    occurredAt DateTime // recomendado: datetime de ingreso (entry)
+  // Base
+  date       DateTime @db.Date
+  time       DateTime @db.Time
+  occurredAt DateTime // recomendado: datetime de ingreso (entry)
 
-    // Horas específicas del flujo
-    entryTime DateTime  @db.Time
-    exitTime  DateTime? @db.Time
-    exitAt    DateTime? // útil para reportes por rango de salida
+  // Horas específicas del flujo
+  entryTime DateTime  @db.Time
+  exitTime  DateTime? @db.Time
+  exitAt    DateTime? // útil para reportes por rango de salida
 
-    parkingNumber String
-    ticketNumber  String? // número de ficha
+  parkingNumber String
+  ticketNumber  String? // número de ficha
 
-    interior  String?
-    apartment String?
+  interior  String?
+  apartment String?
 
-    plate String
-    brand String?
-    color String?
+  plate String
+  brand String?
+  color String?
 
-    // Check de elementos (puedes mantener columnas + JSON)
-    mirrors          Boolean?
-    antenna          Boolean?
-    radio            Boolean?
-    spareTire        Boolean? // repuesto
-    hubcaps          Boolean? // copas
-    vehicleChecklist Json?
+  // Check de elementos (puedes mantener columnas + JSON)
+  mirrors          Boolean?
+  antenna          Boolean?
+  radio            Boolean?
+  spareTire        Boolean? // repuesto
+  hubcaps          Boolean? // copas
+  vehicleChecklist Json?
 
-    condition VehicleCondition @default(GOOD)
+  condition VehicleCondition @default(GOOD)
 
-    // Guarda (operador) del registro
-    guardId           String?
-    guard             User?   @relation("ParkingVehicleGuard", fields: [guardId], references: [id], onDelete: SetNull)
-    guardNameSnapshot String?
+  // Guarda (operador) del registro
+  guardId           String?
+  guard             User?   @relation("ParkingVehicleGuard", fields: [guardId], references: [id], onDelete: SetNull)
+  guardNameSnapshot String?
 
-    observations String?
+  observations String?
 
-    // Estado / anulación
-    status     RecordStatus @default(ACTIVE)
-    voidReason String?
-    voidedAt   DateTime?
-    voidedById String?
-    voidedBy   User?        @relation("ParkingVehicleVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
+  // Estado / anulación
+  status     RecordStatus @default(ACTIVE)
+  voidReason String?
+  voidedAt   DateTime?
+  voidedById String?
+  voidedBy   User?        @relation("ParkingVehicleVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
 
-    // Auditoría transversal
-    source      RecordSource @default(WEB)
-    externalRef String?
+  // Auditoría transversal
+  source      RecordSource @default(WEB)
+  externalRef String?
 
-    createdAt   DateTime @default(now())
-    createdById String?
-    createdBy   User?    @relation("ParkingVehicleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation("ParkingVehicleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
-    updatedAt   DateTime @updatedAt
-    updatedById String?
-    updatedBy   User?    @relation("ParkingVehicleUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("ParkingVehicleUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
-    deletedAt   DateTime?
-    deletedById String?
-    deletedBy   User?     @relation("ParkingVehicleDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("ParkingVehicleDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
-    @@index([tenantId])
-    @@index([tenantId, date])
-    @@index([tenantId, occurredAt])
-    @@index([tenantId, plate])
-    @@index([guardId])
-    @@map("parking_resident_vehicle_control")
+  @@index([tenantId])
+  @@index([tenantId, date])
+  @@index([tenantId, occurredAt])
+  @@index([tenantId, plate])
+  @@index([guardId])
+  @@map("parking_resident_vehicle_control")
 }

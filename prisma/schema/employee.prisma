@@ -30,6 +30,9 @@ model Employee {
   departmentRef Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   positionRef   Position?   @relation("EmployeePosition", fields: [positionId], references: [id], onDelete: SetNull)
 
+  coordinatedClients Client[] @relation("ClientCoordinator")
+  commercialClients  Client[] @relation("ClientCommercialContact")
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])
