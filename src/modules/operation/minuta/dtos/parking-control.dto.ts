@@ -16,7 +16,7 @@ export class CreateParkingControlDto {
   @ApiProperty({ example: '2024-02-19' })
   date!: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '08:00:00' })
   time!: string;
@@ -26,7 +26,7 @@ export class CreateParkingControlDto {
   @ApiProperty({ example: '2024-02-19T08:00:00Z' })
   occurredAt!: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '08:00:00' })
   entryTime!: string;
@@ -115,7 +115,7 @@ export class CreateParkingControlDto {
 }
 
 export class UpdateParkingControlDto {
-  @IsDateString()
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional()
   exitTime?: string;

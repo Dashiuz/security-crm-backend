@@ -38,7 +38,7 @@ export class VisitorControlController {
   @ApiOperation({ summary: 'Create visitor entry control' })
   @ApiBody({ type: CreateVisitorEntryDto })
   create(@Req() req: any, @Body() dto: CreateVisitorEntryDto) {
-    return this.service.create(dto, req.user.id);
+    return this.service.create(dto, req.user.sub, req.user.tenantId);
   }
 
   @Get()
@@ -65,7 +65,7 @@ export class VisitorControlController {
     @Param('id') id: string,
     @Body() dto: UpdateVisitorEntryDto,
   ) {
-    return this.service.update(id, dto, req.user.id);
+    return this.service.update(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')
@@ -73,13 +73,13 @@ export class VisitorControlController {
   @ApiOperation({ summary: 'Void visitor entry control' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
-    return this.service.void(id, dto, req.user.id);
+    return this.service.void(id, dto, req.user.sub);
   }
 
   @Delete(':id')
   @RequirePermissions('visitor:manage', 'visitor:delete')
   @ApiOperation({ summary: 'Soft delete visitor entry control' })
   remove(@Req() req: any, @Param('id') id: string) {
-    return this.service.remove(id, req.user.id);
+    return this.service.remove(id, req.user.sub);
   }
 }

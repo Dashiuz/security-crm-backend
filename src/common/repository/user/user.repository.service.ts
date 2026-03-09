@@ -44,9 +44,20 @@ export class UserRepositoryService {
     });
   }
 
+  async findByDocument(document: string) {
+    return await this.prisma.user.findFirst({
+      where: { document },
+      include: {
+        roles: {
+          select: { role: { select: { id: true, name: true } } },
+        },
+      },
+    });
+  }
+
   async findAll() {
     return await this.prisma.user.findMany({
-      where: { tenant: { isActive: true } },
+      where: { isActive: true, tenant: { isActive: true } },
       select: {
         id: true,
         tenantId: true,
@@ -55,6 +66,14 @@ export class UserRepositoryService {
         department: true,
         position: true,
         isActive: true,
+        isFirstLogin: true,
+        roles: {
+          select: {
+            role: {
+              select: { id: true, name: true },
+            },
+          },
+        },
       },
       orderBy: { id: 'desc' },
     });
@@ -115,6 +134,16 @@ export class UserRepositoryService {
     return await this.prisma.user.update({
       where: { id: userId },
       data: { passwordHash: newPasswordHash },
+    });
+  }
+
+  async adminResetPassword(userId: string, newPasswordHash: string) {
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: newPasswordHash,
+        isFirstLogin: true,
+      },
     });
   }
 
@@ -217,6 +246,23 @@ export class UserRepositoryService {
       where: { userId },
       select: {
         role: { select: { id: true, name: true } },
+      },
+    });
+  }
+  async softDeleteUser(userId: string) {
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false },
+    });
+  }
+
+  async reactivateUser(userId: string, data: Partial<Prisma.UserUpdateInput>) {
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...data,
+        isActive: true,
+        isFirstLogin: true,
       },
     });
   }

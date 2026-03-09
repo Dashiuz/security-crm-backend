@@ -11,13 +11,17 @@ import { RecordStatus } from '@prisma/client';
 export class VisitorControlService {
   constructor(private readonly repository: VisitorControlRepositoryService) {}
 
-  async create(dto: CreateVisitorEntryDto, userId: string) {
+  async create(dto: CreateVisitorEntryDto, userId: string, tenantId: string) {
+    const { date, time, occurredAt, entryTime, ...others } = dto;
+    const parseTime = (t: string) =>
+      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t}`);
     return this.repository.create({
-      ...dto,
-      date: new Date(dto.date),
-      time: new Date(`1970-01-01T${dto.time}`),
-      occurredAt: new Date(dto.occurredAt),
-      entryTime: new Date(`1970-01-01T${dto.entryTime}`),
+      ...others,
+      date: new Date(date),
+      time: parseTime(time),
+      occurredAt: new Date(occurredAt),
+      entryTime: parseTime(entryTime),
+      tenant: { connect: { id: tenantId } },
       createdBy: { connect: { id: userId } },
       guard: { connect: { id: userId } },
     } as any);

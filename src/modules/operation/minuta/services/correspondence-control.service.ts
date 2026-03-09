@@ -11,13 +11,17 @@ import { RecordStatus, CorrespondenceStatus } from '@prisma/client';
 export class CorrespondenceControlService {
   constructor(private readonly repository: CorrespondenceRepositoryService) {}
 
-  async create(dto: CreateCorrespondenceDto, userId: string) {
+  async create(dto: CreateCorrespondenceDto, userId: string, tenantId: string) {
+    const { date, time, occurredAt, receivedTime, ...others } = dto;
+    const parseTime = (t: string) =>
+      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t}`);
     return this.repository.create({
-      ...dto,
-      date: new Date(dto.date),
-      time: new Date(`1970-01-01T${dto.time}`),
-      occurredAt: new Date(dto.occurredAt),
-      receivedTime: new Date(`1970-01-01T${dto.receivedTime}`),
+      ...others,
+      date: new Date(date),
+      time: parseTime(time),
+      occurredAt: new Date(occurredAt),
+      receivedTime: parseTime(receivedTime),
+      tenant: { connect: { id: tenantId } },
       createdBy: { connect: { id: userId } },
       guardOnDuty: { connect: { id: userId } },
     } as any);

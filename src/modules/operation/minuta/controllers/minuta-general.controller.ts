@@ -38,7 +38,7 @@ export class MinutaGeneralController {
   @ApiOperation({ summary: 'Create general logbook entry' })
   @ApiBody({ type: CreateMinutaDto })
   create(@Req() req: any, @Body() dto: CreateMinutaDto) {
-    return this.service.create(dto, req.user.id);
+    return this.service.create(dto, req.user.sub, req.user.tenantId);
   }
 
   @Get()
@@ -63,7 +63,7 @@ export class MinutaGeneralController {
     @Param('id') id: string,
     @Body() dto: UpdateMinutaDto,
   ) {
-    return this.service.update(id, dto, req.user.id);
+    return this.service.update(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')
@@ -71,13 +71,13 @@ export class MinutaGeneralController {
   @ApiOperation({ summary: 'Void general logbook entry' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
-    return this.service.void(id, dto, req.user.id);
+    return this.service.void(id, dto, req.user.sub);
   }
 
   @Delete(':id')
   @RequirePermissions('minuta:manage', 'minuta:delete')
   @ApiOperation({ summary: 'Soft delete general logbook entry' })
   remove(@Req() req: any, @Param('id') id: string) {
-    return this.service.remove(id, req.user.id);
+    return this.service.remove(id, req.user.sub);
   }
 }

@@ -18,7 +18,7 @@ export class CreateCorrespondenceDto {
   @ApiProperty({ example: '2024-02-19' })
   date!: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '16:00:00' })
   time!: string;
@@ -28,7 +28,7 @@ export class CreateCorrespondenceDto {
   @ApiProperty({ example: '2024-02-19T16:00:00Z' })
   occurredAt!: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '16:00:00' })
   receivedTime!: string;

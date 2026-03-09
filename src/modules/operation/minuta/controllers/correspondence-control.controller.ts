@@ -38,7 +38,7 @@ export class CorrespondenceControlController {
   @ApiOperation({ summary: 'Create correspondence received control' })
   @ApiBody({ type: CreateCorrespondenceDto })
   create(@Req() req: any, @Body() dto: CreateCorrespondenceDto) {
-    return this.service.create(dto, req.user.id);
+    return this.service.create(dto, req.user.sub, req.user.tenantId);
   }
 
   @Get()
@@ -65,7 +65,7 @@ export class CorrespondenceControlController {
     @Param('id') id: string,
     @Body() dto: UpdateCorrespondenceDto,
   ) {
-    return this.service.update(id, dto, req.user.id);
+    return this.service.update(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')
@@ -73,13 +73,13 @@ export class CorrespondenceControlController {
   @ApiOperation({ summary: 'Void correspondence record' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
-    return this.service.void(id, dto, req.user.id);
+    return this.service.void(id, dto, req.user.sub);
   }
 
   @Delete(':id')
   @RequirePermissions('correspondence:manage', 'correspondence:delete')
   @ApiOperation({ summary: 'Soft delete correspondence record' })
   remove(@Req() req: any, @Param('id') id: string) {
-    return this.service.remove(id, req.user.id);
+    return this.service.remove(id, req.user.sub);
   }
 }

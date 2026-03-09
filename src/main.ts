@@ -12,6 +12,8 @@ async function bootstrap() {
   const port = config.get<number>('api.port') || 3000;
   const environment = config.get<string>('environment');
 
+  app.setGlobalPrefix('api');
+
   const swaggerConfig = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
@@ -36,8 +38,6 @@ async function bootstrap() {
       persistAuthorization: true,
     },
   });
-
-  app.setGlobalPrefix('api');
   app.use(cookieParser());
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) ?? true,

@@ -24,4 +24,10 @@ export class UserResponseDto {
 
   @ApiProperty({ example: true })
   isFirstLogin!: boolean;
+
+  @ApiProperty({
+    example: [{ id: 'role1', name: 'Admin' }],
+    required: false,
+  })
+  roles?: { id: string; name: string }[];
 }

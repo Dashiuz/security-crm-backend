@@ -111,16 +111,20 @@ export class RoleService {
 
     const addKeys = (dto.add ?? []).map((s) => s.trim()).filter(Boolean);
     const removeKeys = (dto.remove ?? []).map((s) => s.trim()).filter(Boolean);
+    const syncKeys = (dto.keys ?? []).map((s) => s.trim()).filter(Boolean);
 
-    if (addKeys.length === 0 && removeKeys.length === 0) {
-      throw new BadRequestException('Provide add and/or remove');
+    if (addKeys.length === 0 && removeKeys.length === 0 && !dto.keys) {
+      throw new BadRequestException('Provide add, remove or keys');
     }
 
     // 1) Resolve permission IDs by keys
-    const keys = Array.from(new Set([...addKeys, ...removeKeys]));
-    const perms = await this.roleRepository.findPermissionIdByKeys(keys);
+    const allInputKeys = Array.from(
+      new Set([...addKeys, ...removeKeys, ...syncKeys]),
+    );
+    const perms =
+      await this.roleRepository.findPermissionIdByKeys(allInputKeys);
     const byKey = new Map(perms.map((p) => [p.key, p.id]));
-    const missing = keys.filter((k) => !byKey.has(k));
+    const missing = allInputKeys.filter((k) => !byKey.has(k));
 
     if (missing.length) {
       throw new BadRequestException(
@@ -128,18 +132,37 @@ export class RoleService {
       );
     }
 
-    // 2) Apply removals
-    if (removeKeys.length) {
-      await this.roleRepository.removeRolePermissions(
-        roleId,
-        removeKeys,
-        byKey,
-      );
-    }
+    // 2) Full Sync Mode
+    if (dto.keys) {
+      const currentState = await this.roleRepository.getCurrentState(roleId);
+      const currentKeys =
+        currentState?.perms.map((p) => p.permission.key) ?? [];
 
-    // 3) Apply adds (idempotente con skipDuplicates si tienes @@id([roleId, permissionId]))
-    if (addKeys.length) {
-      await this.roleRepository.createRolePermissions(roleId, addKeys, byKey);
+      const toAdd = syncKeys.filter((k) => !currentKeys.includes(k));
+      const toRemove = currentKeys.filter((k) => !syncKeys.includes(k));
+
+      if (toRemove.length > 0) {
+        await this.roleRepository.removeRolePermissions(
+          roleId,
+          toRemove,
+          byKey,
+        );
+      }
+      if (toAdd.length > 0) {
+        await this.roleRepository.createRolePermissions(roleId, toAdd, byKey);
+      }
+    } else {
+      // 3) Incremental Mode (add/remove)
+      if (removeKeys.length) {
+        await this.roleRepository.removeRolePermissions(
+          roleId,
+          removeKeys,
+          byKey,
+        );
+      }
+      if (addKeys.length) {
+        await this.roleRepository.createRolePermissions(roleId, addKeys, byKey);
+      }
     }
 
     // 4) Return current state

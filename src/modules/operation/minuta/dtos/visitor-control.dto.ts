@@ -16,7 +16,7 @@ export class CreateVisitorEntryDto {
   @ApiProperty({ example: '2024-02-19' })
   date!: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '10:00:00' })
   time!: string;
@@ -41,7 +41,7 @@ export class CreateVisitorEntryDto {
   @ApiPropertyOptional({ example: 'CC' })
   visitorIdType?: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '10:00:00' })
   entryTime!: string;
@@ -104,7 +104,7 @@ export class CreateVisitorEntryDto {
 }
 
 export class UpdateVisitorEntryDto {
-  @IsDateString()
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional()
   exitTime?: string;

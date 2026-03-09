@@ -11,12 +11,16 @@ import { RecordStatus } from '@prisma/client';
 export class MinutaGeneralService {
   constructor(private readonly repository: MinutaRepositoryService) {}
 
-  async create(dto: CreateMinutaDto, userId: string) {
+  async create(dto: CreateMinutaDto, userId: string, tenantId: string) {
+    const { date, time, occurredAt, ...others } = dto;
+    const parseTime = (t: string) =>
+      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t}`);
     return this.repository.create({
-      ...dto,
-      date: new Date(dto.date),
-      time: new Date(`1970-01-01T${dto.time}`),
-      occurredAt: new Date(dto.occurredAt),
+      ...others,
+      date: new Date(date),
+      time: parseTime(time),
+      occurredAt: new Date(occurredAt),
+      tenant: { connect: { id: tenantId } },
       createdBy: { connect: { id: userId } },
     } as any);
   }

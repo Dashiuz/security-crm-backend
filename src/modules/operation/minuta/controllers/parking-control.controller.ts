@@ -38,7 +38,7 @@ export class ParkingControlController {
   @ApiOperation({ summary: 'Create parking control entry' })
   @ApiBody({ type: CreateParkingControlDto })
   create(@Req() req: any, @Body() dto: CreateParkingControlDto) {
-    return this.service.create(dto, req.user.id);
+    return this.service.create(dto, req.user.sub, req.user.tenantId);
   }
 
   @Get()
@@ -65,7 +65,7 @@ export class ParkingControlController {
     @Param('id') id: string,
     @Body() dto: UpdateParkingControlDto,
   ) {
-    return this.service.update(id, dto, req.user.id);
+    return this.service.update(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')
@@ -73,13 +73,13 @@ export class ParkingControlController {
   @ApiOperation({ summary: 'Void parking control entry' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
-    return this.service.void(id, dto, req.user.id);
+    return this.service.void(id, dto, req.user.sub);
   }
 
   @Delete(':id')
   @RequirePermissions('parking:manage', 'parking:delete')
   @ApiOperation({ summary: 'Soft delete parking control entry' })
   remove(@Req() req: any, @Param('id') id: string) {
-    return this.service.remove(id, req.user.id);
+    return this.service.remove(id, req.user.sub);
   }
 }

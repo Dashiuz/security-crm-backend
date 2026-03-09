@@ -18,7 +18,7 @@ export class CreateMinutaDto {
   @ApiProperty({ example: '2024-02-19' })
   date!: string;
 
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   @ApiProperty({ example: '14:30:00', description: 'Format HH:mm:ss' })
   time!: string;
