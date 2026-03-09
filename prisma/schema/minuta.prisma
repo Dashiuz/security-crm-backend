@@ -1,0 +1,46 @@
+model Minuta {
+    id       String @id @default(cuid(2))
+    tenantId String
+    tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+    // Core
+    date       DateTime @db.Date
+    time       DateTime @db.Time
+    occurredAt DateTime
+    annotation String
+
+    // Opcionales útiles
+    category       String?
+    priority       Int? // 1..5 si quieres; o cámbialo a enum luego
+    tags           String[] @default([])
+    isConfidential Boolean  @default(false)
+
+    // Estado / anulación
+    status     RecordStatus @default(ACTIVE)
+    voidReason String?
+    voidedAt   DateTime?
+    voidedById String?
+    voidedBy   User?        @relation("MinutaVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
+
+    // Auditoría transversal
+    source      RecordSource @default(WEB)
+    externalRef String?
+
+    createdAt   DateTime @default(now())
+    createdById String?
+    createdBy   User?    @relation("MinutaCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+    updatedAt   DateTime @updatedAt
+    updatedById String?
+    updatedBy   User?    @relation("MinutaUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+    deletedAt   DateTime?
+    deletedById String?
+    deletedBy   User?     @relation("MinutaDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+    @@index([tenantId])
+    @@index([tenantId, date])
+    @@index([tenantId, occurredAt])
+    @@index([createdById])
+    @@map("minuta")
+}

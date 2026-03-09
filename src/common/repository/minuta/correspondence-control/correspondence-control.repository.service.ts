@@ -1,0 +1,39 @@
+import { Injectable } from '@nestjs/common';
+import { Prisma, CorrespondenceReceivedControl } from '@prisma/client';
+import { PrismaService } from '../../../../prisma/prisma.service';
+
+@Injectable()
+export class CorrespondenceRepositoryService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(
+    data: Prisma.CorrespondenceReceivedControlCreateInput,
+  ): Promise<CorrespondenceReceivedControl> {
+    return this.prisma.correspondenceReceivedControl.create({ data });
+  }
+
+  async findMany(
+    where?: Prisma.CorrespondenceReceivedControlWhereInput,
+  ): Promise<CorrespondenceReceivedControl[]> {
+    return this.prisma.correspondenceReceivedControl.findMany({ where });
+  }
+
+  async findUnique(
+    where: Prisma.CorrespondenceReceivedControlWhereUniqueInput,
+  ): Promise<CorrespondenceReceivedControl | null> {
+    return this.prisma.correspondenceReceivedControl.findUnique({ where });
+  }
+
+  async update(
+    where: Prisma.CorrespondenceReceivedControlWhereUniqueInput,
+    data: Prisma.CorrespondenceReceivedControlUpdateInput,
+  ): Promise<CorrespondenceReceivedControl> {
+    return this.prisma.correspondenceReceivedControl.update({ where, data });
+  }
+
+  async delete(
+    where: Prisma.CorrespondenceReceivedControlWhereUniqueInput,
+  ): Promise<CorrespondenceReceivedControl> {
+    return this.prisma.correspondenceReceivedControl.delete({ where });
+  }
+}

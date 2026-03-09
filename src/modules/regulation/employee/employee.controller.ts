@@ -55,6 +55,19 @@ export class EmployeeController {
     return this.employeeService.createEmployee(req.user.tenantId, dto);
   }
 
+  @Get()
+  @RequirePermissions('employee:manage', 'employee:read')
+  @ApiOperation({ summary: 'List all employees' })
+  @ApiOkResponse({
+    description: 'Employees listed successfully.',
+    type: [EmployeeResponseDto],
+  })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+  findAll() {
+    return this.employeeService.findAll();
+  }
+
   @Get('/active/:document')
   @RequirePermissions('employee:manage', 'employee:read')
   @ApiOperation({ summary: 'Get active employee by document' })

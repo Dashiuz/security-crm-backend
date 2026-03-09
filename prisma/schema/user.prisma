@@ -23,6 +23,33 @@ model User {
   roles    UserRole[]
   sessions UserSession[]
 
+  // Minuta audit fields
+  minutasCreated Minuta[] @relation("MinutaCreatedBy")
+  minutasUpdated Minuta[] @relation("MinutaUpdatedBy")
+  minutasDeleted Minuta[] @relation("MinutaDeletedBy")
+  minutasVoided  Minuta[] @relation("MinutaVoidedBy")
+
+  // Parking vehicle control
+  parkingVehicleCreated ParkingResidentVehicleControl[] @relation("ParkingVehicleCreatedBy")
+  parkingVehicleUpdated ParkingResidentVehicleControl[] @relation("ParkingVehicleUpdatedBy")
+  parkingVehicleDeleted ParkingResidentVehicleControl[] @relation("ParkingVehicleDeletedBy")
+  parkingVehicleVoided  ParkingResidentVehicleControl[] @relation("ParkingVehicleVoidedBy")
+  parkingVehicleGuard   ParkingResidentVehicleControl[] @relation("ParkingVehicleGuard")
+
+  // Visitor entry control
+  visitorEntryCreated VisitorEntryControl[] @relation("VisitorEntryCreatedBy")
+  visitorEntryUpdated VisitorEntryControl[] @relation("VisitorEntryUpdatedBy")
+  visitorEntryDeleted VisitorEntryControl[] @relation("VisitorEntryDeletedBy")
+  visitorEntryVoided  VisitorEntryControl[] @relation("VisitorEntryVoidedBy")
+  visitorEntryGuard   VisitorEntryControl[] @relation("VisitorEntryGuard")
+
+  // Correspondence
+  correspondenceCreated     CorrespondenceReceivedControl[] @relation("CorrespondenceCreatedBy")
+  correspondenceUpdated     CorrespondenceReceivedControl[] @relation("CorrespondenceUpdatedBy")
+  correspondenceDeleted     CorrespondenceReceivedControl[] @relation("CorrespondenceDeletedBy")
+  correspondenceVoided      CorrespondenceReceivedControl[] @relation("CorrespondenceVoidedBy")
+  correspondenceGuardOnDuty CorrespondenceReceivedControl[] @relation("CorrespondenceGuardOnDuty")
+
   @@index([tenantId])
   @@index([document])
   @@map("users")

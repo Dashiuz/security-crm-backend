@@ -6,4 +6,7 @@ export class PatchRolePermissionsDto {
 
   @ApiPropertyOptional({ example: ['employee:delete'] })
   remove?: string[];
+
+  @ApiPropertyOptional({ example: ['employee:read', 'employee:create'] })
+  keys?: string[];
 }

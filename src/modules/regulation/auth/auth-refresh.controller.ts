@@ -41,11 +41,13 @@ export class AuthRefreshController {
       userAgent: req.headers['user-agent'],
     });
 
-    res.cookie(
-      result.refreshCookie.name,
-      result.refreshCookie.value,
-      result.refreshCookie.options,
-    );
+    if (result.refreshCookie) {
+      res.cookie(
+        result.refreshCookie.name,
+        result.refreshCookie.value,
+        result.refreshCookie.options,
+      );
+    }
     return { accessToken: result.accessToken };
   }
 

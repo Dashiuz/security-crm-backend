@@ -47,15 +47,22 @@ export class EmployeeService {
       id: row.id,
       tenantId: row.tenantId,
       fullName: row.fullName,
+      firstName: row.firstName,
+      secondName: row.secondName,
+      lastName: row.lastName,
+      maternalSurname: row.maternalSurname,
       documentType: row.documentType,
       document: row.document,
       gender: row.gender,
+      address: row.address,
       email: row.email,
       phone: row.phone,
       birthdate: toDateOnlyIso(row.birthdate),
       entryDate: toDateOnlyIso(row.entryDate),
       isActive: row.isActive,
+      departmentId: row.departmentId,
       departmentName: row.departmentRef?.name ?? null,
+      positionId: row.positionId,
       positionName: row.positionRef?.name ?? null,
     };
   }
@@ -129,6 +136,11 @@ export class EmployeeService {
     } as any);
 
     return this.mapEmployeeToResponse(employee as any);
+  }
+
+  async findAll(): Promise<EmployeeResponseDto[]> {
+    const employees = await this.employeeRepository.findAll();
+    return employees.map((emp) => this.mapEmployeeToResponse(emp as any));
   }
 
   async findActiveByDocument(

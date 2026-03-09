@@ -10,6 +10,18 @@ export class EmployeeResponseDto {
   @ApiProperty({ example: 'Juan Perez' })
   fullName!: string;
 
+  @ApiProperty({ example: 'Juan' })
+  firstName!: string;
+
+  @ApiPropertyOptional({ nullable: true, example: 'Ignacio' })
+  secondName!: string | null;
+
+  @ApiProperty({ example: 'Perez' })
+  lastName!: string;
+
+  @ApiPropertyOptional({ nullable: true, example: 'Gomez' })
+  maternalSurname!: string | null;
+
   @ApiProperty({ example: 'CC' })
   documentType!: string;
 
@@ -18,6 +30,9 @@ export class EmployeeResponseDto {
 
   @ApiProperty({ example: 'M' })
   gender!: string;
+
+  @ApiProperty({ example: 'Calle 123' })
+  address!: string;
 
   @ApiPropertyOptional({ nullable: true, example: 'juan.perez@example.com' })
   email!: string | null;
@@ -35,8 +50,14 @@ export class EmployeeResponseDto {
   @ApiProperty({ example: true })
   isActive!: boolean;
 
+  @ApiPropertyOptional({ nullable: true, example: 'department-id' })
+  departmentId!: string | null;
+
   @ApiPropertyOptional({ nullable: true, example: 'Operaciones' })
   departmentName!: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: 'position-id' })
+  positionId!: string | null;
 
   @ApiPropertyOptional({ nullable: true, example: 'Supervisor Motorizado' })
   positionName!: string | null;

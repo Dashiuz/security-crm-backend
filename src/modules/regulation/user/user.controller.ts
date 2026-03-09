@@ -26,6 +26,7 @@ import {
   CreateUserDto,
   UpdateUserPasswordDto,
   UserResponseDto,
+  AdminResetPasswordDto,
 } from './dtos/index';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
@@ -57,6 +58,15 @@ export class UserController {
     return this.userService.getMe(req.user.sub);
   }
 
+  @RequirePermissions('user:manage', 'user:read')
+  @Get()
+  @ApiOperation({ summary: 'List all users' })
+  @ApiOkResponse({ type: [UserResponseDto] })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  async findAll(): Promise<UserResponseDto[]> {
+    return this.userService.findAll();
+  }
+
   @RequirePermissions('user:manage', 'user:passwordchange')
   @Patch('password')
   @ApiOperation({ summary: 'Update user password' })
@@ -75,5 +85,31 @@ export class UserController {
       dto.oldPassword,
       dto.newPassword,
     );
+  }
+
+  @RequirePermissions('user:manage', 'user:update')
+  @Patch('admin/reset-password')
+  @ApiOperation({ summary: 'Admin: Reset user password' })
+  @ApiOkResponse({
+    schema: { properties: { message: { type: 'string' } } },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid data',
+  })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiBody({ type: AdminResetPasswordDto })
+  async adminReset(@Body() dto: AdminResetPasswordDto): Promise<any> {
+    return this.userService.resetPassword(dto.document, dto.newPassword);
+  }
+
+  @RequirePermissions('user:manage', 'user:delete')
+  @Delete(':userId')
+  @ApiOperation({ summary: 'Soft delete user' })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  async remove(@Param('userId') userId: string): Promise<UserResponseDto> {
+    return this.userService.softDelete(userId);
   }
 }

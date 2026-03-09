@@ -27,6 +27,10 @@ export class UserService {
       tenantId: row.tenantId,
       isActive: row.isActive,
       isFirstLogin: row.isFirstLogin ?? false,
+      roles: row.roles?.map((ur: any) => ({
+        id: ur.role.id,
+        name: ur.role.name,
+      })),
     };
   }
 
@@ -48,7 +52,6 @@ export class UserService {
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     // 1) Business validation: verify an existing active employee with same document
-    // tenantId is handled by Prisma Extension
     const employee = await this.employeeRepository.findActiveByDocument(
       dto.document,
     );
@@ -59,19 +62,52 @@ export class UserService {
       );
     }
 
-    // 2) Check if user already exists
-    const existingUser = await this.userRepository.findActiveByDocument(
-      dto.document,
-    );
+    // 2) Check if user record already exists (regardless of isActive)
+    const existingUser = await this.userRepository.findByDocument(dto.document);
 
     if (existingUser) {
-      throw new BadRequestException('User already exists for this employee.');
+      if (existingUser.isActive) {
+        throw new BadRequestException('User already exists for this employee.');
+      }
+
+      // REACTIVATION LOGIC
+      // 3) Hash new password
+      const passwordHash = await this.hashPassword(dto.password);
+
+      // 4) Reactivate and update user data
+      const reactivatedUser = await this.userRepository.reactivateUser(
+        existingUser.id,
+        {
+          passwordHash,
+          fullName: employee.fullName,
+          department: employee.departmentRef?.name || 'N/A',
+          position: employee.positionRef?.name || 'N/A',
+        },
+      );
+
+      // 5) Sync roles (remove old, add new)
+      if (dto.roleIds) {
+        // Remove existing roles
+        const existingRoleIds = existingUser.roles.map((r: any) => r.role.id);
+        if (existingRoleIds.length > 0) {
+          await this.userRepository.deleteUserRoles(
+            existingUser.id,
+            existingRoleIds,
+          );
+        }
+        // Add new roles
+        if (dto.roleIds.length > 0) {
+          await this.userRepository.addUserRoles(existingUser.id, dto.roleIds);
+        }
+      }
+
+      const finalUser = await this.userRepository.getMe(reactivatedUser.id);
+      return this.mapUserToResponse(finalUser);
     }
 
-    // 3) Hash password
+    // 6) Normal creation flow
     const passwordHash = await this.hashPassword(dto.password);
 
-    // 4) create user record - tenantId is handled by Prisma Extension
     const user = await this.userRepository.createUser({
       passwordHash,
       fullName: employee.fullName,
@@ -80,7 +116,20 @@ export class UserService {
       position: employee.positionRef?.name || 'N/A',
     } as any);
 
-    return this.mapUserToResponse(user);
+    if (dto.roleIds && dto.roleIds.length > 0) {
+      await this.userRepository.addUserRoles(user.id, dto.roleIds);
+    }
+
+    const newUser = await this.userRepository.getMe(user.id);
+    return this.mapUserToResponse(newUser);
+  }
+
+  async softDelete(userId: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.getMe(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const deleted = await this.userRepository.softDeleteUser(userId);
+    return this.mapUserToResponse(deleted);
   }
 
   async changeUserPassword(
@@ -107,12 +156,31 @@ export class UserService {
     return { message: 'Password changed successfully' };
   }
 
+  async resetPassword(document: string, newPassword: string): Promise<any> {
+    const user = await this.userRepository.findActiveByDocument(document);
+
+    if (!user) {
+      throw new NotFoundException('User not found or inactive in this tenant.');
+    }
+
+    const newPasswordHash = await this.hashPassword(newPassword);
+
+    await this.userRepository.adminResetPassword(user.id, newPasswordHash);
+
+    return { message: 'Password reset successfully' };
+  }
+
   async findActiveByDocument(
     document: string,
     tenantId: string,
   ): Promise<UserResponseDto | null> {
     const user = await this.userRepository.findActiveByDocument(document);
     return user ? this.mapUserToResponse(user) : null;
+  }
+
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.findAll();
+    return users.map((u) => this.mapUserToResponse(u));
   }
 
   async getUserPermissions(userId: string): Promise<string[]> {

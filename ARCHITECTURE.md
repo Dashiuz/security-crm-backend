@@ -1,78 +1,63 @@
-# Documentación de Arquitectura y Patrones de Diseño
+# Documentación de Arquitectura y Patrones de Diseño - Noxia API
 
-Este documento describe la estructura técnica, los patrones de diseño y las decisiones arquitectónicas clave implementadas en el **Security CRM Backend**.
+Este documento describe la estructura técnica, los patrones de diseño y las decisiones arquitectónicas clave implementadas en el backend de **Noxia**.
 
 ## 1. Estilo Arquitectónico: Monolito Modular
 
-El proyecto sigue un enfoque de **Monolito Modular**. El código se organiza en módulos de dominio (`regulation`, `administrative`, `operation`) que agrupan lógica relacionada, facilitando una futura transición a microservicios si fuera necesario.
+El proyecto sigue un enfoque de **Monolito Modular**. El código se organiza en módulos de dominio que agrupan lógica relacionada:
+
+- **`regulation`**: Gestión de empleados, departamentos, cargos y cumplimiento.
+- **`operation`**: Módulo de Minuta (General, Parqueadero, Visitantes, Correspondencia).
+- **`administrative`**: Gestión de recursos y procesos operativos.
 
 ## 2. Capas de la Aplicación
 
-Se implementa una arquitectura de capas clásica para separar responsabilidades:
+Se implementa una arquitectura de capas rigurosa para separar responsabilidades:
 
-- **Controladores (`.controller.ts`)**: Manejan las peticiones HTTP, validan la entrada básica y devuelven respuestas DTO. No contienen lógica de negocio.
-- **Servicios de Aplicación (`.service.ts`)**: Orquestan la lógica de negocio, reglas de dominio y coordinan llamadas a repositorios.
-- **Servicios de Repositorio (`.repository.service.ts`)**: Abstraen la complejidad de Prisma ORM. Proporcionan una interfaz limpia para el acceso a datos.
+1.  **Directivas de API (Servicios/Controladores)**: Localizados en `src/modules`.
+2.  **Capa Industrial de Repositorios**: Localizados en `src/common/repository`. Aquí se centraliza la interacción con Prisma, permitiendo que los módulos compartan lógica de persistencia de forma estandarizada.
+3.  **Cross-Cutting Concerns**: Ubicados en `src/common` (Interceptores, Guardias, Contexto).
 
-## 3. Patrones de Diseño Identificados
+## 3. Patrones de Diseño Clave
 
-### 3.1. Repository Pattern
+### 3.1. Industrial Repository Pattern
 
-Utilizado para desacoplar la lógica de negocio del ORM (Prisma). Esto permite que los servicios no dependan directamente de la implementación de la base de datos, facilitando las pruebas unitarias.
+Ubicado en `src/common/repository`. Abstrae la complejidad de Prisma ORM. Proporciona una interfaz limpia para el acceso a datos y permite la inyección de lógica transversal (como el filtrado por `tenantId`) de forma centralizada.
 
 ### 3.2. DTO (Data Transfer Object)
 
-Cada entrada y salida de la API está estrictamente definida por clases DTO con decoradores de `class-validator` y `nestjs/swagger`. Esto garantiza integridad de datos y documentación automática.
+Garantiza que la API tenga un contrato claro. Ubicados en cada sub-módulo (ej. `src/modules/operation/minuta/dtos`).
 
-### 3.3. Singleton (NestJS Native)
+### 3.3. Ambient Context & AsyncLocalStorage
 
-La mayoría de los servicios (`@Injectable`) se manejan como Singletons por el contenedor de inversión de control (IoC) de NestJS.
+Implementado en `src/common/context`. Permite que el `tenantId` y `userId` estén disponibles en cualquier parte de la cadena de ejecución sin necesidad de arrastrarlos como parámetros.
 
-### 3.4. Ambient Context (Contexto Ambiental)
+### 3.4. Prisma Extensions (Multitenancy & Auditoría)
 
-Implementado mediante `AsyncLocalStorage` y `RequestContextService`. Permite que datos como el `tenantId` y `userId` "viajen" a través de llamadas asíncronas sin necesidad de pasarlos como parámetros en cada función.
+Ubicado en `src/common/prisma-extension`. Es el motor de automatización que:
 
-### 3.5. Interceptor Pattern / AOP (Aspect-Oriented Programming)
+- **Inyecta filtros de Tenant** automáticamente en cada consulta.
+- **Genera Audit Logs** de forma invisible al interceptar operaciones de escritura.
 
-Utilizamos Interceptores de NestJS para manejar tareas transversales:
+## 4. Estructura de Base de Datos Modular
 
-- `AuditInterceptor`: Captura el contexto del usuario y activa el almacenamiento en `AsyncLocalStorage`.
+Prisma está configurado para usar esquemas modulares en `prisma/schema`. Cada entidad tiene su propio archivo `.prisma`, facilitando la mantenibilidad y evitando un archivo de esquema gigantesco.
 
-## 4. Tecnologías y Extensiones de Vanguardia
-
-### 4.1. Prisma Extensions (Patrón Interceptor/Proxy)
-
-Es el "corazón" de la automatización del proyecto. Se ha desarrollado una extensión personalizada que actúa como un middleware de base de datos para:
-
-- **Multitenencia Automatizada**: Inyecta filtros `where` y datos de creación de forma invisible para asegurar el aislamiento de datos.
-- **Auditoría Invisible**: Detecta cambios en las entidades y genera registros en la tabla `AuditLog` automáticamente.
-
-### 4.2. Inyección de Dependencias (DI)
-
-Uso extensivo de DI para promover la modularidad y la facilidad de prueba, siguiendo los principios SOLID.
-
-## 5. Seguridad y Aislamiento
-
-- **Estrategia Bearer JWT**: Autenticación estándar para aplicaciones stateless.
-- **RBAC (Role-Based Access Control)**: Implementado mediante `PermissionsGuard` y decoradores personalizados como `@RequirePermissions`.
-- **Aislamiento de Datos**: Garantizado a nivel de base de datos por la extensión de Prisma, eliminando el riesgo de fuga de datos entre clientes (Tenants).
-
-## 6. Diagrama de Flujo de Datos
+## 5. Diagrama de Arquitectura
 
 ```mermaid
 graph TD
-    A[Cliente HTTP] -->|JWT| B(Faso de Interceptores)
-    B -->|Carga Contexto| C[AsyncLocalStorage]
-    B --> D[Controlador]
+    A[Cliente HTTP] -->|JWT| B(Audit/Tenant Interceptor)
+    B -->|Persiste Contexto| C[AsyncLocalStorage]
+    B --> D[Controlador de Dominio]
     D --> E[Servicio de Negocio]
-    E --> F[Servicio de Repositorio]
-    F -->|Operación DB| G[Prisma Extension]
-    G -->|Lee Contexto| C
-    G -->|Inyecta Filtros| H[Prisma Client]
-    H --> I[(Base de Datos)]
-    G -->|Genera Log| J[(AuditLog Table)]
+    E --> F[Repositorio Industrial]
+    F -->|Transacción| G[Prisma Extension]
+    G -->|Extrae Contexto| C
+    G -->|Aplica Filtros / Logs| H[Prisma Client]
+    H --> I[(PostgreSQL)]
 ```
 
 ---
 
-_Este archivo se mantiene actualizado por el equipo de arquitectura para servir como guía a nuevos desarrolladores._
+_Noxia API - Engineering Document_

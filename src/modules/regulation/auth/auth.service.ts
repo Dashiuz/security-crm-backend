@@ -107,12 +107,21 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token mismatch');
     }
 
-    // Rotate: revoke old session + create new
+    // Fetch updated permissions/roles/features for the new access token
     const [permissions, roles, features] = await Promise.all([
       this.userRepository.getUserPermissions(session.userId),
       this.userRepository.getUserRoles(session.userId),
       this.userRepository.getTenantFeatures(session.user.tenantId),
     ]);
+
+    // Final Step: Decide whether to rotate the refresh token or just issue a new access token
+    const rotateWindowDays = Number(
+      process.env.REFRESH_ROTATE_WINDOW_DAYS ?? 3,
+    );
+    const rotateWindowMs = rotateWindowDays * 24 * 60 * 60 * 1000;
+
+    const shouldRotate =
+      session.expiresAt.getTime() - Date.now() <= rotateWindowMs;
 
     const accessToken = await this.signAccessToken({
       sub: session.userId,
@@ -123,6 +132,12 @@ export class AuthService {
       jti: this.newJti(),
     });
 
+    if (!shouldRotate) {
+      // No rotation: just return the new access token
+      return { accessToken };
+    }
+
+    // Full Rotation: revoke old session + create new
     const { refreshToken: newRefreshToken, sessionId: newSessionId } =
       await this.createRefreshSession(session.userId, meta);
 
@@ -221,7 +236,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax', // if frontend is on a different domain, use 'none' + secure
-      path: '/auth/refresh',
+      path: '/',
       maxAge: Number(
         process.env.REFRESH_COOKIE_MAXAGE_MS ?? 14 * 24 * 60 * 60 * 1000,
       ),
@@ -237,7 +252,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
-      path: '/auth/refresh',
+      path: '/',
       maxAge: 0,
     };
 

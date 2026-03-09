@@ -110,6 +110,14 @@ export class EmployeeRepositoryService {
     });
   }
 
+  async findAll() {
+    return this.prisma.employee.findMany({
+      where: { tenant: { isActive: true }, deletedAt: null },
+      select: this.employeeSelect,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findWithRefsById(id: string) {
     return this.prisma.employee.findFirst({
       where: { id, tenant: { isActive: true } },
