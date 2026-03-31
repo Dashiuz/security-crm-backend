@@ -41,3 +41,7 @@ export * from './minuta/visitor-control/visitor-control.repository.service';
 // Operation: Correspondence
 export * from './minuta/correspondence-control/correspondence-control.repository.module';
 export * from './minuta/correspondence-control/correspondence-control.repository.service';
+
+// Client
+export * from './client/client.repository.module';
+export * from './client/client.repository.service';

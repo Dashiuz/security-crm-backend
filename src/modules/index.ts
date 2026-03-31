@@ -35,3 +35,7 @@ export * from './regulation/position/position.service';
 
 // Operation: Minuta
 export * from './operation/minuta/minuta.module';
+
+// Client
+export * from './regulation/client/client.module';
+export * from './regulation/client/client.service';

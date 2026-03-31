@@ -48,7 +48,7 @@ export class RoleService {
   }
 
   async list(tenantId: string): Promise<RoleResponseDto[]> {
-    const rows = await this.roleRepository.listRoles();
+    const rows = await this.roleRepository.listRoles(tenantId);
     return rows.map((r) => this.mapRoleToResponse(r));
   }
 

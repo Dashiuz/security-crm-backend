@@ -19,6 +19,7 @@ import {
   DepartmentModule,
   PositionModule,
   MinutaModule,
+  ClientModule,
 } from './modules/index';
 
 @Module({
@@ -38,6 +39,7 @@ import {
     PermissionModule,
     DepartmentModule,
     PositionModule,
+    ClientModule,
     EmployeeModule,
     UserModule,
     MinutaModule,

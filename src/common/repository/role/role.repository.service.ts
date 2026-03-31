@@ -12,8 +12,9 @@ export class RoleRepositoryService {
     });
   }
 
-  async listRoles() {
+  async listRoles(tenantId: string) {
     return this.prisma.role.findMany({
+      where: { tenantId },
       orderBy: { name: 'asc' },
       select: {
         id: true,

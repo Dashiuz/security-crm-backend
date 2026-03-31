@@ -1,0 +1,53 @@
+model Client {
+  id             String         @id @default(cuid(2))
+  tenantId       String
+  tenant         Tenant         @relation(fields: [tenantId], references: [id])
+  internalCode   String         @unique
+  clientStatus   ClientStatus   @default(ACTIVE)
+  contractStatus ContractStatus @default(ACTIVE)
+
+  contractNumber String  @unique
+  nit            String  @unique
+  name           String
+  email          String?
+  phone          String?
+  receptionPhone String?
+  zipCode        String?
+  address        String?
+  country        String?
+  city           String?
+  state          String?
+  commune        String?
+  neighborhood   String?
+  quadrant       String?
+  observations   String?
+
+  sector ClientSector @default(RESIDENTIAL)
+
+  coordinatorInChargeId String?
+  coordinatorInCharge   Employee? @relation("ClientCoordinator", fields: [coordinatorInChargeId], references: [id], onDelete: SetNull)
+
+  commercialContactId String?
+  commercialContact   Employee? @relation("ClientCommercialContact", fields: [commercialContactId], references: [id], onDelete: SetNull)
+
+  installedTech      Boolean @default(false)
+  securityStudy      String?
+  weaponsAmount      Int     @default(0)
+  administrator      String?
+  administratorPhone String?
+  administratorEmail String?
+
+  contractDate     DateTime @db.Date
+  lastContractDate DateTime @db.Date
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isActive         Boolean  @default(true)
+
+  @@unique([tenantId, nit])
+  @@unique([tenantId, internalCode])
+  @@unique([tenantId, contractNumber])
+  @@index([tenantId])
+  @@index([coordinatorInChargeId])
+  @@index([commercialContactId])
+  @@map("client")
+}

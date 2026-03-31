@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TenantResponseDto {
   @ApiProperty({ example: 'clk1234567890' })
@@ -12,6 +12,21 @@ export class TenantResponseDto {
 
   @ApiProperty({ example: true })
   isActive!: boolean;
+
+  @ApiPropertyOptional()
+  logoUrl?: string;
+
+  @ApiPropertyOptional()
+  primaryColor?: string;
+
+  @ApiPropertyOptional()
+  secondaryColor?: string;
+
+  @ApiPropertyOptional()
+  sidebarColor?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  features?: string[];
 
   @ApiProperty()
   createdAt!: Date;

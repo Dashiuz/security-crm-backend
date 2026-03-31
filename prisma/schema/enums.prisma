@@ -1,35 +1,59 @@
 enum RecordStatus {
-    ACTIVE
-    CORRECTED
-    VOIDED
+  ACTIVE
+  CORRECTED
+  VOIDED
 }
 
 enum RecordSource {
-    WEB
-    MOBILE
-    IMPORT
-    API
+  WEB
+  MOBILE
+  IMPORT
+  API
 }
 
 enum VehicleCondition {
-    GOOD
-    BAD
+  GOOD
+  BAD
 }
 
 enum VisitorMode {
-    PEDESTRIAN
-    VEHICLE
+  PEDESTRIAN
+  VEHICLE
 }
 
 enum CorrespondenceType {
-    BOX
-    ENVELOPE
-    OTHER
+  BOX
+  ENVELOPE
+  OTHER
 }
 
 enum CorrespondenceStatus {
-    RECEIVED
-    DELIVERED
-    RETURNED
-    VOIDED
+  RECEIVED
+  DELIVERED
+  RETURNED
+  VOIDED
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ContractStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+  RENEWED
+  TERMINATED
+}
+
+enum ClientSector {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  GOVERNMENT
+  OTHER
 }

@@ -4,4 +4,5 @@ export interface SessionObjectInterface {
   ip: string | undefined;
   userAgent: string | undefined;
   expiresAt: Date;
+  impersonatedTenantId?: string;
 }

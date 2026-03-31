@@ -55,9 +55,9 @@ export class UserRepositoryService {
     });
   }
 
-  async findAll() {
+  async findAll(tenantId: string) {
     return await this.prisma.user.findMany({
-      where: { isActive: true, tenant: { isActive: true } },
+      where: { tenantId, isActive: true, tenant: { isActive: true } },
       select: {
         id: true,
         tenantId: true,
@@ -79,8 +79,9 @@ export class UserRepositoryService {
     });
   }
 
-  async getMe(userId: string) {
-    return this.prisma.user.findUnique({
+  async getMe(userId: string, targetTenantId?: string) {
+    const user = await (this.prisma.user as any).findUnique({
+      bypassTenant: true,
       where: { id: userId },
       select: {
         id: true,
@@ -88,10 +89,46 @@ export class UserRepositoryService {
         tenantId: true,
         isActive: true,
         tenant: {
-          select: { id: true, name: true, slug: true, isActive: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            isActive: true,
+            features: { select: { key: true } },
+            logoUrl: true,
+            primaryColor: true,
+            secondaryColor: true,
+            sidebarColor: true,
+          },
         },
       },
     });
+
+    if (!user) return null;
+
+    if (targetTenantId && targetTenantId !== user.tenantId) {
+      const overrideTenant = await this.prisma.tenant.findUnique({
+        where: { id: targetTenantId },
+        select: {
+          id: true, name: true, slug: true, isActive: true,
+          features: { select: { key: true } },
+          logoUrl: true, primaryColor: true, secondaryColor: true, sidebarColor: true,
+        }
+      });
+      if (overrideTenant) {
+        user.tenant = overrideTenant as any;
+      }
+    }
+
+    const { features, ...tenantData } = user.tenant;
+
+    return {
+      ...user,
+      tenant: {
+        ...tenantData,
+        enabledFeatures: features.map((f) => f.key),
+      },
+    };
   }
 
   async getUserPermissions(userId: string): Promise<string[]> {
@@ -156,6 +193,7 @@ export class UserRepositoryService {
         expiresAt: true,
         revokedAt: true,
         refreshTokenHash: true,
+        impersonatedTenantId: true,
         user: {
           select: {
             id: true,
@@ -209,9 +247,9 @@ export class UserRepositoryService {
   async getTenantFeatures(tenantId: string): Promise<string[]> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { enabledFeatures: true },
+      select: { features: { select: { key: true } } },
     });
-    return tenant?.enabledFeatures ?? [];
+    return tenant?.features.map((f) => f.key) ?? [];
   }
 
   async findUserInTenant(userId: string) {
