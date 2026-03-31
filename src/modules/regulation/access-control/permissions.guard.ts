@@ -20,10 +20,11 @@ export class PermissionsGuard implements CanActivate {
     if (!required || required.length === 0) return true;
 
     const req = context.switchToHttp().getRequest();
-    const user = req.user as { permissions?: string[]; roles?: string[] };
+    const user = req.user as { permissions?: string[]; roles?: string[]; tenantId?: string; originalTenantId?: string };
 
     // GODLIKE bypass
-    if ((user?.roles ?? []).includes('GODLIKE')) return true;
+    const isSystemTenant = user?.tenantId === 'system' || user?.originalTenantId === 'system';
+    if (isSystemTenant && (user?.roles ?? []).includes('GODLIKE')) return true;
 
     const perms = user?.permissions ?? [];
     const ok = required.some((p) => perms.includes(p));

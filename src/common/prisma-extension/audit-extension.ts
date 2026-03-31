@@ -35,8 +35,10 @@ export const auditExtension = (contextService: RequestContextService) => {
 
             // --- MULTI-TENANCY LOGIC ---
             const anyArgs = args as any;
-            const isGodlike = contextService.isGodlike;
-            const bypassTenant = anyArgs?.bypassTenant || isGodlike;
+            const bypassTenant = anyArgs?.bypassTenant === true;
+            if (anyArgs && 'bypassTenant' in anyArgs) {
+              delete anyArgs.bypassTenant;
+            }
 
             if (tenantId && isMultiTenant) {
               if (

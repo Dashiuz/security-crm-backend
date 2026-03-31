@@ -5,4 +5,6 @@ export type JwtPayload = {
   roles: string[];
   features: string[];
   jti: string;
+  isImpersonating?: boolean;
+  originalTenantId?: string;
 };

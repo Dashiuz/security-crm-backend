@@ -107,11 +107,13 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token mismatch');
     }
 
+    const targetTenantId = session.impersonatedTenantId || session.user.tenantId;
+
     // Fetch updated permissions/roles/features for the new access token
     const [permissions, roles, features] = await Promise.all([
       this.userRepository.getUserPermissions(session.userId),
       this.userRepository.getUserRoles(session.userId),
-      this.userRepository.getTenantFeatures(session.user.tenantId),
+      this.userRepository.getTenantFeatures(targetTenantId),
     ]);
 
     // Final Step: Decide whether to rotate the refresh token or just issue a new access token
@@ -125,11 +127,13 @@ export class AuthService {
 
     const accessToken = await this.signAccessToken({
       sub: session.userId,
-      tenantId: session.user.tenantId,
+      tenantId: targetTenantId,
       permissions,
       roles,
       features,
       jti: this.newJti(),
+      isImpersonating: !!session.impersonatedTenantId,
+      originalTenantId: session.impersonatedTenantId ? session.user.tenantId : undefined,
     });
 
     if (!shouldRotate) {
@@ -139,7 +143,11 @@ export class AuthService {
 
     // Full Rotation: revoke old session + create new
     const { refreshToken: newRefreshToken, sessionId: newSessionId } =
-      await this.createRefreshSession(session.userId, meta);
+      await this.createRefreshSession(session.userId, { 
+        ip: meta.ip, 
+        userAgent: meta.userAgent, 
+        impersonatedTenantId: session.impersonatedTenantId || undefined 
+      });
 
     await this.userRepository.refreshUserSession(session.id, newSessionId);
 
@@ -147,6 +155,77 @@ export class AuthService {
       accessToken,
       refreshCookie: this.buildRefreshCookie(newRefreshToken),
     };
+  }
+
+  // =========================
+  // Impersonation
+  // =========================
+
+  async impersonateTenant(
+    userId: string,
+    currentTenantId: string,
+    targetTenantId: string,
+    meta: { ip?: string; userAgent?: string },
+    oldRefreshTokenRaw?: string,
+  ): Promise<LoginResult> {
+    const permissions = await this.userRepository.getUserPermissions(userId);
+
+    if (!permissions.includes('godlike:manage')) {
+      throw new ForbiddenException('Only SuperAdmins can impersonate tenants');
+    }
+
+    const tenant = await this.userRepository.checkTenantActive(targetTenantId);
+    if (!tenant) throw new ForbiddenException('Target tenant is inactive or not found');
+
+    const [roles, features] = await Promise.all([
+      this.userRepository.getUserRoles(userId),
+      this.userRepository.getTenantFeatures(targetTenantId),
+    ]);
+
+    const accessToken = await this.signAccessToken({
+      sub: userId,
+      tenantId: targetTenantId,
+      permissions,
+      roles,
+      features,
+      jti: this.newJti(),
+      isImpersonating: true,
+      originalTenantId: currentTenantId,
+    });
+
+    const { refreshToken, sessionId } = await this.createRefreshSession(userId, { ...meta, impersonatedTenantId: targetTenantId });
+
+    if (oldRefreshTokenRaw) {
+      const parsed = this.parseRefreshToken(oldRefreshTokenRaw);
+      if (parsed) {
+        await this.userRepository.refreshUserSession(parsed.sessionId, sessionId);
+      }
+    }
+
+    return {
+      accessToken,
+      refreshCookie: this.buildRefreshCookie(refreshToken),
+    };
+  }
+
+  async exitImpersonation(
+    userId: string,
+    originalTenantId: string,
+    meta: { ip?: string; userAgent?: string },
+    oldRefreshTokenRaw?: string,
+  ): Promise<LoginResult> {
+    const loginResult = await this.login({ id: userId, tenantId: originalTenantId }, meta);
+    
+    if (oldRefreshTokenRaw) {
+      const parsed = this.parseRefreshToken(oldRefreshTokenRaw);
+      if (parsed) {
+        // Find the newly created session id from login.
+        // login result does not export sessionId, but we can just revoke the old one.
+        await this.userRepository.revokeSession(parsed.sessionId);
+      }
+    }
+
+    return loginResult;
   }
 
   // Logout: revoke current session with cookie
@@ -178,7 +257,7 @@ export class AuthService {
 
   private async createRefreshSession(
     userId: string,
-    meta: { ip?: string; userAgent?: string },
+    meta: { ip?: string; userAgent?: string; impersonatedTenantId?: string },
   ) {
     const sessionTtlDays = Number(process.env.REFRESH_TTL_DAYS ?? 14);
     const expiresAt = new Date(
@@ -191,6 +270,7 @@ export class AuthService {
       ip: meta.ip,
       userAgent: meta.userAgent,
       expiresAt,
+      impersonatedTenantId: meta.impersonatedTenantId,
     };
 
     const session = await this.userRepository.createUserSession(sessionData);

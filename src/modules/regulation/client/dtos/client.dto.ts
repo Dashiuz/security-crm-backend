@@ -7,7 +7,6 @@ import {
   IsInt,
   IsBoolean,
   IsDateString,
-  IsUUID,
   Min,
 } from 'class-validator';
 import { ClientStatus, ContractStatus, ClientSector } from '@prisma/client';
@@ -104,13 +103,13 @@ export class CreateClientDto {
   @IsOptional()
   sector?: ClientSector;
 
-  @ApiProperty({ example: 'uuid-employee-1', required: false })
-  @IsUUID()
+  @ApiProperty({ example: 'cuid-employee-1', required: false })
+  @IsString()
   @IsOptional()
   coordinatorInChargeId?: string;
 
-  @ApiProperty({ example: 'uuid-employee-2', required: false })
-  @IsUUID()
+  @ApiProperty({ example: 'cuid-employee-2', required: false })
+  @IsString()
   @IsOptional()
   commercialContactId?: string;
 

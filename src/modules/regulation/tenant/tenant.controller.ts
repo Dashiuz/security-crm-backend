@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Put,
   Param,
   Delete,
   UseGuards,
@@ -73,6 +74,17 @@ export class TenantController {
   })
   update(@Param('id') id: string, @Body() dto: UpdateTenantDto) {
     return this.tenantService.update(id, dto);
+  }
+
+  @Put(':id/features')
+  @ApiOperation({ summary: 'Sync features for a tenant' })
+  @ApiOkResponse({ type: TenantResponseDto })
+  @ApiNotFoundResponse({ description: 'Tenant not found' })
+  @ApiForbiddenResponse({
+    description: 'Only GODLIKE users can access this resource',
+  })
+  syncFeatures(@Param('id') id: string, @Body('featureKeys') featureKeys: string[]) {
+    return this.tenantService.syncFeatures(id, featureKeys || []);
   }
 
   @Delete(':id')

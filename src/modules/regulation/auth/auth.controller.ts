@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards, Param } from '@nestjs/common';
 import {
   ApiResponse,
   ApiTags,
@@ -75,6 +75,74 @@ export class AuthController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
+  @Post('impersonate/:tenantId')
+  @ApiOperation({ summary: 'Impersonate a tenant' })
+  @ApiOkResponse({
+    schema: { properties: { accessToken: { type: 'string' } } },
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  async impersonate(
+    @Req() req: any,
+    @Param('tenantId') targetTenantId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = req.user.sub as string;
+    const currentTenantId = req.user.tenantId;
+
+    const result = await this.authService.impersonateTenant(
+      userId,
+      currentTenantId,
+      targetTenantId,
+      { ip: req.ip, userAgent: req.headers['user-agent'] },
+      req.cookies?.refresh_token,
+    );
+
+    res.cookie(
+      result.refreshCookie.name,
+      result.refreshCookie.value,
+      result.refreshCookie.options,
+    );
+
+    return { accessToken: result.accessToken };
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('impersonate-exit')
+  @ApiOperation({ summary: 'Exit impersonation' })
+  @ApiOkResponse({
+    schema: { properties: { accessToken: { type: 'string' } } },
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  async exitImpersonation(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = req.user.sub as string;
+    const originalTenantId = req.user.originalTenantId;
+
+    if (!originalTenantId) {
+      return { ok: true };
+    }
+
+    const result = await this.authService.exitImpersonation(
+      userId,
+      originalTenantId,
+      { ip: req.ip, userAgent: req.headers['user-agent'] },
+      req.cookies?.refresh_token,
+    );
+
+    res.cookie(
+      result.refreshCookie.name,
+      result.refreshCookie.value,
+      result.refreshCookie.options,
+    );
+
+    return { accessToken: result.accessToken };
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiOperation({ summary: 'Get current user session info' })
   @ApiOkResponse({
@@ -89,11 +157,14 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async me(@Req() req: any) {
     const userId = req.user.sub as string;
-    const me = await this.userRepository.getMe(userId);
+    const targetTenantId = req.user.tenantId as string;
+    const me = await this.userRepository.getMe(userId, targetTenantId);
     return {
       user: me,
       tenantId: req.user.tenantId,
       permissions: req.user.permissions,
+      isImpersonating: req.user.isImpersonating || false,
+      originalTenantId: req.user.originalTenantId || null,
     };
   }
 }

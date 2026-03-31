@@ -6,27 +6,48 @@ import { CreateTenantDto, UpdateTenantDto, TenantResponseDto } from './dtos';
 export class TenantService {
   constructor(private readonly tenantRepository: TenantRepositoryService) {}
 
+  private mapTenant(t: any): TenantResponseDto {
+    return {
+      ...t,
+      features: t.features?.map((f: any) => f.key) || [],
+    };
+  }
+
   async create(dto: CreateTenantDto): Promise<TenantResponseDto> {
-    return this.tenantRepository.create(dto);
+    const tenant = await this.tenantRepository.create(dto);
+    return this.mapTenant(tenant);
   }
 
   async list(): Promise<TenantResponseDto[]> {
-    return this.tenantRepository.findAll();
+    const tenants = await this.tenantRepository.findAll();
+    return tenants.map((t) => this.mapTenant(t));
   }
 
   async findOne(id: string): Promise<TenantResponseDto> {
     const tenant = await this.tenantRepository.findById(id);
     if (!tenant) throw new NotFoundException('Tenant not found');
-    return tenant;
+    return this.mapTenant(tenant);
   }
 
   async update(id: string, dto: UpdateTenantDto): Promise<TenantResponseDto> {
     await this.findOne(id);
-    return this.tenantRepository.update(id, dto);
+    const updated = await this.tenantRepository.update(id, dto);
+    return this.mapTenant(updated);
   }
 
   async remove(id: string): Promise<TenantResponseDto> {
     await this.findOne(id);
-    return this.tenantRepository.remove(id);
+    const removed = await this.tenantRepository.remove(id);
+    return this.mapTenant(removed);
+  }
+
+  async listFeatures() {
+    return this.tenantRepository.getAllFeatures();
+  }
+
+  async syncFeatures(id: string, featureKeys: string[]): Promise<TenantResponseDto> {
+    await this.findOne(id);
+    const updated = await this.tenantRepository.syncFeatures(id, featureKeys);
+    return this.mapTenant(updated);
   }
 }

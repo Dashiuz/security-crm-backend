@@ -63,8 +63,8 @@ export class UserController {
   @ApiOperation({ summary: 'List all users' })
   @ApiOkResponse({ type: [UserResponseDto] })
   @ApiForbiddenResponse({ description: 'Forbidden' })
-  async findAll(): Promise<UserResponseDto[]> {
-    return this.userService.findAll();
+  async findAll(@Req() req: any): Promise<UserResponseDto[]> {
+    return this.userService.findAll(req.user.tenantId);
   }
 
   @RequirePermissions('user:manage', 'user:passwordchange')
