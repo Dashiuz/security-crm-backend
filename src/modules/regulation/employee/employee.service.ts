@@ -60,6 +60,8 @@ export class EmployeeService {
       birthdate: toDateOnlyIso(row.birthdate),
       entryDate: toDateOnlyIso(row.entryDate),
       isActive: row.isActive,
+      clientId: row.clientId ?? null,
+      clientName: row.client?.name ?? null,
       departmentId: row.departmentId,
       departmentName: row.departmentRef?.name ?? null,
       positionId: row.positionId,
@@ -125,6 +127,7 @@ export class EmployeeService {
       document,
       birthdate,
       gender: dto.gender.trim(),
+      clientId: dto.clientId || null,
       departmentId: dto.departmentId || null,
       positionId: dto.positionId || null,
       email: email ?? null,
@@ -134,6 +137,18 @@ export class EmployeeService {
       isActive: dto.isActive ?? true,
       retiredAt: retiredAt,
     } as any);
+
+    // Sync clientId to User account if it exists
+    if (dto.clientId !== undefined) {
+      try {
+        const user = await this.userRepository.findByDocument(document);
+        if (user) {
+          await this.userRepository.updateUser(user.id, { clientId: dto.clientId || null } as any);
+        }
+      } catch {
+        // Ignore if user not found yet
+      }
+    }
 
     return this.mapEmployeeToResponse(employee as any);
   }
@@ -194,6 +209,7 @@ export class EmployeeService {
     setString('documentType');
     setString('document');
     setString('gender');
+    setString('clientId');
     setString('departmentId');
     setString('positionId');
     setString('address');
@@ -290,28 +306,39 @@ export class EmployeeService {
       this.employeeRepository as any
     ).updateEmployee(employeeId, patch);
 
-    return this.mapEmployeeToResponse(updatedEmployee as any);
+    // Sync clientId to User account if updated
+    if (dto.clientId !== undefined) {
+      try {
+        const effectiveDocument = dto.document?.trim() ?? current.document;
+        const user = await this.userRepository.findByDocument(effectiveDocument);
+        if (user) {
+          await this.userRepository.updateUser(user.id, { clientId: dto.clientId || null } as any);
+        }
+      } catch {
+        // Ignore if user not found
+      }
+    }
+
+    return this.mapEmployeeToResponse(updatedEmployee);
   }
 
   async softDeleteEmployee(employeeId: string): Promise<DeletedEmployeeDto> {
     const current = await this.employeeRepository.findAnyById(employeeId);
     if (!current) throw new NotFoundException('Employee not found.');
 
-    // Idempotency: if already deleted, return the same data
-    if (current.deletedAt) {
-      return {
-        id: current.id,
-        tenantId: current.tenantId,
-        fullName: current.fullName,
-        document: current.document,
-        isActive: current.isActive,
-        deletedAt: current.deletedAt,
-        updatedAt: current.updatedAt,
-      };
-    }
-
     const deletedEmployee =
       await this.employeeRepository.softDeleteEmployee(employeeId);
+
+    // Cascade to User account if exists
+    try {
+      const user = await this.userRepository.findByDocument(current.document);
+      if (user) {
+        await this.userRepository.softDeleteUser(user.id);
+        await this.userRepository.revokeAllSessionsForUser(user.id);
+      }
+    } catch {
+      // Ignore if user doesn't exist
+    }
 
     return deletedEmployee as any;
   }
@@ -325,6 +352,26 @@ export class EmployeeService {
     }
 
     const retired = await this.employeeRepository.retireEmployee(employeeId);
+
+    // Cascade to User account if exists
+    try {
+      const user = await this.userRepository.findByDocument(current.document);
+      if (user) {
+        await this.userRepository.softDeleteUser(user.id);
+        await this.userRepository.revokeAllSessionsForUser(user.id);
+      }
+    } catch {
+      // Ignore if user doesn't exist
+    }
+
     return this.mapEmployeeToResponse(retired as any);
+  }
+
+  async reactivateEmployee(employeeId: string): Promise<EmployeeResponseDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
+    if (!current) throw new NotFoundException('Employee not found.');
+
+    const reactivated = await this.employeeRepository.reactivateEmployee(employeeId);
+    return this.mapEmployeeToResponse(reactivated as any);
   }
 }

@@ -71,5 +71,10 @@ model User {
 
 ## 5. Especificación Frontend (Next.js)
 
-- **Ruta**: `src/app/(protected)/regulation`
-- **Interfaz**: Vista de gestión de usuarios con tabla de estado activo/inactivo, asignación de roles mediante modales y vinculación con la hoja de vida del empleado.
+- **Ruta**: `src/app/(protected)/administrative/users`
+- **Interfaz**: Vista de gestión de usuarios con tabla sin columna ID para evitar saturación visual, modal de detalle ("ojito"), confirmación por número de documento para inhabilitar cuentas, y validación estricta de empleado activo al crear/reactivar usuarios.
+- **Reglas de Integridad & Seguridad**:
+  - Al inhabilitar o borrar un usuario, se exige confirmación tipeando el número de documento (cédula).
+  - Al dar de baja un empleado en el sistema, la cuenta de usuario vinculada (por cédula) se inactiva automáticamente y se revocan sus sesiones.
+  - Al crear o reactivar un usuario, se valida que el empleado exista y se encuentre en estado activo (`isActive: true`, `isRetired: false`, `deletedAt: null`).
+  - **Asignación de Cliente / Conjunto Residencial**: El campo `clientId` en el Usuario no se modifica directamente en la pantalla de Usuarios. Se gestiona en el módulo de Empleados y se sincroniza automáticamente con la cuenta de Usuario coincidente por número de cédula (`document`). En el frontend de Usuarios, la columna y detalle de "Cliente / Conjunto" son de solo lectura.

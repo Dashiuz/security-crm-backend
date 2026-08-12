@@ -14,8 +14,20 @@ export class VisitorControlRepositoryService {
 
   async findMany(
     where?: Prisma.VisitorEntryControlWhereInput,
-  ): Promise<VisitorEntryControl[]> {
-    return this.prisma.visitorEntryControl.findMany({ where });
+  ): Promise<any[]> {
+    const rows = await this.prisma.visitorEntryControl.findMany({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r: any) => ({
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+    }));
   }
 
   async findUnique(

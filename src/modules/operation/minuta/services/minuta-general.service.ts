@@ -14,7 +14,9 @@ export class MinutaGeneralService {
   async create(dto: CreateMinutaDto, userId: string, tenantId: string) {
     const { date, time, occurredAt, ...others } = dto;
     const parseTime = (t: string) =>
-      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t}`);
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
     return this.repository.create({
       ...others,
       date: new Date(date),
@@ -25,23 +27,42 @@ export class MinutaGeneralService {
     } as any);
   }
 
-  async findAll() {
-    return this.repository.findMany({
+  async findAll(clientId?: string) {
+    const where: any = {
       status: { not: RecordStatus.VOIDED },
-    });
+      deletedAt: null,
+    };
+    if (clientId) {
+      where.clientId = clientId;
+    }
+    return this.repository.findMany(where);
   }
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record) throw new NotFoundException('Minuta not found');
+    if (!record || record.deletedAt) throw new NotFoundException('Minuta not found');
     return record;
   }
 
   async update(id: string, dto: UpdateMinutaDto, userId: string) {
-    return this.repository.update({ id }, {
-      ...dto,
-      updatedBy: { connect: { id: userId } },
-    } as any);
+    const { date, time, occurredAt, ...others } = dto;
+    const parseTime = (t: string) =>
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
+
+    const updateData: Record<string, unknown> = { ...others };
+    if (date) updateData.date = new Date(date);
+    if (time) updateData.time = parseTime(time);
+    if (occurredAt) updateData.occurredAt = new Date(occurredAt);
+
+    return this.repository.update(
+      { id },
+      {
+        ...updateData,
+        updatedBy: { connect: { id: userId } },
+      },
+    );
   }
 
   async void(id: string, dto: VoidRecordDto, userId: string) {

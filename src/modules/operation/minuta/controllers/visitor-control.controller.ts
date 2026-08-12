@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,7 +35,7 @@ export class VisitorControlController {
   constructor(private readonly service: VisitorControlService) {}
 
   @Post()
-  @RequirePermissions('visitor:manage', 'visitor:create')
+  @RequirePermissions('minuta:manage', 'minuta:create')
   @ApiOperation({ summary: 'Create visitor entry control' })
   @ApiBody({ type: CreateVisitorEntryDto })
   create(@Req() req: any, @Body() dto: CreateVisitorEntryDto) {
@@ -42,21 +43,21 @@ export class VisitorControlController {
   }
 
   @Get()
-  @RequirePermissions('visitor:manage', 'visitor:read')
+  @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'List visitor entry controls' })
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('clientId') clientId?: string) {
+    return this.service.findAll(clientId);
   }
 
   @Get(':id')
-  @RequirePermissions('visitor:manage', 'visitor:read')
+  @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'Get visitor entry control by id' })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('visitor:manage', 'visitor:update')
+  @RequirePermissions('minuta:manage', 'minuta:update')
   @ApiOperation({
     summary: 'Update visitor entry control (e.g. set exit time)',
   })
@@ -69,7 +70,7 @@ export class VisitorControlController {
   }
 
   @Patch(':id/void')
-  @RequirePermissions('visitor:manage', 'visitor:update')
+  @RequirePermissions('minuta:manage', 'minuta:update')
   @ApiOperation({ summary: 'Void visitor entry control' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
@@ -77,7 +78,7 @@ export class VisitorControlController {
   }
 
   @Delete(':id')
-  @RequirePermissions('visitor:manage', 'visitor:delete')
+  @RequirePermissions('minuta:manage', 'minuta:delete')
   @ApiOperation({ summary: 'Soft delete visitor entry control' })
   remove(@Req() req: any, @Param('id') id: string) {
     return this.service.remove(id, req.user.sub);

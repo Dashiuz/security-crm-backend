@@ -14,7 +14,9 @@ export class VisitorControlService {
   async create(dto: CreateVisitorEntryDto, userId: string, tenantId: string) {
     const { date, time, occurredAt, entryTime, ...others } = dto;
     const parseTime = (t: string) =>
-      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t}`);
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
     return this.repository.create({
       ...others,
       date: new Date(date),
@@ -27,28 +29,46 @@ export class VisitorControlService {
     } as any);
   }
 
-  async findAll() {
-    return this.repository.findMany({
+  async findAll(clientId?: string) {
+    const where: any = {
       status: { not: RecordStatus.VOIDED },
-    });
+      deletedAt: null,
+    };
+    if (clientId) {
+      where.clientId = clientId;
+    }
+    return this.repository.findMany(where);
   }
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record) throw new NotFoundException('Visitor record not found');
+    if (!record || record.deletedAt) throw new NotFoundException('Visitor record not found');
     return record;
   }
 
   async update(id: string, dto: UpdateVisitorEntryDto, userId: string) {
-    const updateData: any = { ...dto };
-    if (dto.exitTime)
-      updateData.exitTime = new Date(`1970-01-01T${dto.exitTime}`);
-    if (dto.exitAt) updateData.exitAt = new Date(dto.exitAt);
+    const { date, time, occurredAt, entryTime, exitTime, exitAt, ...others } =
+      dto;
+    const parseTime = (t: string) =>
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
 
-    return this.repository.update({ id }, {
-      ...updateData,
-      updatedBy: { connect: { id: userId } },
-    } as any);
+    const updateData: Record<string, unknown> = { ...others };
+    if (date) updateData.date = new Date(date);
+    if (time) updateData.time = parseTime(time);
+    if (occurredAt) updateData.occurredAt = new Date(occurredAt);
+    if (entryTime) updateData.entryTime = parseTime(entryTime);
+    if (exitTime) updateData.exitTime = parseTime(exitTime);
+    if (exitAt) updateData.exitAt = new Date(exitAt);
+
+    return this.repository.update(
+      { id },
+      {
+        ...updateData,
+        updatedBy: { connect: { id: userId } },
+      },
+    );
   }
 
   async void(id: string, dto: VoidRecordDto, userId: string) {

@@ -4,6 +4,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 export interface RequestContext {
   userId?: string;
   tenantId?: string;
+  clientId?: string | null;
   isGodlike?: boolean;
   features: string[];
 }
@@ -22,6 +23,10 @@ export class RequestContextService {
 
   get tenantId(): string | undefined {
     return RequestContextService.als.getStore()?.tenantId;
+  }
+
+  get clientId(): string | null | undefined {
+    return RequestContextService.als.getStore()?.clientId;
   }
 
   get isGodlike(): boolean {

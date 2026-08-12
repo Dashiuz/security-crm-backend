@@ -59,5 +59,20 @@ model Employee {
   - `EmployeeController` (`src/modules/regulation/employee/employee.controller.ts`)
   - `DepartmentController` (`src/modules/regulation/department/department.controller.ts`)
   - `PositionController` (`src/modules/regulation/position/position.controller.ts`)
-- **Servicio**: `EmployeeService` (`src/modules/regulation/employee/employee.service.ts`)
-- **Ruta Base**: `/api/v1/regulation/employee`
+- **Servicios**: `EmployeeService`, `DepartmentService`, `PositionService`
+- **Endpoints Clave**:
+  - `PATCH /employee/:id/retire`: Retira al empleado (`isRetired: true`, `isActive: false`, `retiredAt`) y desactiva en cascada su cuenta de usuario vinculada.
+  - `PATCH /employee/:id/reactivate`: Reactiva al empleado (`isRetired: false`, `retiredAt: null`, `isActive: true`).
+
+- **Asignación de Cliente y Sincronización**:
+  - Al crear o actualizar un empleado seleccionando su Cliente / Conjunto Residencial (`clientId`), el `EmployeeService` busca automáticamente la cuenta de usuario vinculada (por `document`) y actualiza `user.clientId = employee.clientId`.
+
+---
+
+## 4. Especificación Frontend (Next.js)
+
+- **Ruta**: `src/app/(protected)/administrative/employees`
+- **Controles de Formulario & Acciones**:
+  - **Campo Cliente / Conjunto**: Selector desplegable en el formulario de creación/edición de empleados.
+  - **Dar de Baja**: Disponible para empleados activos. Requiere confirmación tipeando la cédula del empleado en un modal de verificación.
+  - **Reactivar Empleado**: Disponible para empleados inactivos/dados de baja. Muestra un icono de persona con signo más y exige la confirmación tipeando el documento del empleado antes de reactivarlo.

@@ -17,6 +17,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'Department',
               'Position',
               'Tenant',
+              'Client',
+              'Minuta',
+              'VisitorEntryControl',
+              'CorrespondenceReceivedControl',
+              'ParkingResidentVehicleControl',
             ];
             const multiTenantModels = [
               'User',
@@ -24,6 +29,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'Role',
               'Department',
               'Position',
+              'Client',
+              'Minuta',
+              'VisitorEntryControl',
+              'CorrespondenceReceivedControl',
+              'ParkingResidentVehicleControl',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -39,6 +49,15 @@ export const auditExtension = (contextService: RequestContextService) => {
             if (anyArgs && 'bypassTenant' in anyArgs) {
               delete anyArgs.bypassTenant;
             }
+
+            const clientId = contextService.clientId;
+            const multiClientModels = [
+              'Minuta',
+              'VisitorEntryControl',
+              'CorrespondenceReceivedControl',
+              'ParkingResidentVehicleControl',
+            ];
+            const isMultiClient = (multiClientModels as any[]).includes(model);
 
             if (tenantId && isMultiTenant) {
               if (
@@ -58,6 +77,9 @@ export const auditExtension = (contextService: RequestContextService) => {
                 // For search and targeted updates/deletes, Godlike users bypass the filter
                 if (!bypassTenant) {
                   anyArgs.where = { ...(anyArgs.where || {}), tenantId };
+                  if (clientId && isMultiClient && !anyArgs.where.clientId) {
+                    anyArgs.where.clientId = clientId;
+                  }
                 }
               } else if (operation === 'create') {
                 // For creation, we ALWAYS need a tenantId for multitenant models.
@@ -65,10 +87,14 @@ export const auditExtension = (contextService: RequestContextService) => {
                 if (!anyArgs.data?.tenantId && !anyArgs.data?.tenant) {
                   anyArgs.data = { ...(anyArgs.data || {}), tenantId };
                 }
+                if (clientId && isMultiClient && !anyArgs.data?.clientId && !anyArgs.data?.client) {
+                  anyArgs.data.client = { connect: { id: clientId } };
+                }
               } else if (operation === 'createMany') {
                 if (Array.isArray(anyArgs.data)) {
                   anyArgs.data = anyArgs.data.map((item: any) => ({
                     tenantId: item.tenantId || tenantId,
+                    ...(clientId && isMultiClient ? { clientId: item.clientId || clientId } : {}),
                     ...item,
                   }));
                 }
@@ -76,35 +102,120 @@ export const auditExtension = (contextService: RequestContextService) => {
                 if (!anyArgs.create?.tenantId && !anyArgs.create?.tenant) {
                   anyArgs.create = { ...(anyArgs.create || {}), tenantId };
                 }
+                if (clientId && isMultiClient && !anyArgs.create?.clientId && !anyArgs.create?.client) {
+                  anyArgs.create.client = { connect: { id: clientId } };
+                }
                 if (!bypassTenant) {
                   anyArgs.where = { ...(anyArgs.where || {}), tenantId };
+                  if (clientId && isMultiClient && !anyArgs.where.clientId) {
+                    anyArgs.where.clientId = clientId;
+                  }
                 }
               }
             }
 
             // 1. Inject createdBy / updatedBy only for models that have them
             if (isAuditable) {
+              const relationAuditModels = [
+                'Minuta',
+                'VisitorEntryControl',
+                'CorrespondenceReceivedControl',
+                'ParkingResidentVehicleControl',
+                'Client',
+              ];
+              const isRelationAudit = relationAuditModels.includes(model);
+
               if (operation === 'create') {
-                args.data = {
-                  ...(args.data as any),
-                  createdBy: (args.data as any).createdBy || userId,
-                  updatedBy: (args.data as any).updatedBy || userId,
-                };
+                if (isRelationAudit) {
+                  const data = (args.data || {}) as any;
+                  const newFields: any = {};
+                  if (
+                    !data.createdById &&
+                    !data.createdBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    newFields.createdBy = { connect: { id: userId } };
+                  }
+                  if (
+                    !data.updatedById &&
+                    !data.updatedBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    newFields.updatedBy = { connect: { id: userId } };
+                  }
+                  args.data = { ...data, ...newFields };
+                } else {
+                  args.data = {
+                    ...(args.data as any),
+                    createdBy: (args.data as any).createdBy || userId,
+                    updatedBy: (args.data as any).updatedBy || userId,
+                  };
+                }
               } else if (operation === 'update') {
-                args.data = {
-                  ...(args.data as any),
-                  updatedBy: (args.data as any).updatedBy || userId,
-                };
+                if (isRelationAudit) {
+                  const data = (args.data || {}) as any;
+                  if (
+                    !data.updatedById &&
+                    !data.updatedBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    args.data = {
+                      ...data,
+                      updatedBy: { connect: { id: userId } },
+                    };
+                  }
+                } else {
+                  args.data = {
+                    ...(args.data as any),
+                    updatedBy: (args.data as any).updatedBy || userId,
+                  };
+                }
               } else if (operation === 'upsert') {
-                (args as any).create = {
-                  ...((args as any).create || {}),
-                  createdBy: (args as any).create?.createdBy || userId,
-                  updatedBy: (args as any).create?.updatedBy || userId,
-                };
-                (args as any).update = {
-                  ...((args as any).update || {}),
-                  updatedBy: (args as any).update?.updatedBy || userId,
-                };
+                if (isRelationAudit) {
+                  const createData = ((args as any).create || {}) as any;
+                  const updateData = ((args as any).update || {}) as any;
+                  const newCreate: any = {};
+                  const newUpdate: any = {};
+                  if (
+                    !createData.createdById &&
+                    !createData.createdBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    newCreate.createdBy = { connect: { id: userId } };
+                  }
+                  if (
+                    !createData.updatedById &&
+                    !createData.updatedBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    newCreate.updatedBy = { connect: { id: userId } };
+                  }
+                  if (
+                    !updateData.updatedById &&
+                    !updateData.updatedBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    newUpdate.updatedBy = { connect: { id: userId } };
+                  }
+                  (args as any).create = { ...createData, ...newCreate };
+                  (args as any).update = { ...updateData, ...newUpdate };
+                } else {
+                  (args as any).create = {
+                    ...((args as any).create || {}),
+                    createdBy: (args as any).create?.createdBy || userId,
+                    updatedBy: (args as any).create?.updatedBy || userId,
+                  };
+                  (args as any).update = {
+                    ...((args as any).update || {}),
+                    updatedBy: (args as any).update?.updatedBy || userId,
+                  };
+                }
               }
             }
 

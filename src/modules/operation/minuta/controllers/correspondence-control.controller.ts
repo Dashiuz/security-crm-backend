@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,7 +35,7 @@ export class CorrespondenceControlController {
   constructor(private readonly service: CorrespondenceControlService) {}
 
   @Post()
-  @RequirePermissions('correspondence:manage', 'correspondence:create')
+  @RequirePermissions('minuta:manage', 'minuta:create')
   @ApiOperation({ summary: 'Create correspondence received control' })
   @ApiBody({ type: CreateCorrespondenceDto })
   create(@Req() req: any, @Body() dto: CreateCorrespondenceDto) {
@@ -42,21 +43,21 @@ export class CorrespondenceControlController {
   }
 
   @Get()
-  @RequirePermissions('correspondence:manage', 'correspondence:read')
+  @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'List correspondence records' })
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('clientId') clientId?: string) {
+    return this.service.findAll(clientId);
   }
 
   @Get(':id')
-  @RequirePermissions('correspondence:manage', 'correspondence:read')
+  @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'Get correspondence record by id' })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('correspondence:manage', 'correspondence:update')
+  @RequirePermissions('minuta:manage', 'minuta:update')
   @ApiOperation({
     summary: 'Update correspondence record (e.g. set delivered)',
   })
@@ -69,7 +70,7 @@ export class CorrespondenceControlController {
   }
 
   @Patch(':id/void')
-  @RequirePermissions('correspondence:manage', 'correspondence:update')
+  @RequirePermissions('minuta:manage', 'minuta:update')
   @ApiOperation({ summary: 'Void correspondence record' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
@@ -77,7 +78,7 @@ export class CorrespondenceControlController {
   }
 
   @Delete(':id')
-  @RequirePermissions('correspondence:manage', 'correspondence:delete')
+  @RequirePermissions('minuta:manage', 'minuta:delete')
   @ApiOperation({ summary: 'Soft delete correspondence record' })
   remove(@Req() req: any, @Param('id') id: string) {
     return this.service.remove(id, req.user.sub);

@@ -140,4 +140,15 @@ export class EmployeeController {
   async retire(@Param('id') id: string): Promise<EmployeeResponseDto> {
     return this.employeeService.retireEmployee(id);
   }
+
+  @Patch(':id/reactivate')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({ summary: 'Reactivate employee' })
+  @ApiOkResponse({
+    description: 'Employee reactivated successfully.',
+    type: EmployeeResponseDto,
+  })
+  async reactivate(@Param('id') id: string): Promise<EmployeeResponseDto> {
+    return this.employeeService.reactivateEmployee(id);
+  }
 }

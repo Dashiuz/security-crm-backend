@@ -104,6 +104,26 @@ export class CreateVisitorEntryDto {
 }
 
 export class UpdateVisitorEntryDto {
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  date?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '10:00:00' })
+  time?: string;
+
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  occurredAt?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '10:00:00' })
+  entryTime?: string;
+
   @IsString()
   @IsOptional()
   @ApiPropertyOptional()

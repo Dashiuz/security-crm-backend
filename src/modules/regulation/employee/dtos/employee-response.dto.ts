@@ -50,6 +50,12 @@ export class EmployeeResponseDto {
   @ApiProperty({ example: true })
   isActive!: boolean;
 
+  @ApiPropertyOptional({ nullable: true, example: 'client-id' })
+  clientId!: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: 'Conjunto Residencial Las Margaritas' })
+  clientName!: string | null;
+
   @ApiPropertyOptional({ nullable: true, example: 'department-id' })
   departmentId!: string | null;
 

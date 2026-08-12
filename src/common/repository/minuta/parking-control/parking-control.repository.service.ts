@@ -14,8 +14,20 @@ export class ParkingControlRepositoryService {
 
   async findMany(
     where?: Prisma.ParkingResidentVehicleControlWhereInput,
-  ): Promise<ParkingResidentVehicleControl[]> {
-    return this.prisma.parkingResidentVehicleControl.findMany({ where });
+  ): Promise<any[]> {
+    const rows = await this.prisma.parkingResidentVehicleControl.findMany({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r: any) => ({
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+    }));
   }
 
   async findUnique(

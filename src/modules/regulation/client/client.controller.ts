@@ -76,4 +76,12 @@ export class ClientController {
   remove(@Param('id') id: string, @Request() req) {
     return this.clientService.remove(id, req.user);
   }
+
+  @Patch(':id/reactivate')
+  @RequirePermissions('client:manage', 'client:update')
+  @ApiOperation({ summary: 'Reactivate client' })
+  @ApiOkResponse({ type: ClientResponseDto })
+  reactivate(@Param('id') id: string, @Request() req) {
+    return this.clientService.reactivate(id, req.user);
+  }
 }

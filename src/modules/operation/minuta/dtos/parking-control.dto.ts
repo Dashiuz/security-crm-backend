@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
-  IsJSON,
 } from 'class-validator';
 import { RecordSource, VehicleCondition } from '@prisma/client';
 
@@ -115,6 +114,26 @@ export class CreateParkingControlDto {
 }
 
 export class UpdateParkingControlDto {
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  date?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '08:00:00' })
+  time?: string;
+
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  occurredAt?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '08:00:00' })
+  entryTime?: string;
+
   @IsString()
   @IsOptional()
   @ApiPropertyOptional()

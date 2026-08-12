@@ -75,6 +75,26 @@ export class CreateCorrespondenceDto {
 }
 
 export class UpdateCorrespondenceDto {
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  date?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '16:00:00' })
+  time?: string;
+
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  occurredAt?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '16:00:00' })
+  receivedTime?: string;
+
   @IsEnum(CorrespondenceStatus)
   @IsOptional()
   @ApiPropertyOptional({ enum: CorrespondenceStatus })

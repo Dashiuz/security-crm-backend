@@ -14,6 +14,7 @@ export class EmployeeRepositoryService {
   private readonly employeeSelect = {
     id: true,
     tenantId: true,
+    clientId: true,
     departmentId: true,
     positionId: true,
     firstName: true,
@@ -25,6 +26,13 @@ export class EmployeeRepositoryService {
     document: true,
     address: true,
     gender: true,
+    client: {
+      select: {
+        id: true,
+        name: true,
+        internalCode: true,
+      },
+    },
     departmentRef: {
       select: {
         id: true,
@@ -90,10 +98,9 @@ export class EmployeeRepositoryService {
     } catch (e: any) {
       // Prisma unique violation
       if (e?.code === 'P2002') {
-        const target =
-          (e?.meta?.target as string[] | undefined)?.join(', ') ??
-          'unique field';
-        throw new ConflictException(`Duplicate value for: ${target}`);
+        throw new ConflictException(
+          'Ya existe un empleado registrado con este número de documento en la empresa.',
+        );
       }
       // Foreign key / relation errors etc.
       if (e?.code === 'P2003') {
@@ -130,6 +137,8 @@ export class EmployeeRepositoryService {
       where: {
         document,
         isActive: true,
+        isRetired: false,
+        deletedAt: null,
         tenant: { isActive: true },
       },
       select: this.employeeSelect,
@@ -156,10 +165,9 @@ export class EmployeeRepositoryService {
       return updated;
     } catch (e: any) {
       if (e?.code === 'P2002') {
-        const target =
-          (e?.meta?.target as string[] | undefined)?.join(', ') ??
-          'unique field';
-        throw new ConflictException(`Duplicate value for: ${target}`);
+        throw new ConflictException(
+          'Ya existe un empleado registrado con este número de documento en la empresa.',
+        );
       }
       if (e?.code === 'P2025') {
         // record not found
@@ -198,6 +206,24 @@ export class EmployeeRepositoryService {
         isRetired: true,
         retiredAt: new Date(),
         isActive: false,
+      },
+    });
+
+    if (res.count === 0) throw new NotFoundException('Employee not found.');
+
+    return this.prisma.employee.findFirst({
+      where: { id },
+      select: this.employeeSelect,
+    });
+  }
+
+  async reactivateEmployee(id: string) {
+    const res = await this.prisma.employee.updateMany({
+      where: { id },
+      data: {
+        isRetired: false,
+        retiredAt: null,
+        isActive: true,
       },
     });
 

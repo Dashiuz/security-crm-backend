@@ -14,16 +14,18 @@ export class AuditInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
     const user = req.user;
-    
+
     // Administrative Tenant Sandbox
-    const isSystemTenant = user?.tenantId === 'system' || user?.originalTenantId === 'system';
+    const isSystemTenant =
+      user?.tenantId === 'system' || user?.originalTenantId === 'system';
     const isGodlike = isSystemTenant && (user?.roles ?? []).includes('GODLIKE');
-    
+
     const features = user?.features ?? [];
 
     const ctx = {
       userId: user?.id || user?.sub,
       tenantId: user?.tenantId,
+      clientId: user?.clientId ?? null,
       isGodlike,
       features,
     };

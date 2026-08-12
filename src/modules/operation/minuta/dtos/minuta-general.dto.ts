@@ -10,7 +10,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { RecordStatus, RecordSource } from '@prisma/client';
+import { RecordSource } from '@prisma/client';
 
 export class CreateMinutaDto {
   @IsDateString()
@@ -67,6 +67,21 @@ export class CreateMinutaDto {
 }
 
 export class UpdateMinutaDto {
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  date?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ example: '14:30:00' })
+  time?: string;
+
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  occurredAt?: string;
+
   @IsString()
   @IsOptional()
   @ApiPropertyOptional()
