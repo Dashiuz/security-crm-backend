@@ -13,7 +13,8 @@ export class SuperAdminGuard implements CanActivate {
 
     const roles = user?.roles ?? [];
 
-    const isSystemTenant = user?.tenantId === 'system' || user?.originalTenantId === 'system';
+    const isSystemTenant =
+      user?.tenantId === 'system' || user?.originalTenantId === 'system';
     const hasGodlikeRole = roles.includes('GODLIKE');
 
     const isGodlike = isSystemTenant && hasGodlikeRole;

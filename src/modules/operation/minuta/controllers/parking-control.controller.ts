@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,7 +35,7 @@ export class ParkingControlController {
   constructor(private readonly service: ParkingControlService) {}
 
   @Post()
-  @RequirePermissions('parking:manage', 'parking:create')
+  @RequirePermissions('minuta:manage', 'minuta:create')
   @ApiOperation({ summary: 'Create parking control entry' })
   @ApiBody({ type: CreateParkingControlDto })
   create(@Req() req: any, @Body() dto: CreateParkingControlDto) {
@@ -42,21 +43,21 @@ export class ParkingControlController {
   }
 
   @Get()
-  @RequirePermissions('parking:manage', 'parking:read')
+  @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'List parking control entries' })
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('clientId') clientId?: string) {
+    return this.service.findAll(clientId);
   }
 
   @Get(':id')
-  @RequirePermissions('parking:manage', 'parking:read')
+  @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'Get parking control entry by id' })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
-  @RequirePermissions('parking:manage', 'parking:update')
+  @RequirePermissions('minuta:manage', 'minuta:update')
   @ApiOperation({
     summary: 'Update parking control entry (e.g. set exit time)',
   })
@@ -69,7 +70,7 @@ export class ParkingControlController {
   }
 
   @Patch(':id/void')
-  @RequirePermissions('parking:manage', 'parking:update')
+  @RequirePermissions('minuta:manage', 'minuta:update')
   @ApiOperation({ summary: 'Void parking control entry' })
   @ApiBody({ type: VoidRecordDto })
   void(@Req() req: any, @Param('id') id: string, @Body() dto: VoidRecordDto) {
@@ -77,7 +78,7 @@ export class ParkingControlController {
   }
 
   @Delete(':id')
-  @RequirePermissions('parking:manage', 'parking:delete')
+  @RequirePermissions('minuta:manage', 'minuta:delete')
   @ApiOperation({ summary: 'Soft delete parking control entry' })
   remove(@Req() req: any, @Param('id') id: string) {
     return this.service.remove(id, req.user.sub);

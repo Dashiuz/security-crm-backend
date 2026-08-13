@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { UserRepositoryService } from '../../../common/repository/index';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let service: { generateDummyToken: jest.Mock };
 
   beforeEach(async () => {
-    service = { generateDummyToken: jest.fn() };
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: service }],
+      providers: [
+        { provide: AuthService, useValue: { clearRefreshCookie: jest.fn() } },
+        { provide: UserRepositoryService, useValue: { getMe: jest.fn() } },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
@@ -21,12 +22,5 @@ describe('AuthController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
-  });
-
-  it('delegates to AuthService.generateDummyToken', async () => {
-    service.generateDummyToken.mockResolvedValue('signed-token');
-
-    await expect(controller.generateDummyToken()).resolves.toBe('signed-token');
-    expect(service.generateDummyToken).toHaveBeenCalledTimes(1);
   });
 });

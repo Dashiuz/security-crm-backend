@@ -5,7 +5,7 @@ import {
   UpdateCorrespondenceDto,
 } from '../dtos/correspondence-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
-import { RecordStatus, CorrespondenceStatus } from '@prisma/client';
+import { CorrespondenceStatus } from '@prisma/client';
 
 @Injectable()
 export class CorrespondenceControlService {
@@ -14,7 +14,9 @@ export class CorrespondenceControlService {
   async create(dto: CreateCorrespondenceDto, userId: string, tenantId: string) {
     const { date, time, occurredAt, receivedTime, ...others } = dto;
     const parseTime = (t: string) =>
-      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t}`);
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
     return this.repository.create({
       ...others,
       date: new Date(date),
@@ -27,21 +29,34 @@ export class CorrespondenceControlService {
     } as any);
   }
 
-  async findAll() {
-    return this.repository.findMany({
-      // status: { not: CorrespondenceStatus.VOIDED }, // Correspondence has its own status enum with VOIDED
-    });
+  async findAll(clientId?: string) {
+    const where: any = {
+      status: { not: CorrespondenceStatus.VOIDED },
+      deletedAt: null,
+    };
+    if (clientId) {
+      where.clientId = clientId;
+    }
+    return this.repository.findMany(where);
   }
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record) throw new NotFoundException('Correspondence record not found');
+    if (!record || record.deletedAt) throw new NotFoundException('Correspondence record not found');
     return record;
   }
 
   async update(id: string, dto: UpdateCorrespondenceDto, userId: string) {
-    const updateData: any = { ...dto };
-    if (dto.deliveredAt) updateData.deliveredAt = new Date(dto.deliveredAt);
+    const { date, time, occurredAt, receivedTime, deliveredAt, ...others } = dto;
+    const parseTime = (t: string) =>
+      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
+
+    const updateData: Record<string, unknown> = { ...others };
+    if (date) updateData.date = new Date(date);
+    if (time) updateData.time = parseTime(time);
+    if (occurredAt) updateData.occurredAt = new Date(occurredAt);
+    if (receivedTime) updateData.receivedTime = parseTime(receivedTime);
+    if (deliveredAt) updateData.deliveredAt = new Date(deliveredAt);
 
     return this.repository.update({ id }, {
       ...updateData,

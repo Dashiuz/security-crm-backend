@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -7,7 +7,16 @@ export class TenantRepositoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.TenantCreateInput) {
-    return this.prisma.tenant.create({ data });
+    try {
+      return await this.prisma.tenant.create({ data });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException(
+          'Ya existe una empresa registrada con este nombre o identificador (slug).',
+        );
+      }
+      throw e;
+    }
   }
 
   async findAll() {
@@ -25,10 +34,19 @@ export class TenantRepositoryService {
   }
 
   async update(id: string, data: Prisma.TenantUpdateInput) {
-    return this.prisma.tenant.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await this.prisma.tenant.update({
+        where: { id },
+        data,
+      });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException(
+          'Ya existe una empresa registrada con este nombre o identificador (slug).',
+        );
+      }
+      throw e;
+    }
   }
 
   async remove(id: string) {

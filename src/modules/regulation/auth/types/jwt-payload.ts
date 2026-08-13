@@ -7,4 +7,5 @@ export type JwtPayload = {
   jti: string;
   isImpersonating?: boolean;
   originalTenantId?: string;
+  clientId?: string | null;
 };

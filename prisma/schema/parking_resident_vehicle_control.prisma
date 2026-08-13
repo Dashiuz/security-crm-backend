@@ -3,6 +3,9 @@ model ParkingResidentVehicleControl {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
   // Base
   date       DateTime @db.Date
   time       DateTime @db.Time
@@ -64,6 +67,8 @@ model ParkingResidentVehicleControl {
   deletedBy   User?     @relation("ParkingVehicleDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
+  @@index([clientId])
+  @@index([tenantId, clientId])
   @@index([tenantId, date])
   @@index([tenantId, occurredAt])
   @@index([tenantId, plate])

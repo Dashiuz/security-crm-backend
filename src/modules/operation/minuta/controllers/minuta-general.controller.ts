@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -44,8 +45,8 @@ export class MinutaGeneralController {
   @Get()
   @RequirePermissions('minuta:manage', 'minuta:read')
   @ApiOperation({ summary: 'List general logbook entries' })
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('clientId') clientId?: string) {
+    return this.service.findAll(clientId);
   }
 
   @Get(':id')

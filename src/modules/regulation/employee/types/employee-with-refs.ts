@@ -17,6 +17,8 @@ export type EmployeeWithRefs = {
   isActive: boolean;
   departmentId: string | null;
   positionId: string | null;
+  clientId?: string | null;
+  client?: { name: string } | null;
   departmentRef?: { name: string } | null;
   positionRef?: { name: string } | null;
 };

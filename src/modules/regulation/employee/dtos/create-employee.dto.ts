@@ -61,6 +61,11 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   @ApiProperty({ example: 'nxthvhdl3b2jfbvdr825mapd' })
+  clientId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ example: 'nxthvhdl3b2jfbvdr825mapd' })
   departmentId?: string | null;
 
   @IsString()

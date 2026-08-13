@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -35,6 +36,7 @@ export class AuthService {
     return {
       id: user.id,
       tenantId: user.tenantId,
+      clientId: user.clientId || null,
       username: user.fullName,
       document,
     };
@@ -42,7 +44,7 @@ export class AuthService {
 
   // Login issues access + refresh (rotating sessions)
   async login(
-    user: { id: string; tenantId: string },
+    user: { id: string; tenantId: string; clientId?: string | null },
     meta: { ip?: string; userAgent?: string },
   ): Promise<LoginResult> {
     const [permissions, roles, features] = await Promise.all([
@@ -54,6 +56,7 @@ export class AuthService {
     const accessToken = await this.signAccessToken({
       sub: user.id,
       tenantId: user.tenantId,
+      clientId: user.clientId || null,
       permissions,
       roles,
       features,
@@ -107,7 +110,8 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token mismatch');
     }
 
-    const targetTenantId = session.impersonatedTenantId || session.user.tenantId;
+    const targetTenantId =
+      session.impersonatedTenantId || session.user.tenantId;
 
     // Fetch updated permissions/roles/features for the new access token
     const [permissions, roles, features] = await Promise.all([
@@ -128,12 +132,15 @@ export class AuthService {
     const accessToken = await this.signAccessToken({
       sub: session.userId,
       tenantId: targetTenantId,
+      clientId: session.user.clientId || null,
       permissions,
       roles,
       features,
       jti: this.newJti(),
       isImpersonating: !!session.impersonatedTenantId,
-      originalTenantId: session.impersonatedTenantId ? session.user.tenantId : undefined,
+      originalTenantId: session.impersonatedTenantId
+        ? session.user.tenantId
+        : undefined,
     });
 
     if (!shouldRotate) {
@@ -143,10 +150,10 @@ export class AuthService {
 
     // Full Rotation: revoke old session + create new
     const { refreshToken: newRefreshToken, sessionId: newSessionId } =
-      await this.createRefreshSession(session.userId, { 
-        ip: meta.ip, 
-        userAgent: meta.userAgent, 
-        impersonatedTenantId: session.impersonatedTenantId || undefined 
+      await this.createRefreshSession(session.userId, {
+        ip: meta.ip,
+        userAgent: meta.userAgent,
+        impersonatedTenantId: session.impersonatedTenantId || undefined,
       });
 
     await this.userRepository.refreshUserSession(session.id, newSessionId);
@@ -168,6 +175,10 @@ export class AuthService {
     meta: { ip?: string; userAgent?: string },
     oldRefreshTokenRaw?: string,
   ): Promise<LoginResult> {
+    if (targetTenantId === 'system') {
+      throw new BadRequestException('Cannot impersonate the system master tenant');
+    }
+
     const permissions = await this.userRepository.getUserPermissions(userId);
 
     if (!permissions.includes('godlike:manage')) {
@@ -175,7 +186,8 @@ export class AuthService {
     }
 
     const tenant = await this.userRepository.checkTenantActive(targetTenantId);
-    if (!tenant) throw new ForbiddenException('Target tenant is inactive or not found');
+    if (!tenant)
+      throw new ForbiddenException('Target tenant is inactive or not found');
 
     const [roles, features] = await Promise.all([
       this.userRepository.getUserRoles(userId),
@@ -193,12 +205,18 @@ export class AuthService {
       originalTenantId: currentTenantId,
     });
 
-    const { refreshToken, sessionId } = await this.createRefreshSession(userId, { ...meta, impersonatedTenantId: targetTenantId });
+    const { refreshToken, sessionId } = await this.createRefreshSession(
+      userId,
+      { ...meta, impersonatedTenantId: targetTenantId },
+    );
 
     if (oldRefreshTokenRaw) {
       const parsed = this.parseRefreshToken(oldRefreshTokenRaw);
       if (parsed) {
-        await this.userRepository.refreshUserSession(parsed.sessionId, sessionId);
+        await this.userRepository.refreshUserSession(
+          parsed.sessionId,
+          sessionId,
+        );
       }
     }
 
@@ -214,8 +232,11 @@ export class AuthService {
     meta: { ip?: string; userAgent?: string },
     oldRefreshTokenRaw?: string,
   ): Promise<LoginResult> {
-    const loginResult = await this.login({ id: userId, tenantId: originalTenantId }, meta);
-    
+    const loginResult = await this.login(
+      { id: userId, tenantId: originalTenantId },
+      meta,
+    );
+
     if (oldRefreshTokenRaw) {
       const parsed = this.parseRefreshToken(oldRefreshTokenRaw);
       if (parsed) {

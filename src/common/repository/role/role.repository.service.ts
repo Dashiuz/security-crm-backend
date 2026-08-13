@@ -19,6 +19,8 @@ export class RoleRepositoryService {
       select: {
         id: true,
         name: true,
+        createdAt: true,
+        createdBy: true,
         perms: {
           select: { permission: { select: { key: true } } },
         },
@@ -86,8 +88,13 @@ export class RoleRepositoryService {
     addKeys: string[],
     byKey: Map<string, string>,
   ) {
+    const ids = addKeys
+      .map((k) => byKey.get(k))
+      .filter((id): id is string => Boolean(id));
+    if (ids.length === 0) return { count: 0 };
+
     return await this.prisma.rolePermission.createMany({
-      data: addKeys.map((k) => ({ roleId, permissionId: byKey.get(k)! })),
+      data: ids.map((permissionId) => ({ roleId, permissionId })),
       skipDuplicates: true,
     });
   }
@@ -97,10 +104,15 @@ export class RoleRepositoryService {
     removeKeys: string[],
     byKey: Map<string, string>,
   ) {
+    const ids = removeKeys
+      .map((k) => byKey.get(k))
+      .filter((id): id is string => Boolean(id));
+    if (ids.length === 0) return { count: 0 };
+
     return this.prisma.rolePermission.deleteMany({
       where: {
         roleId,
-        permissionId: { in: removeKeys.map((k) => byKey.get(k)!) },
+        permissionId: { in: ids },
       },
     });
   }

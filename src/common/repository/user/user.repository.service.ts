@@ -5,7 +5,7 @@ import { SessionObjectInterface } from '../../../common/interfaces/index';
 
 @Injectable()
 export class UserRepositoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // tenant table operation
   async checkTenantActive(tenantId: string) {
@@ -15,6 +15,18 @@ export class UserRepositoryService {
     });
 
     return tenant;
+  }
+
+  async findNamesByIds(ids: string[]): Promise<Map<string, string>> {
+    const validIds = ids.filter((id) => id && id !== 'system');
+    if (validIds.length === 0) return new Map();
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: validIds } },
+      select: { id: true, fullName: true },
+    });
+
+    return new Map(users.map((u) => [u.id, u.fullName]));
   }
 
   // ##### USER DATA OPERATIONS ##### //
@@ -34,6 +46,7 @@ export class UserRepositoryService {
       select: {
         id: true,
         tenantId: true,
+        clientId: true,
         fullName: true,
         document: true,
         department: true,
@@ -56,17 +69,25 @@ export class UserRepositoryService {
   }
 
   async findAll(tenantId: string) {
-    return await this.prisma.user.findMany({
+    return await (this.prisma.user as any).findMany({
       where: { tenantId, isActive: true, tenant: { isActive: true } },
       select: {
         id: true,
         tenantId: true,
+        clientId: true,
         fullName: true,
         document: true,
         department: true,
         position: true,
         isActive: true,
         isFirstLogin: true,
+        client: {
+          select: {
+            id: true,
+            name: true,
+            internalCode: true,
+          },
+        },
         roles: {
           select: {
             role: {
@@ -87,7 +108,15 @@ export class UserRepositoryService {
         id: true,
         fullName: true,
         tenantId: true,
+        clientId: true,
         isActive: true,
+        client: {
+          select: {
+            id: true,
+            name: true,
+            internalCode: true,
+          },
+        },
         tenant: {
           select: {
             id: true,
@@ -110,10 +139,16 @@ export class UserRepositoryService {
       const overrideTenant = await this.prisma.tenant.findUnique({
         where: { id: targetTenantId },
         select: {
-          id: true, name: true, slug: true, isActive: true,
+          id: true,
+          name: true,
+          slug: true,
+          isActive: true,
           features: { select: { key: true } },
-          logoUrl: true, primaryColor: true, secondaryColor: true, sidebarColor: true,
-        }
+          logoUrl: true,
+          primaryColor: true,
+          secondaryColor: true,
+          sidebarColor: true,
+        },
       });
       if (overrideTenant) {
         user.tenant = overrideTenant as any;
@@ -198,6 +233,7 @@ export class UserRepositoryService {
           select: {
             id: true,
             tenantId: true,
+            clientId: true,
             isActive: true,
             tenant: { select: { isActive: true } },
           },
@@ -287,6 +323,13 @@ export class UserRepositoryService {
       },
     });
   }
+  async updateUser(userId: string, data: Partial<Prisma.UserUpdateInput>) {
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  }
+
   async softDeleteUser(userId: string) {
     return await this.prisma.user.update({
       where: { id: userId },

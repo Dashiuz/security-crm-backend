@@ -10,8 +10,20 @@ export class MinutaRepositoryService {
     return this.prisma.minuta.create({ data });
   }
 
-  async findMany(where?: Prisma.MinutaWhereInput): Promise<Minuta[]> {
-    return this.prisma.minuta.findMany({ where });
+  async findMany(where?: Prisma.MinutaWhereInput): Promise<any[]> {
+    const rows = await this.prisma.minuta.findMany({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r: any) => ({
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+    }));
   }
 
   async findUnique(

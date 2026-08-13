@@ -25,6 +25,8 @@ export class UserService {
       department: row.department,
       position: row.position,
       tenantId: row.tenantId,
+      clientId: row.clientId ?? null,
+      clientName: row.client?.name ?? null,
       isActive: row.isActive,
       isFirstLogin: row.isFirstLogin ?? false,
       roles: row.roles?.map((ur: any) => ({
@@ -52,9 +54,9 @@ export class UserService {
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     // 1) Business validation: verify an existing active employee with same document
-    const employee = await this.employeeRepository.findActiveByDocument(
+    const employee = (await this.employeeRepository.findActiveByDocument(
       dto.document,
-    );
+    )) as any;
 
     if (!employee) {
       throw new BadRequestException(
@@ -82,7 +84,8 @@ export class UserService {
           fullName: employee.fullName,
           department: employee.departmentRef?.name || 'N/A',
           position: employee.positionRef?.name || 'N/A',
-        },
+          clientId: employee.clientId || null,
+        } as any,
       );
 
       // 5) Sync roles (remove old, add new)
@@ -114,6 +117,7 @@ export class UserService {
       document: dto.document,
       department: employee.departmentRef?.name || 'N/A',
       position: employee.positionRef?.name || 'N/A',
+      clientId: employee.clientId || null,
     } as any);
 
     if (dto.roleIds && dto.roleIds.length > 0) {

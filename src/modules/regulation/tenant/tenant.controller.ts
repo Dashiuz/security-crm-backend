@@ -83,7 +83,10 @@ export class TenantController {
   @ApiForbiddenResponse({
     description: 'Only GODLIKE users can access this resource',
   })
-  syncFeatures(@Param('id') id: string, @Body('featureKeys') featureKeys: string[]) {
+  syncFeatures(
+    @Param('id') id: string,
+    @Body('featureKeys') featureKeys: string[],
+  ) {
     return this.tenantService.syncFeatures(id, featureKeys || []);
   }
 

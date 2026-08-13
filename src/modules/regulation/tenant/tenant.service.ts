@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { TenantRepositoryService } from '../../../common/repository/index';
 import { CreateTenantDto, UpdateTenantDto, TenantResponseDto } from './dtos';
 
@@ -36,7 +36,10 @@ export class TenantService {
   }
 
   async remove(id: string): Promise<TenantResponseDto> {
-    await this.findOne(id);
+    const tenant = await this.findOne(id);
+    if (tenant.slug === 'system' || tenant.id === 'system') {
+      throw new BadRequestException('Cannot delete the system master tenant');
+    }
     const removed = await this.tenantRepository.remove(id);
     return this.mapTenant(removed);
   }
@@ -45,7 +48,10 @@ export class TenantService {
     return this.tenantRepository.getAllFeatures();
   }
 
-  async syncFeatures(id: string, featureKeys: string[]): Promise<TenantResponseDto> {
+  async syncFeatures(
+    id: string,
+    featureKeys: string[],
+  ): Promise<TenantResponseDto> {
     await this.findOne(id);
     const updated = await this.tenantRepository.syncFeatures(id, featureKeys);
     return this.mapTenant(updated);

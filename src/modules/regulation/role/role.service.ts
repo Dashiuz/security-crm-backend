@@ -2,8 +2,9 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
-import { RoleRepositoryService } from '../../../common/repository/index';
+import { RoleRepositoryService, UserRepositoryService } from '../../../common/repository/index';
 import {
   CreateRoleDto,
   UpdateRoleDto,
@@ -13,13 +14,18 @@ import {
 
 @Injectable()
 export class RoleService {
-  constructor(private readonly roleRepository: RoleRepositoryService) {}
+  constructor(
+    private readonly roleRepository: RoleRepositoryService,
+    private readonly userRepository: UserRepositoryService,
+  ) {}
 
-  private mapRoleToResponse(row: any): RoleResponseDto {
+  private mapRoleToResponse(row: any, userName?: string): any {
     return {
       id: row.id,
       name: row.name,
       tenantId: row.tenantId,
+      createdAt: row.createdAt,
+      createdBy: userName || (row.createdBy === 'system' ? 'Sistema' : row.createdBy || 'Sistema'),
       permissions:
         row.perms?.map((p: any) => ({
           key: p.permission.key,
@@ -29,7 +35,7 @@ export class RoleService {
   }
 
   async create(tenantId: string, dto: CreateRoleDto): Promise<RoleResponseDto> {
-    const name = dto.name.trim();
+    const name = dto.name.trim().toUpperCase();
 
     if (!name) throw new BadRequestException('Role name is required');
 
@@ -39,23 +45,31 @@ export class RoleService {
       return this.mapRoleToResponse(row);
     } catch (e: any) {
       if (e?.code === 'P2002') {
-        throw new BadRequestException(
-          `Role with name "${name}" already exists for this tenant`,
+        throw new ConflictException(
+          `Ya existe un rol registrado con el nombre "${name}" en la empresa.`,
         );
       }
       throw e;
     }
   }
 
-  async list(tenantId: string): Promise<RoleResponseDto[]> {
+  async list(tenantId: string): Promise<any[]> {
     const rows = await this.roleRepository.listRoles(tenantId);
-    return rows.map((r) => this.mapRoleToResponse(r));
+    const createdByIds = rows.map((r: any) => r.createdBy).filter((id): id is string => Boolean(id));
+    const userMap = await this.userRepository.findNamesByIds(createdByIds);
+
+    return rows.map((r) =>
+      this.mapRoleToResponse(
+        r,
+        r.createdBy === 'system' ? 'Sistema' : (r.createdBy ? userMap.get(r.createdBy) : undefined),
+      ),
+    );
   }
 
   async findOne(tenantId: string, roleId: string): Promise<RoleResponseDto> {
-    const role = await this.roleRepository.findRoleById(roleId);
-    if (!role) throw new NotFoundException('Role not found');
-    return this.mapRoleToResponse(role);
+    const row = await this.roleRepository.findRoleById(roleId);
+    if (!row) throw new NotFoundException('Role not found');
+    return this.mapRoleToResponse(row);
   }
 
   async update(
@@ -67,14 +81,14 @@ export class RoleService {
     if (!role) throw new NotFoundException('Role not found');
 
     if (dto.name) {
-      const name = dto.name.trim();
+      const name = dto.name.trim().toUpperCase();
       try {
         const updated = await this.roleRepository.updateRole(roleId, name);
         return this.mapRoleToResponse(updated);
       } catch (e: any) {
         if (e?.code === 'P2002') {
-          throw new BadRequestException(
-            `Role with name "${name}" already exists for this tenant`,
+          throw new ConflictException(
+            `Ya existe un rol registrado con el nombre "${name}" en la empresa.`,
           );
         }
         throw e;
@@ -93,7 +107,7 @@ export class RoleService {
     } catch (e: any) {
       if (e?.code === 'P2003') {
         throw new BadRequestException(
-          'Cannot delete role as it is assigned to users or has permissions',
+          'No es posible eliminar el rol porque se encuentra asignado a uno o más usuarios.',
         );
       }
       throw e;
@@ -117,9 +131,12 @@ export class RoleService {
       throw new BadRequestException('Provide add, remove or keys');
     }
 
+    const currentState = await this.roleRepository.getCurrentState(roleId);
+    const currentKeys = currentState?.perms.map((p) => p.permission.key) ?? [];
+
     // 1) Resolve permission IDs by keys
     const allInputKeys = Array.from(
-      new Set([...addKeys, ...removeKeys, ...syncKeys]),
+      new Set([...addKeys, ...removeKeys, ...syncKeys, ...currentKeys]),
     );
     const perms =
       await this.roleRepository.findPermissionIdByKeys(allInputKeys);
@@ -134,10 +151,6 @@ export class RoleService {
 
     // 2) Full Sync Mode
     if (dto.keys) {
-      const currentState = await this.roleRepository.getCurrentState(roleId);
-      const currentKeys =
-        currentState?.perms.map((p) => p.permission.key) ?? [];
-
       const toAdd = syncKeys.filter((k) => !currentKeys.includes(k));
       const toRemove = currentKeys.filter((k) => !syncKeys.includes(k));
 

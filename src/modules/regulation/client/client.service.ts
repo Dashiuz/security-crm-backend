@@ -17,10 +17,24 @@ export class ClientService {
   constructor(private readonly clientRepository: ClientRepositoryService) {}
 
   private mapClientToResponse(row: any): ClientResponseDto {
+    let createdByName = 'Sistema';
+    if (row.createdBy) {
+      if (typeof row.createdBy === 'object') {
+        createdByName =
+          row.createdBy.fullName ||
+          row.createdBy.name ||
+          row.createdBy.email ||
+          'Sistema';
+      } else if (typeof row.createdBy === 'string') {
+        createdByName = row.createdBy;
+      }
+    }
+
     return {
       ...row,
       contractDate: toDateOnlyIso(row.contractDate),
       lastContractDate: toDateOnlyIso(row.lastContractDate),
+      createdBy: createdByName,
     };
   }
 
@@ -60,7 +74,7 @@ export class ClientService {
     data.lastContractDate = lastContractDate;
 
     const res = await this.clientRepository.create(data);
-    return this.mapClientToResponse(res);
+    return this.findOne(res.id, user);
   }
 
   async findAll(user: UserContext): Promise<ClientResponseDto[]> {
@@ -70,6 +84,7 @@ export class ClientService {
         include: {
           coordinatorInCharge: true,
           commercialContact: true,
+          createdBy: true,
         },
       })
       .then((rows) => rows.map((r) => this.mapClientToResponse(r))) as any;
@@ -79,6 +94,7 @@ export class ClientService {
     const client = await this.clientRepository.findOne(id, {
       coordinatorInCharge: true,
       commercialContact: true,
+      createdBy: true,
     });
     if (!client || client.tenantId !== user.tenantId) {
       throw new NotFoundException('Client not found');
@@ -126,13 +142,36 @@ export class ClientService {
       data.lastContractDate = d;
     }
 
-    const res = await this.clientRepository.update(id, data);
-    return this.mapClientToResponse(res);
+    await this.clientRepository.update(id, data);
+    return this.findOne(id, user);
   }
 
   async remove(id: string, user: UserContext): Promise<ClientResponseDto> {
     await this.findOne(id, user);
-    const res = await this.clientRepository.remove(id);
-    return this.mapClientToResponse(res);
+    const userId = user.sub;
+    const data: any = {
+      isActive: false,
+      deletedAt: new Date(),
+    };
+    if (userId && userId !== 'system') {
+      data.deletedBy = { connect: { id: userId } };
+    }
+    await this.clientRepository.update(id, data);
+    return this.findOne(id, user);
+  }
+
+  async reactivate(id: string, user: UserContext): Promise<ClientResponseDto> {
+    await this.findOne(id, user);
+    const userId = user.sub;
+    const data: any = {
+      isActive: true,
+      deletedAt: null,
+      deletedBy: { disconnect: true },
+    };
+    if (userId && userId !== 'system') {
+      data.updatedBy = { connect: { id: userId } };
+    }
+    await this.clientRepository.update(id, data);
+    return this.findOne(id, user);
   }
 }
