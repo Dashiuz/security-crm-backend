@@ -24,6 +24,11 @@ model Tenant {
   visitorEntryControls           VisitorEntryControl[]
   correspondenceReceivedControls CorrespondenceReceivedControl[]
   clients                        Client[]
+  residents                      Resident[]
+  clientProperties               ClientProperties[]
+  towers                         Tower[]
+  floors                         Floor[]
+  units                          Unit[]
 
   @@map("tenant")
 }

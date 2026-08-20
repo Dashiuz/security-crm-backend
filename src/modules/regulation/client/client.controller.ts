@@ -22,6 +22,7 @@ import {
   UpdateClientDto,
   ClientResponseDto,
 } from './dtos/client.dto';
+import { CreateClientWithStructureDto } from './dtos/client-structure.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
@@ -38,6 +39,14 @@ export class ClientController {
   @ApiOperation({ summary: 'Create client' })
   @ApiCreatedResponse({ type: ClientResponseDto })
   create(@Body() dto: CreateClientDto, @Request() req) {
+    return this.clientService.create(dto, req.user);
+  }
+
+  @Post('with-structure')
+  @RequirePermissions('client:manage', 'client:create')
+  @ApiOperation({ summary: 'Create client with residential complex structure' })
+  @ApiCreatedResponse({ type: ClientResponseDto })
+  createWithStructure(@Body() dto: CreateClientWithStructureDto, @Request() req) {
     return this.clientService.create(dto, req.user);
   }
 

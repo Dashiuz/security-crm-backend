@@ -16,6 +16,7 @@ async function main() {
     { key: 'department', name: 'Departamentos', description: 'Gestión de áreas de la empresa' },
     { key: 'position', name: 'Posiciones', description: 'Gestión de cargos' },
     { key: 'role', name: 'Roles', description: 'Gestión de permisos y accesos' },
+    { key: 'resident', name: 'Residentes', description: 'Gestión de censo y residentes de inmuebles' },
   ];
 
   for (const f of featuresData) {

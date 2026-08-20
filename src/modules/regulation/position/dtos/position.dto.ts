@@ -8,36 +8,36 @@ import {
 } from 'class-validator';
 
 export class CreatePositionDto {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ example: 'Junior Developer' })
+  @ApiProperty({ example: 'Supervisor de Seguridad' })
+  @IsString({ message: 'El nombre del cargo o posición debe ser un texto válido.' })
+  @IsNotEmpty({ message: 'El nombre del cargo o posición es requerido.' })
   name!: string;
 
-  @IsInt()
-  @IsOptional()
   @ApiProperty({ example: 1, required: false })
+  @IsInt({ message: 'El nivel jerárquico debe ser un número entero.' })
+  @IsOptional()
   level?: number;
 
-  @IsBoolean()
-  @IsOptional()
   @ApiProperty({ example: true, required: false })
+  @IsBoolean({ message: 'El estado activo debe ser un valor booleano.' })
+  @IsOptional()
   isActive?: boolean;
 }
 
 export class UpdatePositionDto {
-  @IsString()
+  @ApiProperty({ example: 'Director Operativo', required: false })
+  @IsString({ message: 'El nombre del cargo o posición debe ser un texto válido.' })
   @IsOptional()
-  @ApiProperty({ example: 'Senior Developer', required: false })
   name?: string;
 
-  @IsInt()
-  @IsOptional()
   @ApiProperty({ example: 2, required: false })
+  @IsInt({ message: 'El nivel jerárquico debe ser un número entero.' })
+  @IsOptional()
   level?: number;
 
-  @IsBoolean()
-  @IsOptional()
   @ApiProperty({ example: true, required: false })
+  @IsBoolean({ message: 'El estado activo debe ser un valor booleano.' })
+  @IsOptional()
   isActive?: boolean;
 }
 
@@ -48,7 +48,7 @@ export class PositionResponseDto {
   @ApiProperty({ example: 'tenant_id_123' })
   tenantId!: string;
 
-  @ApiProperty({ example: 'Junior Developer' })
+  @ApiProperty({ example: 'Supervisor de Seguridad' })
   name!: string;
 
   @ApiProperty({ example: 1 })

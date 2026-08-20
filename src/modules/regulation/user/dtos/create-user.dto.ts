@@ -1,18 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString()
-  @IsNotEmpty()
   @ApiProperty({ example: 'password' })
+  @IsString({ message: 'La contraseña debe ser un texto válido.' })
+  @IsNotEmpty({ message: 'La contraseña es requerida.' })
   password!: string;
 
-  @IsString()
-  @IsNotEmpty()
   @ApiProperty({ example: '12345678' })
+  @IsString({ message: 'El número de documento debe ser un texto válido.' })
+  @IsNotEmpty({ message: 'El número de documento es requerido.' })
   document!: string;
 
-  @IsOptional()
   @ApiPropertyOptional({ example: ['role_id_1'] })
+  @IsArray({ message: 'Los roles deben proporcionarse en una lista.' })
+  @IsString({ each: true, message: 'Cada ID de rol debe ser un texto válido.' })
+  @IsOptional()
   roleIds?: string[];
 }
