@@ -8,38 +8,42 @@ import {
   IsBoolean,
   IsDateString,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { ClientStatus, ContractStatus, ClientSector } from '@prisma/client';
 
 export class CreateClientDto {
   @ApiProperty({ example: 'C001' })
-  @IsString()
+  @IsString({ message: 'El Código Interno es requerido.' })
   internalCode: string;
 
   @ApiProperty({ enum: ClientStatus, default: ClientStatus.ACTIVE })
-  @IsEnum(ClientStatus)
+  @IsEnum(ClientStatus, { message: 'Estado del cliente no válido.' })
   @IsOptional()
   clientStatus?: ClientStatus;
 
   @ApiProperty({ enum: ContractStatus, default: ContractStatus.ACTIVE })
-  @IsEnum(ContractStatus)
+  @IsEnum(ContractStatus, { message: 'Estado del contrato no válido.' })
   @IsOptional()
   contractStatus?: ContractStatus;
 
   @ApiProperty({ example: 'CONT-2026-001' })
-  @IsString()
+  @IsString({ message: 'El Número de Contrato es requerido.' })
   contractNumber: string;
 
   @ApiProperty({ example: '900123456-7' })
-  @IsString()
+  @IsString({ message: 'El NIT es requerido.' })
   nit: string;
 
   @ApiProperty({ example: 'Conjunto Residencial Las Palmas' })
-  @IsString()
+  @IsString({ message: 'El Nombre o Razón Social es requerido.' })
   name: string;
 
   @ApiProperty({ example: 'admin@laspalmas.com', required: false })
-  @IsEmail()
+  @ValidateIf(
+    (o) => o.email !== undefined && o.email !== null && o.email !== '',
+  )
+  @IsEmail({}, { message: 'El correo electrónico principal no tiene un formato válido.' })
   @IsOptional()
   email?: string;
 
@@ -99,19 +103,19 @@ export class CreateClientDto {
   observations?: string;
 
   @ApiProperty({ enum: ClientSector, default: ClientSector.RESIDENTIAL })
-  @IsEnum(ClientSector)
+  @IsEnum(ClientSector, { message: 'Sector del cliente no válido.' })
   @IsOptional()
   sector?: ClientSector;
 
   @ApiProperty({ example: 'cuid-employee-1', required: false })
   @IsString()
   @IsOptional()
-  coordinatorInChargeId?: string;
+  coordinatorInChargeId?: string | null;
 
   @ApiProperty({ example: 'cuid-employee-2', required: false })
   @IsString()
   @IsOptional()
-  commercialContactId?: string;
+  commercialContactId?: string | null;
 
   @ApiProperty({ default: false })
   @IsBoolean()
@@ -140,16 +144,34 @@ export class CreateClientDto {
   administratorPhone?: string;
 
   @ApiProperty({ example: 'juan.perez@gmail.com', required: false })
-  @IsEmail()
+  @ValidateIf(
+    (o) =>
+      o.administratorEmail !== undefined &&
+      o.administratorEmail !== null &&
+      o.administratorEmail !== '',
+  )
+  @IsEmail(
+    {},
+    {
+      message:
+        'El correo electrónico del administrador no tiene un formato válido.',
+    },
+  )
   @IsOptional()
   administratorEmail?: string;
 
   @ApiProperty({ example: '2026-03-09' })
-  @IsDateString()
+  @IsDateString(
+    {},
+    { message: 'La fecha de contrato debe ser una fecha válida.' },
+  )
   contractDate: string;
 
   @ApiProperty({ example: '2026-03-09' })
-  @IsDateString()
+  @IsDateString(
+    {},
+    { message: 'La fecha de fin de contrato debe ser una fecha válida.' },
+  )
   lastContractDate: string;
 
   @ApiProperty({ default: true })

@@ -45,3 +45,8 @@ export * from './minuta/correspondence-control/correspondence-control.repository
 // Client
 export * from './client/client.repository.module';
 export * from './client/client.repository.service';
+
+// Resident
+export * from './resident/resident.repository.module';
+export * from './resident/resident.repository.service';
+

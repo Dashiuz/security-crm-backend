@@ -1,0 +1,25 @@
+model Floor {
+    id       String @id @default(cuid(2))
+    tenantId String
+    tenant   Tenant @relation(fields: [tenantId], references: [id])
+    clientId String
+    client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    towerId  String?
+    tower    Tower? @relation(fields: [towerId], references: [id], onDelete: Cascade)
+
+    floorNumber Int @default(0)
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+    createdBy String?
+    updatedBy String?
+    deletedBy String?
+
+    units Unit[]
+
+    @@index([tenantId])
+    @@index([clientId])
+    @@index([towerId])
+    @@map("floors")
+}

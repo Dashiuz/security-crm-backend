@@ -57,3 +57,41 @@ enum ClientSector {
   GOVERNMENT
   OTHER
 }
+
+enum ResidentialComplexType {
+  SINGLE_BUILDING
+  BUILDING_CLUSTER
+  HOUSE_CLUSTER
+  OTHER
+}
+
+enum ResidentType {
+  OWNER
+  TENANT
+  FAMILY_MEMBER
+  OTHER
+}
+
+enum IdType {
+  CI
+  CE
+  PASSPORT
+  NIT
+  OTHER
+}
+
+enum ResidencePlaceholder {
+  LETTER
+  NUMBER
+  ALPHANUMERIC
+}
+
+enum UnitType {
+  APARTMENT
+  HOUSE
+  OFFICE
+  WAREHOUSE
+  OTHER
+  TOWNHOUSE
+  BODEGA
+}

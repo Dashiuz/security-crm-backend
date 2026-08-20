@@ -282,6 +282,32 @@ async function main() {
       key: 'client:manage',
       desc: 'Manage all client operations',
     },
+    // Resident permissions
+    {
+      id: 'resident_read_perm_id',
+      key: 'resident:read',
+      desc: 'Read resident records and unit assignments',
+    },
+    {
+      id: 'resident_create_perm_id',
+      key: 'resident:create',
+      desc: 'Create resident records and unit assignments',
+    },
+    {
+      id: 'resident_update_perm_id',
+      key: 'resident:update',
+      desc: 'Update resident records and unit assignments',
+    },
+    {
+      id: 'resident_delete_perm_id',
+      key: 'resident:delete',
+      desc: 'Soft delete or unassign resident records',
+    },
+    {
+      id: 'resident_manage_perm_id',
+      key: 'resident:manage',
+      desc: 'Manage all resident operations',
+    },
   ];
 
   // 4. Role Permissions

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { ClientRepositoryService } from '../../../common/repository/client/client.repository.service';
 import {
@@ -9,12 +10,17 @@ import {
   UpdateClientDto,
   ClientResponseDto,
 } from './dtos/client.dto';
+import { CreateClientWithStructureDto } from './dtos/client-structure.dto';
+import { ClientStructureGeneratorService } from './services/client-structure-generator.service';
 import { UserContext } from '../../../common/interfaces/user-context.interface';
 import { toDateOnlyIso } from '../../../common/utils/convertDate';
 
 @Injectable()
 export class ClientService {
-  constructor(private readonly clientRepository: ClientRepositoryService) {}
+  constructor(
+    private readonly clientRepository: ClientRepositoryService,
+    private readonly structureGenerator: ClientStructureGeneratorService,
+  ) {}
 
   private mapClientToResponse(row: any): ClientResponseDto {
     let createdByName = 'Sistema';
@@ -38,42 +44,107 @@ export class ClientService {
     };
   }
 
+  private handlePrismaError(error: any): never {
+    if (error?.code === 'P2002') {
+      const target = (error?.meta?.target as string[]) || [];
+      const targetStr = Array.isArray(target) ? target.join(', ') : String(target);
+      if (targetStr.includes('nit')) {
+        throw new ConflictException(
+          'Ya existe un cliente o conjunto residencial registrado con este número de NIT.',
+        );
+      }
+      if (targetStr.includes('internalCode')) {
+        throw new ConflictException(
+          'Ya existe un cliente registrado con este Código Interno.',
+        );
+      }
+      if (targetStr.includes('contractNumber')) {
+        throw new ConflictException(
+          'Ya existe un cliente registrado con este Número de Contrato.',
+        );
+      }
+      throw new ConflictException(
+        `Ya existe un registro con información duplicada en el sistema (${targetStr}).`,
+      );
+    }
+    throw error;
+  }
+
   async create(
-    dto: CreateClientDto,
+    dto: CreateClientDto | CreateClientWithStructureDto,
     user: UserContext,
   ): Promise<ClientResponseDto> {
+    const { structureConfig, ...clientFields } = dto as any;
+
     const data = {
-      ...dto,
+      ...clientFields,
       tenant: { connect: { id: user.tenantId } },
     } as any;
 
-    if (dto.coordinatorInChargeId) {
-      data.coordinatorInCharge = { connect: { id: dto.coordinatorInChargeId } };
-      delete data.coordinatorInChargeId;
+    // Clean relation scalar fields so Prisma payload doesn't contain unknown arguments
+    delete data.coordinatorInChargeId;
+    delete data.commercialContactId;
+
+    if (
+      clientFields.coordinatorInChargeId &&
+      String(clientFields.coordinatorInChargeId).trim() !== ''
+    ) {
+      data.coordinatorInCharge = {
+        connect: { id: clientFields.coordinatorInChargeId },
+      };
     }
 
-    if (dto.commercialContactId) {
-      data.commercialContact = { connect: { id: dto.commercialContactId } };
-      delete data.commercialContactId;
+    if (
+      clientFields.commercialContactId &&
+      String(clientFields.commercialContactId).trim() !== ''
+    ) {
+      data.commercialContact = {
+        connect: { id: clientFields.commercialContactId },
+      };
     }
 
     // Date parsing
-    const contractDate = new Date(dto.contractDate);
-    const lastContractDate = new Date(dto.lastContractDate);
+    const contractDate = new Date(clientFields.contractDate);
+    const lastContractDate = new Date(clientFields.lastContractDate);
 
     if (
       Number.isNaN(contractDate.getTime()) ||
       Number.isNaN(lastContractDate.getTime())
     ) {
       throw new BadRequestException(
-        'Invalid contractDate or lastContractDate.',
+        'Las fechas de inicio y/o fin de contrato no son válidas.',
       );
     }
 
     data.contractDate = contractDate;
     data.lastContractDate = lastContractDate;
 
-    const res = await this.clientRepository.create(data);
+    if (user.sub && user.sub !== 'system') {
+      data.createdBy = { connect: { id: user.sub } };
+    }
+
+    let res: any;
+    try {
+      res = await this.clientRepository.create(data);
+    } catch (err: any) {
+      this.handlePrismaError(err);
+    }
+
+    if (structureConfig) {
+      try {
+        await this.structureGenerator.generateStructure(
+          res.id,
+          user.tenantId,
+          structureConfig,
+          user.sub,
+        );
+      } catch (err: any) {
+        throw new BadRequestException(
+          `Error al generar la estructura física del conjunto: ${err.message}`,
+        );
+      }
+    }
+
     return this.findOne(res.id, user);
   }
 
@@ -85,6 +156,7 @@ export class ClientService {
           coordinatorInCharge: true,
           commercialContact: true,
           createdBy: true,
+          clientProperties: true,
         },
       })
       .then((rows) => rows.map((r) => this.mapClientToResponse(r))) as any;
@@ -95,54 +167,103 @@ export class ClientService {
       coordinatorInCharge: true,
       commercialContact: true,
       createdBy: true,
+      clientProperties: true,
+      towers: {
+        where: { deletedAt: null },
+        orderBy: { towerName: 'asc' },
+      },
+      floors: {
+        where: { deletedAt: null },
+        orderBy: { floorNumber: 'asc' },
+      },
+      units: {
+        where: { deletedAt: null },
+        orderBy: { unitName: 'asc' },
+      },
     });
     if (!client || client.tenantId !== user.tenantId) {
-      throw new NotFoundException('Client not found');
+      throw new NotFoundException('Cliente no encontrado');
     }
     return this.mapClientToResponse(client);
   }
 
   async update(
     id: string,
-    dto: UpdateClientDto,
+    dto: UpdateClientDto | any,
     user: UserContext,
   ): Promise<ClientResponseDto> {
     await this.findOne(id, user);
 
-    const data = { ...dto } as any;
+    const { structureConfig, ...clientFields } = dto as any;
+    const data = { ...clientFields } as any;
 
-    if (dto.coordinatorInChargeId) {
-      data.coordinatorInCharge = { connect: { id: dto.coordinatorInChargeId } };
-      delete data.coordinatorInChargeId;
-    } else if (dto.coordinatorInChargeId === null) {
+    delete data.coordinatorInChargeId;
+    delete data.commercialContactId;
+
+    if (
+      clientFields.coordinatorInChargeId &&
+      String(clientFields.coordinatorInChargeId).trim() !== ''
+    ) {
+      data.coordinatorInCharge = {
+        connect: { id: clientFields.coordinatorInChargeId },
+      };
+    } else if (
+      clientFields.coordinatorInChargeId === null ||
+      clientFields.coordinatorInChargeId === ''
+    ) {
       data.coordinatorInCharge = { disconnect: true };
-      delete data.coordinatorInChargeId;
     }
 
-    if (dto.commercialContactId) {
-      data.commercialContact = { connect: { id: dto.commercialContactId } };
-      delete data.commercialContactId;
-    } else if (dto.commercialContactId === null) {
+    if (
+      clientFields.commercialContactId &&
+      String(clientFields.commercialContactId).trim() !== ''
+    ) {
+      data.commercialContact = {
+        connect: { id: clientFields.commercialContactId },
+      };
+    } else if (
+      clientFields.commercialContactId === null ||
+      clientFields.commercialContactId === ''
+    ) {
       data.commercialContact = { disconnect: true };
-      delete data.commercialContactId;
     }
 
     // Date parsing for updates
-    if (dto.contractDate) {
-      const d = new Date(dto.contractDate);
+    if (clientFields.contractDate) {
+      const d = new Date(clientFields.contractDate);
       if (Number.isNaN(d.getTime()))
-        throw new BadRequestException('Invalid contractDate.');
+        throw new BadRequestException('La fecha de contrato no es válida.');
       data.contractDate = d;
     }
 
-    if (dto.lastContractDate) {
-      const d = new Date(dto.lastContractDate);
+    if (clientFields.lastContractDate) {
+      const d = new Date(clientFields.lastContractDate);
       if (Number.isNaN(d.getTime()))
-        throw new BadRequestException('Invalid lastContractDate.');
+        throw new BadRequestException(
+          'La última fecha de contrato no es válida.',
+        );
       data.lastContractDate = d;
     }
 
-    await this.clientRepository.update(id, data);
+    if (user.sub && user.sub !== 'system') {
+      data.updatedBy = { connect: { id: user.sub } };
+    }
+
+    try {
+      await this.clientRepository.update(id, data);
+    } catch (err: any) {
+      this.handlePrismaError(err);
+    }
+
+    if (structureConfig) {
+      await this.structureGenerator.generateStructure(
+        id,
+        user.tenantId,
+        structureConfig,
+        user.sub,
+      );
+    }
+
     return this.findOne(id, user);
   }
 
