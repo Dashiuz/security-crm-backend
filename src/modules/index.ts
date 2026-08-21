@@ -36,12 +36,10 @@ export * from './regulation/position/position.service';
 // Operation: Minuta
 export * from './operation/minuta/minuta.module';
 
-// Client
-export * from './regulation/client/client.module';
-export * from './regulation/client/client.service';
+// Administrative: Client
+export * from './administrative/client/client.module';
+export * from './administrative/client/client.service';
 
-// Resident
-export * from './regulation/resident/resident.module';
-export * from './regulation/resident/services/resident.service';
-
-
+// Administrative: Resident
+export * from './administrative/resident/resident.module';
+export * from './administrative/resident/services/resident.service';
