@@ -21,6 +21,7 @@ import {
   MinutaModule,
   ClientModule,
   ResidentModule,
+  ProspectModule,
 } from './modules/index';
 
 @Module({
@@ -42,6 +43,7 @@ import {
     PositionModule,
     ClientModule,
     ResidentModule,
+    ProspectModule,
     EmployeeModule,
     UserModule,
     MinutaModule,

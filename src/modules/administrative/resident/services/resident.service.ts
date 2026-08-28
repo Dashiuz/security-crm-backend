@@ -12,7 +12,7 @@ import {
   ResidentResponseDto,
 } from '../dtos/resident.dto';
 import { UserContext } from '../../../../common/interfaces/user-context.interface';
-import { ResidentType } from '@prisma/client';
+import { ResidentType, IdType } from '@prisma/client';
 
 @Injectable()
 export class ResidentService {
@@ -216,5 +216,234 @@ export class ResidentService {
     await this.findOne(id, user);
     await this.residentRepository.softDelete(id, user.sub);
     return { success: true } as any;
+  }
+
+  async importResidentsFromCsv(
+    clientId: string,
+    csvData: Array<Record<string, string>>,
+    fileName: string,
+    user: UserContext,
+  ) {
+    const client = await this.prisma.client.findFirst({
+      where: { id: clientId, tenantId: user.tenantId },
+    });
+    if (!client) {
+      throw new NotFoundException('Conjunto residencial no encontrado.');
+    }
+
+    const totalRows = csvData.length;
+    let successRows = 0;
+    let errorRows = 0;
+    const errors: Array<{ row: number; document?: string; reason: string }> = [];
+    const createdResidents: any[] = [];
+
+    // Pre-fetch units for this client
+    const existingUnits = await this.prisma.unit.findMany({
+      where: { clientId, tenantId: user.tenantId },
+    });
+
+    for (let i = 0; i < csvData.length; i++) {
+      const row = csvData[i];
+      const rowNum = i + 1;
+
+      try {
+        if (!row.firstName || !row.lastName || !row.document || !row.phoneNumber) {
+          throw new Error(
+            'Campos obligatorios faltantes: Nombre, Apellido, Documento y Teléfono.',
+          );
+        }
+
+        // Unit resolution
+        let unitId = row.unitId;
+        if (!unitId && row.unitName) {
+          const matched = existingUnits.find(
+            (u) =>
+              u.unitName.toLowerCase().trim() ===
+              row.unitName.toLowerCase().trim(),
+          );
+          if (matched) {
+            unitId = matched.id;
+          } else {
+            // Find first or create unit
+            const newUnit = await this.prisma.unit.create({
+              data: {
+                tenantId: user.tenantId,
+                clientId,
+                unitName: row.unitName.trim(),
+                unitType: 'APARTMENT',
+                createdBy: user.sub !== 'system' ? user.sub : null,
+              },
+            });
+            existingUnits.push(newUnit);
+            unitId = newUnit.id;
+          }
+        }
+
+        if (!unitId) {
+          if (existingUnits.length > 0) {
+            unitId = existingUnits[0].id;
+          } else {
+            const defaultUnit = await this.prisma.unit.create({
+              data: {
+                tenantId: user.tenantId,
+                clientId,
+                unitName: 'Unidad 101',
+                unitType: 'APARTMENT',
+                createdBy: user.sub !== 'system' ? user.sub : null,
+              },
+            });
+            existingUnits.push(defaultUnit);
+            unitId = defaultUnit.id;
+          }
+        }
+
+        const rawResidentType = (row.residentType || 'OWNER').trim().toUpperCase();
+        let residentType: ResidentType = ResidentType.OWNER;
+        if (
+          rawResidentType === 'TENANT' ||
+          rawResidentType === 'INQUILINO' ||
+          rawResidentType === 'ARRENDATARIO'
+        ) {
+          residentType = ResidentType.TENANT;
+        } else if (
+          rawResidentType === 'FAMILY_MEMBER' ||
+          rawResidentType === 'FAMILIAR'
+        ) {
+          residentType = ResidentType.FAMILY_MEMBER;
+        } else if (rawResidentType === 'OTHER' || rawResidentType === 'OTRO') {
+          residentType = ResidentType.OTHER;
+        } else if (rawResidentType in ResidentType) {
+          residentType = rawResidentType as ResidentType;
+        }
+
+        // Check single OWNER rule
+        if (residentType === ResidentType.OWNER) {
+          const existingOwner = await this.prisma.resident.findFirst({
+            where: {
+              tenantId: user.tenantId,
+              clientId,
+              unitId,
+              residentType: ResidentType.OWNER,
+              deletedAt: null,
+            },
+          });
+          if (existingOwner) {
+            throw new Error(
+              `La unidad ya cuenta con un Propietario (OWNER) registrado.`,
+            );
+          }
+        }
+
+        // Check duplicate document in client
+        const existingResident = await this.prisma.resident.findFirst({
+          where: {
+            tenantId: user.tenantId,
+            clientId,
+            document: row.document.trim(),
+            deletedAt: null,
+          },
+        });
+        if (existingResident) {
+          throw new Error(
+            `Ya existe un residente con documento ${row.document} en este conjunto.`,
+          );
+        }
+
+        // Normalize idType (mapping common Colombian CC / Cedula to CI)
+        let idType: IdType | null = null;
+        if (row.idType && row.idType.trim() !== '') {
+          const rawIdType = row.idType.trim().toUpperCase().replace(/[\.\-\s]/g, '');
+          if (
+            rawIdType === 'CC' ||
+            rawIdType === 'CI' ||
+            rawIdType === 'CEDULA' ||
+            rawIdType === 'TI' ||
+            rawIdType === 'TARJETAIDENTIDAD'
+          ) {
+            idType = IdType.CI;
+          } else if (rawIdType === 'CE' || rawIdType === 'EXTRANJERIA') {
+            idType = IdType.CE;
+          } else if (rawIdType === 'PASSPORT' || rawIdType === 'PASAPORTE') {
+            idType = IdType.PASSPORT;
+          } else if (rawIdType === 'NIT') {
+            idType = IdType.NIT;
+          } else if (rawIdType in IdType) {
+            idType = rawIdType as IdType;
+          } else {
+            idType = IdType.OTHER;
+          }
+        }
+
+        // Normalize gender (VarChar(1))
+        let gender: string | null = null;
+        if (row.gender && row.gender.trim() !== '') {
+          const g = row.gender.trim().toUpperCase();
+          if (g.startsWith('M')) gender = 'M';
+          else if (g.startsWith('F')) gender = 'F';
+          else gender = g.substring(0, 1);
+        }
+
+        const created = await this.prisma.resident.create({
+          data: {
+            tenantId: user.tenantId,
+            clientId,
+            unitId,
+            residentType,
+            idType,
+            firstName: row.firstName.trim(),
+            lastName: row.lastName.trim(),
+            document: row.document.trim(),
+            phoneNumber: row.phoneNumber.trim(),
+            email: row.email?.trim() || null,
+            gender,
+            birthdate: this.parseDate(row.birthdate),
+            residentSince: this.parseDate(row.residentSince) || new Date(),
+            accessStartDate: this.parseDate(row.accessStartDate),
+            accessEndDate: this.parseDate(row.accessEndDate),
+            createdById: user.sub !== 'system' ? user.sub : null,
+          },
+        });
+
+        createdResidents.push(created);
+        successRows++;
+      } catch (err: any) {
+        errorRows++;
+        errors.push({
+          row: rowNum,
+          document: row.document,
+          reason: err.message || 'Error al procesar fila',
+        });
+      }
+    }
+
+    const status =
+      errorRows === 0
+        ? 'SUCCESS'
+        : successRows === 0
+          ? 'FAILED'
+          : 'PARTIAL';
+
+    await this.prisma.fileImportLog.create({
+      data: {
+        tenantId: user.tenantId,
+        entityType: 'RESIDENT',
+        fileName: fileName || 'residentes.csv',
+        status,
+        totalRows,
+        successRows,
+        errorRows,
+        errorDetails: errors.length > 0 ? errors : undefined,
+        uploadedBy: user.sub || 'system',
+      },
+    });
+
+    return {
+      status,
+      totalRows,
+      successRows,
+      errorRows,
+      errors,
+      importedCount: createdResidents.length,
+    };
   }
 }

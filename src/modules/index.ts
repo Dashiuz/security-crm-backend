@@ -43,3 +43,7 @@ export * from './administrative/client/client.service';
 // Administrative: Resident
 export * from './administrative/resident/resident.module';
 export * from './administrative/resident/services/resident.service';
+
+// Administrative: Prospect
+export * from './administrative/prospect/prospect.module';
+export * from './administrative/prospect/prospect.service';

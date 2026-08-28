@@ -76,4 +76,24 @@ export class ResidentController {
   remove(@Param('id') id: string, @Request() req) {
     return this.residentService.remove(id, req.user);
   }
+
+  @Post('import/csv')
+  @RequirePermissions('resident:manage', 'resident:create')
+  @ApiOperation({ summary: 'Bulk import residents from JSON/CSV payload' })
+  importCsv(
+    @Body()
+    body: {
+      clientId: string;
+      data: Array<Record<string, string>>;
+      fileName?: string;
+    },
+    @Request() req,
+  ) {
+    return this.residentService.importResidentsFromCsv(
+      body.clientId,
+      body.data || [],
+      body.fileName || 'residentes.csv',
+      req.user,
+    );
+  }
 }

@@ -35,8 +35,14 @@ enum CorrespondenceStatus {
 }
 
 enum ClientStatus {
+  PROSPECT
   ACTIVE
   INACTIVE
+}
+
+enum AdministrationType {
+  ENTERPRISE
+  INDIVIDUAL
 }
 
 enum ContractStatus {
@@ -62,6 +68,7 @@ enum ResidentialComplexType {
   SINGLE_BUILDING
   BUILDING_CLUSTER
   HOUSE_CLUSTER
+  MIXED
   OTHER
 }
 

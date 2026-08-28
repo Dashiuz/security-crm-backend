@@ -55,6 +55,8 @@ model CorrespondenceReceivedControl {
   deletedById String?
   deletedBy   User?     @relation("CorrespondenceDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
+  mediaAttachments MediaAttachment[]
+
   @@index([tenantId])
   @@index([clientId])
   @@index([tenantId, clientId])

@@ -1,0 +1,6 @@
+nit,name,email,phone,address,city,sector,internalCode,contractNumber
+900881234-1,Conjunto Residencial Bosques de Castilla,administracion@bosquescastilla.com,3104567890,Calle 140 # 12-34,Bogotá,RESIDENTIAL,CLI-1001,CONT-2026-001
+901234567-2,Edificio Residencial Parque Central,contacto@parquecentral.com,3112345678,Carrera 15 # 85-20,Bogotá,RESIDENTIAL,CLI-1002,CONT-2026-002
+900554321-3,Conjunto Cerrado Las Palmas de Suba,admin@palmassuba.com,3123456789,Calle 152 # 111-45,Bogotá,RESIDENTIAL,CLI-1003,CONT-2026-003
+900778899-4,Torres de San Telmo P.H.,info@torressantelmo.com,3134567890,Avenida 19 # 104-50,Bogotá,RESIDENTIAL,CLI-1004,CONT-2026-004
+901998877-5,Centro Empresarial y Comercial Santa Bárbara,gerencia@santabarbaracec.com,3145678901,Calle 116 # 7-15,Bogotá,COMMERCIAL,CLI-1005,CONT-2026-005

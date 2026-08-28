@@ -9,13 +9,20 @@ import {
   IsDateString,
   Min,
   ValidateIf,
+  IsObject,
 } from 'class-validator';
-import { ClientStatus, ContractStatus, ClientSector } from '@prisma/client';
+import {
+  ClientStatus,
+  ContractStatus,
+  ClientSector,
+  AdministrationType,
+} from '@prisma/client';
 
 export class CreateClientDto {
-  @ApiProperty({ example: 'C001' })
-  @IsString({ message: 'El Código Interno es requerido.' })
-  internalCode: string;
+  @ApiProperty({ example: 'C001', required: false })
+  @IsString()
+  @IsOptional()
+  internalCode?: string;
 
   @ApiProperty({ enum: ClientStatus, default: ClientStatus.ACTIVE })
   @IsEnum(ClientStatus, { message: 'Estado del cliente no válido.' })
@@ -27,9 +34,10 @@ export class CreateClientDto {
   @IsOptional()
   contractStatus?: ContractStatus;
 
-  @ApiProperty({ example: 'CONT-2026-001' })
-  @IsString({ message: 'El Número de Contrato es requerido.' })
-  contractNumber: string;
+  @ApiProperty({ example: 'CONT-2026-001', required: false })
+  @IsString()
+  @IsOptional()
+  contractNumber?: string;
 
   @ApiProperty({ example: '900123456-7' })
   @IsString({ message: 'El NIT es requerido.' })
@@ -97,6 +105,16 @@ export class CreateClientDto {
   @IsOptional()
   quadrant?: string;
 
+  @ApiProperty({ example: '3101234567', required: false })
+  @IsString()
+  @IsOptional()
+  quadrantPhone?: string;
+
+  @ApiProperty({ example: 'CAI Cedritos', required: false })
+  @IsString()
+  @IsOptional()
+  cai?: string;
+
   @ApiProperty({ example: 'Observaciones generales', required: false })
   @IsString()
   @IsOptional()
@@ -160,19 +178,74 @@ export class CreateClientDto {
   @IsOptional()
   administratorEmail?: string;
 
-  @ApiProperty({ example: '2026-03-09' })
+  @ApiProperty({ example: '2026-03-09', required: false })
+  @ValidateIf(
+    (o) =>
+      o.contractDate !== undefined &&
+      o.contractDate !== null &&
+      o.contractDate !== '',
+  )
   @IsDateString(
     {},
     { message: 'La fecha de contrato debe ser una fecha válida.' },
   )
-  contractDate: string;
+  @IsOptional()
+  contractDate?: string;
 
-  @ApiProperty({ example: '2026-03-09' })
+  @ApiProperty({ example: '2026-03-09', required: false })
+  @ValidateIf(
+    (o) =>
+      o.lastContractDate !== undefined &&
+      o.lastContractDate !== null &&
+      o.lastContractDate !== '',
+  )
   @IsDateString(
     {},
     { message: 'La fecha de fin de contrato debe ser una fecha válida.' },
   )
-  lastContractDate: string;
+  @IsOptional()
+  lastContractDate?: string;
+
+  // Extended Contract Fields
+  @ApiProperty({ default: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  renewedContract?: boolean;
+
+  @ApiProperty({ example: '2027-03-09', required: false })
+  @ValidateIf(
+    (o) =>
+      o.contractEndDate !== undefined &&
+      o.contractEndDate !== null &&
+      o.contractEndDate !== '',
+  )
+  @IsDateString(
+    {},
+    { message: 'La fecha final de contrato debe ser una fecha válida.' },
+  )
+  @IsOptional()
+  contractEndDate?: string;
+
+  @ApiProperty({ required: false })
+  @IsObject()
+  @IsOptional()
+  contractMediaFiles?: Record<string, any>;
+
+  // Extended Administration Fields
+  @ApiProperty({ enum: AdministrationType, required: false })
+  @IsEnum(AdministrationType, { message: 'Tipo de administración no válido.' })
+  @IsOptional()
+  administrationType?: AdministrationType;
+
+  @ApiProperty({ required: false })
+  @IsObject()
+  @IsOptional()
+  administrationCompanyData?: Record<string, any>;
+
+  @ApiProperty({ required: false })
+  @IsObject()
+  @IsOptional()
+  councilData?: Record<string, any>;
 
   @ApiProperty({ default: true })
   @IsBoolean()

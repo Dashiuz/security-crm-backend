@@ -93,4 +93,18 @@ export class ClientController {
   reactivate(@Param('id') id: string, @Request() req) {
     return this.clientService.reactivate(id, req.user);
   }
+
+  @Post('import/csv')
+  @RequirePermissions('client:manage', 'client:create')
+  @ApiOperation({ summary: 'Bulk import clients from JSON/CSV payload' })
+  importCsv(
+    @Body() body: { data: Array<Record<string, string>>; fileName?: string },
+    @Request() req,
+  ) {
+    return this.clientService.importClientsFromCsv(
+      body.data || [],
+      body.fileName || 'clientes.csv',
+      req.user,
+    );
+  }
 }
