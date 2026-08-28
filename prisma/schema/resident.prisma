@@ -29,7 +29,9 @@ model Resident {
 
     deletedAt   DateTime?
     deletedById String?
-    deletedBy   User?    @relation("ResidentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+    deletedBy   User?     @relation("ResidentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+    mediaAttachments MediaAttachment[]
 
     @@unique([tenantId, clientId, document])
     @@index([tenantId])

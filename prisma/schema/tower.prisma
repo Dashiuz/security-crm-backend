@@ -7,6 +7,7 @@ model Tower {
 
     towerName    String @db.VarChar(50)
     floorsAmount Int    @default(0)
+    elevators    Int    @default(0)
 
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

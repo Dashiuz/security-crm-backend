@@ -30,10 +30,17 @@ export const auditExtension = (contextService: RequestContextService) => {
               'Department',
               'Position',
               'Client',
+              'ClientProperties',
+              'Resident',
+              'Tower',
+              'Floor',
+              'Unit',
               'Minuta',
               'VisitorEntryControl',
               'CorrespondenceReceivedControl',
               'ParkingResidentVehicleControl',
+              'MediaAttachment',
+              'FileImportLog',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -129,13 +136,20 @@ export const auditExtension = (contextService: RequestContextService) => {
                 if (isRelationAudit) {
                   const data = (args.data || {}) as any;
                   const newFields: any = {};
+                  const isUnchecked = Boolean(
+                    data.tenantId || data.createdById || data.clientId || data.updatedById,
+                  );
                   if (
                     !data.createdById &&
                     !data.createdBy &&
                     userId &&
                     userId !== 'system'
                   ) {
-                    newFields.createdBy = { connect: { id: userId } };
+                    if (isUnchecked) {
+                      newFields.createdById = userId;
+                    } else {
+                      newFields.createdBy = { connect: { id: userId } };
+                    }
                   }
                   if (
                     !data.updatedById &&
@@ -143,7 +157,11 @@ export const auditExtension = (contextService: RequestContextService) => {
                     userId &&
                     userId !== 'system'
                   ) {
-                    newFields.updatedBy = { connect: { id: userId } };
+                    if (isUnchecked) {
+                      newFields.updatedById = userId;
+                    } else {
+                      newFields.updatedBy = { connect: { id: userId } };
+                    }
                   }
                   args.data = { ...data, ...newFields };
                 } else {
@@ -156,16 +174,26 @@ export const auditExtension = (contextService: RequestContextService) => {
               } else if (operation === 'update') {
                 if (isRelationAudit) {
                   const data = (args.data || {}) as any;
+                  const isUnchecked = Boolean(
+                    data.tenantId || data.createdById || data.clientId || data.updatedById,
+                  );
                   if (
                     !data.updatedById &&
                     !data.updatedBy &&
                     userId &&
                     userId !== 'system'
                   ) {
-                    args.data = {
-                      ...data,
-                      updatedBy: { connect: { id: userId } },
-                    };
+                    if (isUnchecked) {
+                      args.data = {
+                        ...data,
+                        updatedById: userId,
+                      };
+                    } else {
+                      args.data = {
+                        ...data,
+                        updatedBy: { connect: { id: userId } },
+                      };
+                    }
                   }
                 } else {
                   args.data = {
@@ -179,13 +207,24 @@ export const auditExtension = (contextService: RequestContextService) => {
                   const updateData = ((args as any).update || {}) as any;
                   const newCreate: any = {};
                   const newUpdate: any = {};
+                  const isUncheckedCreate = Boolean(
+                    createData.tenantId || createData.createdById || createData.clientId || createData.updatedById,
+                  );
+                  const isUncheckedUpdate = Boolean(
+                    updateData.tenantId || updateData.createdById || updateData.clientId || updateData.updatedById,
+                  );
+
                   if (
                     !createData.createdById &&
                     !createData.createdBy &&
                     userId &&
                     userId !== 'system'
                   ) {
-                    newCreate.createdBy = { connect: { id: userId } };
+                    if (isUncheckedCreate) {
+                      newCreate.createdById = userId;
+                    } else {
+                      newCreate.createdBy = { connect: { id: userId } };
+                    }
                   }
                   if (
                     !createData.updatedById &&
@@ -193,16 +232,26 @@ export const auditExtension = (contextService: RequestContextService) => {
                     userId &&
                     userId !== 'system'
                   ) {
-                    newCreate.updatedBy = { connect: { id: userId } };
+                    if (isUncheckedCreate) {
+                      newCreate.updatedById = userId;
+                    } else {
+                      newCreate.updatedBy = { connect: { id: userId } };
+                    }
                   }
+
                   if (
                     !updateData.updatedById &&
                     !updateData.updatedBy &&
                     userId &&
                     userId !== 'system'
                   ) {
-                    newUpdate.updatedBy = { connect: { id: userId } };
+                    if (isUncheckedUpdate) {
+                      newUpdate.updatedById = userId;
+                    } else {
+                      newUpdate.updatedBy = { connect: { id: userId } };
+                    }
                   }
+
                   (args as any).create = { ...createData, ...newCreate };
                   (args as any).update = { ...updateData, ...newUpdate };
                 } else {

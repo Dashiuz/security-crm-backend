@@ -5,6 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ClientRepositoryService } from '../../../common/repository/client/client.repository.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import {
   CreateClientDto,
   UpdateClientDto,
@@ -14,12 +15,14 @@ import { CreateClientWithStructureDto } from './dtos/client-structure.dto';
 import { ClientStructureGeneratorService } from './services/client-structure-generator.service';
 import { UserContext } from '../../../common/interfaces/user-context.interface';
 import { toDateOnlyIso } from '../../../common/utils/convertDate';
+import { ClientStatus, ClientSector } from '@prisma/client';
 
 @Injectable()
 export class ClientService {
   constructor(
     private readonly clientRepository: ClientRepositoryService,
     private readonly structureGenerator: ClientStructureGeneratorService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private mapClientToResponse(row: any): ClientResponseDto {
@@ -38,8 +41,13 @@ export class ClientService {
 
     return {
       ...row,
-      contractDate: toDateOnlyIso(row.contractDate),
-      lastContractDate: toDateOnlyIso(row.lastContractDate),
+      contractDate: row.contractDate ? toDateOnlyIso(row.contractDate) : null,
+      lastContractDate: row.lastContractDate
+        ? toDateOnlyIso(row.lastContractDate)
+        : null,
+      contractEndDate: row.contractEndDate
+        ? toDateOnlyIso(row.contractEndDate)
+        : null,
       createdBy: createdByName,
     };
   }
@@ -76,12 +84,19 @@ export class ClientService {
   ): Promise<ClientResponseDto> {
     const { structureConfig, ...clientFields } = dto as any;
 
+    const internalCode =
+      clientFields.internalCode && clientFields.internalCode.trim() !== ''
+        ? clientFields.internalCode.trim()
+        : `CLI-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const data = {
       ...clientFields,
+      internalCode,
+      clientStatus: clientFields.clientStatus || ClientStatus.ACTIVE,
       tenant: { connect: { id: user.tenantId } },
     } as any;
 
-    // Clean relation scalar fields so Prisma payload doesn't contain unknown arguments
+    // Clean relation scalar fields
     delete data.coordinatorInChargeId;
     delete data.commercialContactId;
 
@@ -103,21 +118,28 @@ export class ClientService {
       };
     }
 
-    // Date parsing
-    const contractDate = new Date(clientFields.contractDate);
-    const lastContractDate = new Date(clientFields.lastContractDate);
+    // Helper for optional date parsing
+    const parseOptionalDate = (val: any) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') return null;
+      const d = new Date(val);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
 
-    if (
-      Number.isNaN(contractDate.getTime()) ||
-      Number.isNaN(lastContractDate.getTime())
-    ) {
-      throw new BadRequestException(
-        'Las fechas de inicio y/o fin de contrato no son válidas.',
-      );
+    // Date parsing and sanitization
+    delete data.contractDate;
+    delete data.lastContractDate;
+    delete data.contractEndDate;
+
+    const parsedContractDate = parseOptionalDate(clientFields.contractDate);
+    if (parsedContractDate) data.contractDate = parsedContractDate;
+
+    const parsedEndDate = parseOptionalDate(
+      clientFields.lastContractDate || clientFields.contractEndDate,
+    );
+    if (parsedEndDate) {
+      data.lastContractDate = parsedEndDate;
+      data.contractEndDate = parsedEndDate;
     }
-
-    data.contractDate = contractDate;
-    data.lastContractDate = lastContractDate;
 
     if (user.sub && user.sub !== 'system') {
       data.createdBy = { connect: { id: user.sub } };
@@ -151,7 +173,10 @@ export class ClientService {
   async findAll(user: UserContext): Promise<ClientResponseDto[]> {
     return this.clientRepository
       .findMany({
-        where: { tenantId: user.tenantId },
+        where: {
+          tenantId: user.tenantId,
+          clientStatus: { not: ClientStatus.PROSPECT },
+        },
         include: {
           coordinatorInCharge: true,
           commercialContact: true,
@@ -228,21 +253,30 @@ export class ClientService {
       data.commercialContact = { disconnect: true };
     }
 
-    // Date parsing for updates
-    if (clientFields.contractDate) {
-      const d = new Date(clientFields.contractDate);
-      if (Number.isNaN(d.getTime()))
-        throw new BadRequestException('La fecha de contrato no es válida.');
-      data.contractDate = d;
+    // Helper for optional date parsing
+    const parseOptionalDate = (val: any) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') return null;
+      const d = new Date(val);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+
+    delete data.contractDate;
+    delete data.lastContractDate;
+    delete data.contractEndDate;
+
+    if (clientFields.contractDate !== undefined) {
+      data.contractDate = parseOptionalDate(clientFields.contractDate);
     }
 
-    if (clientFields.lastContractDate) {
-      const d = new Date(clientFields.lastContractDate);
-      if (Number.isNaN(d.getTime()))
-        throw new BadRequestException(
-          'La última fecha de contrato no es válida.',
-        );
-      data.lastContractDate = d;
+    if (
+      clientFields.lastContractDate !== undefined ||
+      clientFields.contractEndDate !== undefined
+    ) {
+      const parsedEnd = parseOptionalDate(
+        clientFields.lastContractDate || clientFields.contractEndDate,
+      );
+      data.lastContractDate = parsedEnd;
+      data.contractEndDate = parsedEnd;
     }
 
     if (user.sub && user.sub !== 'system') {
@@ -294,5 +328,125 @@ export class ClientService {
     }
     await this.clientRepository.update(id, data);
     return this.findOne(id, user);
+  }
+
+  async importClientsFromCsv(
+    csvData: Array<Record<string, string>>,
+    fileName: string,
+    user: UserContext,
+  ) {
+    const totalRows = csvData.length;
+    let successRows = 0;
+    let errorRows = 0;
+    const errors: Array<{ row: number; nit?: string; reason: string }> = [];
+    const createdClients: any[] = [];
+
+    for (let i = 0; i < csvData.length; i++) {
+      const row = csvData[i];
+      const rowNum = i + 1;
+
+      try {
+        if (!row.nit || !row.name) {
+          throw new Error('Los campos NIT y Nombre son obligatorios.');
+        }
+
+        const existing = await this.prisma.client.findFirst({
+          where: {
+            tenantId: user.tenantId,
+            nit: row.nit.trim(),
+          },
+        });
+
+        if (existing) {
+          throw new Error(`Ya existe un cliente con el NIT ${row.nit}`);
+        }
+
+        const internalCode =
+          row.internalCode && row.internalCode.trim() !== ''
+            ? row.internalCode.trim()
+            : `CLI-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        let sector: ClientSector = ClientSector.RESIDENTIAL;
+        if (row.sector && row.sector.trim() !== '') {
+          const s = row.sector.trim().toUpperCase();
+          if (s === 'RESIDENCIAL' || s === 'RESIDENTIAL') {
+            sector = ClientSector.RESIDENTIAL;
+          } else if (s === 'COMERCIAL' || s === 'COMMERCIAL') {
+            sector = ClientSector.COMMERCIAL;
+          } else if (s === 'INDUSTRIAL') {
+            sector = ClientSector.INDUSTRIAL;
+          } else if (s === 'GUBERNAMENTAL' || s === 'GOVERNMENT') {
+            sector = ClientSector.GOVERNMENT;
+          } else if (s in ClientSector) {
+            sector = s as ClientSector;
+          } else {
+            sector = ClientSector.OTHER;
+          }
+        }
+
+        const clientData: any = {
+          tenant: { connect: { id: user.tenantId } },
+          nit: row.nit.trim(),
+          name: row.name.trim(),
+          internalCode,
+          contractNumber:
+            row.contractNumber?.trim() ||
+            `CONT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+          email: row.email?.trim() || null,
+          phone: row.phone?.trim() || null,
+          address: row.address?.trim() || null,
+          city: row.city?.trim() || 'Bogotá',
+          sector,
+          clientStatus: ClientStatus.ACTIVE,
+        };
+
+        if (user.sub && user.sub !== 'system') {
+          clientData.createdBy = { connect: { id: user.sub } };
+          clientData.updatedBy = { connect: { id: user.sub } };
+        }
+
+        const created = await this.prisma.client.create({ data: clientData });
+        createdClients.push(created);
+        successRows++;
+      } catch (err: any) {
+        errorRows++;
+        errors.push({
+          row: rowNum,
+          nit: row.nit,
+          reason: err.message || 'Error desconocido al procesar fila',
+        });
+      }
+    }
+
+    // Record FileImportLog
+    const status =
+      errorRows === 0
+        ? 'SUCCESS'
+        : successRows === 0
+          ? 'FAILED'
+          : 'PARTIAL';
+
+    await this.prisma.fileImportLog.create({
+      data: {
+        tenantId: user.tenantId,
+        entityType: 'CLIENT',
+        fileName: fileName || 'clientes.csv',
+        status,
+        totalRows,
+        successRows,
+        errorRows,
+        errorDetails: errors.length > 0 ? errors : undefined,
+        uploadedBy: user.sub || 'system',
+      },
+    });
+
+    return {
+      status,
+      totalRows,
+      successRows,
+      errorRows,
+      errors,
+      importedCount: createdClients.length,
+    };
   }
 }

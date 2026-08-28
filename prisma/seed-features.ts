@@ -11,6 +11,7 @@ async function main() {
     { key: 'visitor', name: 'Control de Visitas', description: 'Registro de entrada y salida de visitantes' },
     { key: 'correspondence', name: 'Control de Correspondencia', description: 'Recepción y entrega de paquetes' },
     { key: 'client', name: 'Clientes', description: 'Gestión de cartera de clientes' },
+    { key: 'prospect', name: 'Prospectos', description: 'Gestión de prospectos de clientes' },
     { key: 'employee', name: 'Empleados', description: 'Gestión de personal' },
     { key: 'user', name: 'Usuarios', description: 'Gestión de cuentas de acceso' },
     { key: 'department', name: 'Departamentos', description: 'Gestión de áreas de la empresa' },

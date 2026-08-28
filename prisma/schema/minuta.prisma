@@ -41,6 +41,8 @@ model Minuta {
   deletedById String?
   deletedBy   User?     @relation("MinutaDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
+  mediaAttachments MediaAttachment[]
+
   @@index([tenantId])
   @@index([clientId])
   @@index([tenantId, clientId])

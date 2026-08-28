@@ -40,6 +40,12 @@ export class TowerDefinitionDto {
   @Min(1, { message: 'La cantidad mínima de apartamentos por piso es 1.' })
   apartmentsPerFloor: number;
 
+  @ApiProperty({ example: 2, required: false, default: 0 })
+  @IsInt({ message: 'La cantidad de ascensores debe ser un entero.' })
+  @Min(0)
+  @IsOptional()
+  elevators?: number;
+
   @ApiProperty({ type: [FloorVariationDto], required: false })
   @IsArray({ message: 'Las variaciones de piso deben estar en una lista.' })
   @ValidateNested({ each: true })
@@ -168,6 +174,16 @@ export class StructureConfigDto {
   volleyballCourtAmount?: number;
 
   @ApiProperty({ default: false, required: false })
+  @IsBoolean({ message: 'El indicador de cancha de squash debe ser booleano.' })
+  @IsOptional()
+  hasSquashCourt?: boolean;
+
+  @ApiProperty({ default: 0, required: false })
+  @IsInt({ message: 'La cantidad de canchas de squash debe ser un entero.' })
+  @IsOptional()
+  squashCourtAmount?: number;
+
+  @ApiProperty({ default: false, required: false })
   @IsBoolean({ message: 'El indicador de parque infantil debe ser booleano.' })
   @IsOptional()
   hasPlayground?: boolean;
@@ -178,14 +194,44 @@ export class StructureConfigDto {
   playgroundAmount?: number;
 
   @ApiProperty({ default: false, required: false })
-  @IsBoolean({ message: 'El indicador de parqueadero debe ser booleano.' })
+  @IsBoolean({ message: 'El indicador de parqueadero privado debe ser booleano.' })
   @IsOptional()
   hasParking?: boolean;
 
   @ApiProperty({ default: 0, required: false })
-  @IsInt({ message: 'La cantidad de parqueaderos debe ser un entero.' })
+  @IsInt({ message: 'La cantidad de parqueaderos privados debe ser un entero.' })
   @IsOptional()
   parkingAmount?: number;
+
+  @ApiProperty({ default: false, required: false })
+  @IsBoolean({ message: 'El indicador de parqueadero de visitantes debe ser booleano.' })
+  @IsOptional()
+  hasGuestParking?: boolean;
+
+  @ApiProperty({ default: 0, required: false })
+  @IsInt({ message: 'La cantidad de parqueaderos de visitantes debe ser un entero.' })
+  @IsOptional()
+  guestParkingAmount?: number;
+
+  @ApiProperty({ default: false, required: false })
+  @IsBoolean({ message: 'El indicador de bicicletero debe ser booleano.' })
+  @IsOptional()
+  hasBicycleRack?: boolean;
+
+  @ApiProperty({ default: 0, required: false })
+  @IsInt({ message: 'La cantidad de bicicleteros debe ser un entero.' })
+  @IsOptional()
+  bicycleRackAmount?: number;
+
+  @ApiProperty({ default: false, required: false })
+  @IsBoolean({ message: 'El indicador de locales comerciales debe ser booleano.' })
+  @IsOptional()
+  hasCommercialStores?: boolean;
+
+  @ApiProperty({ default: 0, required: false })
+  @IsInt({ message: 'La cantidad de locales comerciales debe ser un entero.' })
+  @IsOptional()
+  commercialStoresAmount?: number;
 
   @ApiProperty({ default: false, required: false })
   @IsBoolean({ message: 'El indicador de depósito debe ser booleano.' })
@@ -196,6 +242,14 @@ export class StructureConfigDto {
   @IsInt({ message: 'La cantidad de depósitos debe ser un entero.' })
   @IsOptional()
   storageRoomAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  entriesDescription?: Record<string, any>;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  entriesMediaFiles?: Record<string, any>;
 }
 
 export class CreateClientWithStructureDto extends CreateClientDto {

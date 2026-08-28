@@ -22,9 +22,9 @@ import {
   UpdateResidentDto,
   ResidentResponseDto,
 } from '../dtos/resident.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { PermissionsGuard } from '../../access-control/permissions.guard';
-import { RequirePermissions } from '../../access-control/permissions.decorator';
+import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../../regulation/access-control/permissions.guard';
+import { RequirePermissions } from '../../../regulation/access-control/permissions.decorator';
 
 @ApiTags('Residents')
 @ApiBearerAuth('access-token')
@@ -75,5 +75,25 @@ export class ResidentController {
   @ApiOkResponse({ description: 'Resident deleted' })
   remove(@Param('id') id: string, @Request() req) {
     return this.residentService.remove(id, req.user);
+  }
+
+  @Post('import/csv')
+  @RequirePermissions('resident:manage', 'resident:create')
+  @ApiOperation({ summary: 'Bulk import residents from JSON/CSV payload' })
+  importCsv(
+    @Body()
+    body: {
+      clientId: string;
+      data: Array<Record<string, string>>;
+      fileName?: string;
+    },
+    @Request() req,
+  ) {
+    return this.residentService.importResidentsFromCsv(
+      body.clientId,
+      body.data || [],
+      body.fileName || 'residentes.csv',
+      req.user,
+    );
   }
 }

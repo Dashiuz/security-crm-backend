@@ -6,7 +6,7 @@ model Client {
   clientStatus   ClientStatus   @default(ACTIVE)
   contractStatus ContractStatus @default(ACTIVE)
 
-  contractNumber String  @unique
+  contractNumber String? @unique
   nit            String  @unique
   name           String
   email          String?
@@ -20,6 +20,8 @@ model Client {
   commune        String?
   neighborhood   String?
   quadrant       String?
+  quadrantPhone  String?
+  cai            String?
   observations   String?
 
   sector ClientSector @default(RESIDENTIAL)
@@ -37,11 +39,22 @@ model Client {
   administratorPhone String?
   administratorEmail String?
 
-  contractDate     DateTime @db.Date
-  lastContractDate DateTime @db.Date
-  createdAt        DateTime @default(now())
-  createdById      String?
-  createdBy        User?    @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  contractDate     DateTime? @db.Date
+  lastContractDate DateTime? @db.Date
+
+  // Extended Contract Information
+  renewedContract    Boolean?  @default(false)
+  contractEndDate    DateTime?
+  contractMediaFiles Json?     @db.JsonB
+
+  // Extended Administrative & Contact Information
+  administrationType        AdministrationType?
+  administrationCompanyData Json?               @db.JsonB
+  councilData               Json?               @db.JsonB
+
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   updatedAt   DateTime @updatedAt
   updatedById String?
@@ -53,12 +66,13 @@ model Client {
 
   isActive Boolean @default(true)
 
-  users           User[]
-  employees       Employee[]
-  minutas         Minuta[]
-  visitorEntries  VisitorEntryControl[]
-  correspondences CorrespondenceReceivedControl[]
-  parkingVehicles ParkingResidentVehicleControl[]
+  users            User[]
+  employees        Employee[]
+  minutas          Minuta[]
+  visitorEntries   VisitorEntryControl[]
+  correspondences  CorrespondenceReceivedControl[]
+  parkingVehicles  ParkingResidentVehicleControl[]
+  mediaAttachments MediaAttachment[]
 
   clientProperties ClientProperties?
   residents        Resident[]
