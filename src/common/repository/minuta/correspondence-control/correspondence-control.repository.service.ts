@@ -20,6 +20,8 @@ export class CorrespondenceRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        recipientResident: { select: { id: true, firstName: true, lastName: true, document: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -27,13 +29,23 @@ export class CorrespondenceRepositoryService {
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',
       clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || null,
+      recipientResidentName: r.recipientResident ? `${r.recipientResident.firstName} ${r.recipientResident.lastName}` : null,
     }));
   }
 
   async findUnique(
     where: Prisma.CorrespondenceReceivedControlWhereUniqueInput,
-  ): Promise<CorrespondenceReceivedControl | null> {
-    return this.prisma.correspondenceReceivedControl.findUnique({ where });
+  ): Promise<any> {
+    return this.prisma.correspondenceReceivedControl.findUnique({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        recipientResident: { select: { id: true, firstName: true, lastName: true, document: true } },
+      },
+    });
   }
 
   async update(

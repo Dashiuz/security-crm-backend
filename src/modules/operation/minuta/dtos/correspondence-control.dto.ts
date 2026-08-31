@@ -68,6 +68,21 @@ export class CreateCorrespondenceDto {
   @IsOptional()
   observations?: string;
 
+  @ApiPropertyOptional({ example: 'client-id-123' })
+  @IsString({ message: 'El ID del cliente/conjunto debe ser un texto válido.' })
+  @IsOptional()
+  clientId?: string;
+
+  @ApiPropertyOptional({ example: 'unit-id-123' })
+  @IsString({ message: 'El ID de la unidad o apartamento debe ser un texto válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional({ example: 'resident-id-123' })
+  @IsString({ message: 'El ID del residente destinatario debe ser un texto válido.' })
+  @IsOptional()
+  recipientResidentId?: string;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -111,7 +126,44 @@ export class UpdateCorrespondenceDto {
   deliveredToName?: string;
 
   @ApiPropertyOptional()
+  @IsString({ message: 'La URL o evidencia de entrega debe ser un texto válido.' })
+  @IsOptional()
+  deliveryEvidenceUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'Las notas de entrega deben ser un texto válido.' })
+  @IsOptional()
+  deliveryNotes?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El ID de la unidad debe ser un texto válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El ID del residente destinatario debe ser un texto válido.' })
+  @IsOptional()
+  recipientResidentId?: string;
+
+  @ApiPropertyOptional()
   @IsString({ message: 'Las observaciones deben ser un texto válido.' })
   @IsOptional()
   observations?: string;
+}
+
+export class DeliverCorrespondenceDto {
+  @ApiProperty({ example: 'Carlos Gómez' })
+  @IsString({ message: 'El nombre de la persona que recibe debe ser un texto válido.' })
+  @IsNotEmpty({ message: 'El nombre de quien recibe es requerido.' })
+  deliveredToName!: string;
+
+  @ApiPropertyOptional({ example: 'https://...' })
+  @IsString()
+  @IsOptional()
+  deliveryEvidenceUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  deliveryNotes?: string;
 }

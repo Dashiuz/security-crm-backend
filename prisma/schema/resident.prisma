@@ -32,6 +32,8 @@ model Resident {
     deletedBy   User?     @relation("ResidentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
     mediaAttachments MediaAttachment[]
+    visitorEntries   VisitorEntryControl[]
+    correspondences  CorrespondenceReceivedControl[]
 
     @@unique([tenantId, clientId, document])
     @@index([tenantId])

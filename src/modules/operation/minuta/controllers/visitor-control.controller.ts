@@ -21,6 +21,7 @@ import { VisitorControlService } from '../services/visitor-control.service';
 import {
   CreateVisitorEntryDto,
   UpdateVisitorEntryDto,
+  RegisterVisitorExitDto,
 } from '../dtos/visitor-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
@@ -67,6 +68,18 @@ export class VisitorControlController {
     @Body() dto: UpdateVisitorEntryDto,
   ) {
     return this.service.update(id, dto, req.user.sub);
+  }
+
+  @Patch(':id/exit')
+  @RequirePermissions('minuta:manage', 'minuta:update')
+  @ApiOperation({ summary: 'Register visitor exit timestamp' })
+  @ApiBody({ type: RegisterVisitorExitDto, required: false })
+  registerExit(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto?: RegisterVisitorExitDto,
+  ) {
+    return this.service.registerExit(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')

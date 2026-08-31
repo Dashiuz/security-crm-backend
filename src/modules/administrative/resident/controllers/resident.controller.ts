@@ -42,7 +42,7 @@ export class ResidentController {
   }
 
   @Get('by-client/:clientId')
-  @RequirePermissions('resident:manage', 'resident:read')
+  @RequirePermissions('resident:manage', 'resident:read', 'minuta:manage', 'minuta:create')
   @ApiOperation({ summary: 'List residents by client' })
   @ApiOkResponse({ type: [ResidentResponseDto] })
   findByClient(@Param('clientId') clientId: string, @Request() req) {

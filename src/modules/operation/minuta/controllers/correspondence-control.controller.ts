@@ -21,6 +21,7 @@ import { CorrespondenceControlService } from '../services/correspondence-control
 import {
   CreateCorrespondenceDto,
   UpdateCorrespondenceDto,
+  DeliverCorrespondenceDto,
 } from '../dtos/correspondence-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
@@ -67,6 +68,18 @@ export class CorrespondenceControlController {
     @Body() dto: UpdateCorrespondenceDto,
   ) {
     return this.service.update(id, dto, req.user.sub);
+  }
+
+  @Patch(':id/deliver')
+  @RequirePermissions('minuta:manage', 'minuta:update')
+  @ApiOperation({ summary: 'Deliver correspondence to resident with evidence' })
+  @ApiBody({ type: DeliverCorrespondenceDto })
+  deliver(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: DeliverCorrespondenceDto,
+  ) {
+    return this.service.deliver(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')

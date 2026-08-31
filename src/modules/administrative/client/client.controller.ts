@@ -59,7 +59,7 @@ export class ClientController {
   }
 
   @Get(':id')
-  @RequirePermissions('client:manage', 'client:read')
+  @RequirePermissions('client:manage', 'client:read', 'minuta:manage', 'minuta:create')
   @ApiOperation({ summary: 'Get client by id' })
   @ApiOkResponse({ type: ClientResponseDto })
   findOne(@Param('id') id: string, @Request() req) {

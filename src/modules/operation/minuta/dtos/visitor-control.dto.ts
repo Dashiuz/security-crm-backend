@@ -97,6 +97,21 @@ export class CreateVisitorEntryDto {
   @IsOptional()
   observations?: string;
 
+  @ApiPropertyOptional({ example: 'client-id-123' })
+  @IsString({ message: 'El ID del cliente/conjunto debe ser un texto válido.' })
+  @IsOptional()
+  clientId?: string;
+
+  @ApiPropertyOptional({ example: 'unit-id-123' })
+  @IsString({ message: 'El ID de la unidad o apartamento debe ser un texto válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional({ example: 'resident-id-123' })
+  @IsString({ message: 'El ID del residente debe ser un texto válido.' })
+  @IsOptional()
+  residentId?: string;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -131,6 +146,33 @@ export class UpdateVisitorEntryDto {
 
   @ApiPropertyOptional()
   @IsDateString({}, { message: 'La fecha/hora de salida debe ser válida.' })
+  @IsOptional()
+  exitAt?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El ID de la unidad debe ser un texto válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El ID del residente debe ser un texto válido.' })
+  @IsOptional()
+  residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'Las observaciones deben ser un texto válido.' })
+  @IsOptional()
+  observations?: string;
+}
+
+export class RegisterVisitorExitDto {
+  @ApiPropertyOptional({ example: '18:30:00' })
+  @IsString({ message: 'La hora de salida debe ser un texto válido.' })
+  @IsOptional()
+  exitTime?: string;
+
+  @ApiPropertyOptional({ example: '2026-08-29T18:30:00Z' })
+  @IsDateString({}, { message: 'La fecha/hora de salida debe ser una fecha válida.' })
   @IsOptional()
   exitAt?: string;
 
