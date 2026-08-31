@@ -20,6 +20,8 @@ export class VisitorControlRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        resident: { select: { id: true, firstName: true, lastName: true, document: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -27,13 +29,23 @@ export class VisitorControlRepositoryService {
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',
       clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || null,
+      residentName: r.resident ? `${r.resident.firstName} ${r.resident.lastName}` : null,
     }));
   }
 
   async findUnique(
     where: Prisma.VisitorEntryControlWhereUniqueInput,
-  ): Promise<VisitorEntryControl | null> {
-    return this.prisma.visitorEntryControl.findUnique({ where });
+  ): Promise<any> {
+    return this.prisma.visitorEntryControl.findUnique({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        resident: { select: { id: true, firstName: true, lastName: true, document: true } },
+      },
+    });
   }
 
   async update(

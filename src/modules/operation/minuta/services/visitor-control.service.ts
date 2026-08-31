@@ -3,6 +3,7 @@ import { VisitorControlRepositoryService } from '../../../../common/repository/m
 import {
   CreateVisitorEntryDto,
   UpdateVisitorEntryDto,
+  RegisterVisitorExitDto,
 } from '../dtos/visitor-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { RecordStatus } from '@prisma/client';
@@ -12,12 +13,13 @@ export class VisitorControlService {
   constructor(private readonly repository: VisitorControlRepositoryService) {}
 
   async create(dto: CreateVisitorEntryDto, userId: string, tenantId: string) {
-    const { date, time, occurredAt, entryTime, ...others } = dto;
+    const { date, time, occurredAt, entryTime, clientId, unitId, residentId, ...others } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
         : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
-    return this.repository.create({
+
+    const dataToCreate: any = {
       ...others,
       date: new Date(date),
       time: parseTime(time),
@@ -26,7 +28,19 @@ export class VisitorControlService {
       tenant: { connect: { id: tenantId } },
       createdBy: { connect: { id: userId } },
       guard: { connect: { id: userId } },
-    } as any);
+    };
+
+    if (clientId) {
+      dataToCreate.client = { connect: { id: clientId } };
+    }
+    if (unitId) {
+      dataToCreate.unit = { connect: { id: unitId } };
+    }
+    if (residentId) {
+      dataToCreate.resident = { connect: { id: residentId } };
+    }
+
+    return this.repository.create(dataToCreate);
   }
 
   async findAll(clientId?: string) {
@@ -47,7 +61,7 @@ export class VisitorControlService {
   }
 
   async update(id: string, dto: UpdateVisitorEntryDto, userId: string) {
-    const { date, time, occurredAt, entryTime, exitTime, exitAt, ...others } =
+    const { date, time, occurredAt, entryTime, exitTime, exitAt, unitId, residentId, ...others } =
       dto;
     const parseTime = (t: string) =>
       t.includes('T')
@@ -61,6 +75,8 @@ export class VisitorControlService {
     if (entryTime) updateData.entryTime = parseTime(entryTime);
     if (exitTime) updateData.exitTime = parseTime(exitTime);
     if (exitAt) updateData.exitAt = new Date(exitAt);
+    if (unitId) (updateData as any).unit = { connect: { id: unitId } };
+    if (residentId) (updateData as any).resident = { connect: { id: residentId } };
 
     return this.repository.update(
       { id },
@@ -69,6 +85,30 @@ export class VisitorControlService {
         updatedBy: { connect: { id: userId } },
       },
     );
+  }
+
+  async registerExit(id: string, dto?: RegisterVisitorExitDto, userId?: string) {
+    await this.findOne(id);
+    const now = new Date();
+    const parseTime = (t: string) =>
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
+
+    const exitAt = dto?.exitAt ? new Date(dto.exitAt) : now;
+    const exitTime = dto?.exitTime ? parseTime(dto.exitTime) : now;
+
+    const updateData: any = {
+      exitAt,
+      exitTime,
+      ...(dto?.observations ? { observations: dto.observations } : {}),
+    };
+
+    if (userId && userId !== 'system') {
+      updateData.updatedBy = { connect: { id: userId } };
+    }
+
+    return this.repository.update({ id }, updateData);
   }
 
   async void(id: string, dto: VoidRecordDto, userId: string) {

@@ -19,7 +19,9 @@ model Unit {
     updatedBy String?
     deletedBy String?
 
-    residents Resident[]
+    residents       Resident[]
+    visitorEntries  VisitorEntryControl[]
+    correspondences CorrespondenceReceivedControl[]
 
     @@index([tenantId])
     @@index([clientId])
