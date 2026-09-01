@@ -20,6 +20,7 @@ export class ParkingControlRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
+        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -32,8 +33,15 @@ export class ParkingControlRepositoryService {
 
   async findUnique(
     where: Prisma.ParkingResidentVehicleControlWhereUniqueInput,
-  ): Promise<ParkingResidentVehicleControl | null> {
-    return this.prisma.parkingResidentVehicleControl.findUnique({ where });
+  ): Promise<any> {
+    return this.prisma.parkingResidentVehicleControl.findUnique({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+      },
+    });
   }
 
   async update(

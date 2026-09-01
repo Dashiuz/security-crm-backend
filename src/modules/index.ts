@@ -47,3 +47,10 @@ export * from './administrative/resident/services/resident.service';
 // Administrative: Prospect
 export * from './administrative/prospect/prospect.module';
 export * from './administrative/prospect/prospect.service';
+
+// Storage (AWS S3 & Media Attachment)
+export * from './storage/storage.module';
+export * from './storage/services/storage.service';
+export * from './storage/services/s3.service';
+export * from './storage/dtos/upload-media.dto';
+

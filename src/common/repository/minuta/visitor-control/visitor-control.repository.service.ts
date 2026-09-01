@@ -22,6 +22,7 @@ export class VisitorControlRepositoryService {
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
         resident: { select: { id: true, firstName: true, lastName: true, document: true } },
+        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -44,6 +45,7 @@ export class VisitorControlRepositoryService {
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
         resident: { select: { id: true, firstName: true, lastName: true, document: true } },
+        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
       },
     });
   }

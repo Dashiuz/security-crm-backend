@@ -24,6 +24,8 @@ model MediaAttachment {
   parkingVehicle     ParkingResidentVehicleControl?  @relation(fields: [parkingVehicleId], references: [id], onDelete: Cascade)
   visitorEntryId     String?
   visitorEntry       VisitorEntryControl?            @relation(fields: [visitorEntryId], references: [id], onDelete: Cascade)
+  employeeId         String?
+  employee           Employee?                       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   uploadedById String
   createdAt    DateTime @default(now())
@@ -33,6 +35,7 @@ model MediaAttachment {
   @@index([clientId])
   @@index([residentId])
   @@index([minutaId])
+  @@index([employeeId])
   @@index([s3Key])
   @@map("media_attachments")
 }

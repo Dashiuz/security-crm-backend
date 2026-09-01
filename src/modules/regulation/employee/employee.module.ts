@@ -5,9 +5,10 @@ import {
   EmployeeRepositoryModule,
   UserRepositoryModule,
 } from '../../../common/repository/index';
+import { StorageModule } from '../../storage/storage.module';
 
 @Module({
-  imports: [EmployeeRepositoryModule, UserRepositoryModule],
+  imports: [EmployeeRepositoryModule, UserRepositoryModule, StorageModule],
   controllers: [EmployeeController],
   providers: [EmployeeService],
 })

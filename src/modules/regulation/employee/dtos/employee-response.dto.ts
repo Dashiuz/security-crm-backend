@@ -67,4 +67,10 @@ export class EmployeeResponseDto {
 
   @ApiPropertyOptional({ nullable: true, example: 'Supervisor Motorizado' })
   positionName!: string | null;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Presigned S3 URL for employee avatar' })
+  avatarUrl?: string | null;
+
+  @ApiPropertyOptional({ description: 'List of media attachments' })
+  mediaAttachments?: any[];
 }
