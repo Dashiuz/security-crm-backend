@@ -1,0 +1,79 @@
+model CorrespondenceReceivedControl {
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  unitId   String?
+  unit     Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  recipientResidentId String?
+  recipientResident   Resident? @relation(fields: [recipientResidentId], references: [id], onDelete: SetNull)
+
+  // Base
+  date       DateTime @db.Date
+  time       DateTime @db.Time
+  occurredAt DateTime // recomendado: datetime de recibido
+
+  receivedTime DateTime @db.Time // si quieres mantener “hora de recibido” explícita
+
+  destination    String
+  sender         String? // remite
+  courierCompany String?
+  trackingNumber String?
+
+  guardOnDutyId     String?
+  guardOnDuty       User?   @relation("CorrespondenceGuardOnDuty", fields: [guardOnDutyId], references: [id], onDelete: SetNull)
+  guardNameSnapshot String?
+
+  receivedByName String? // “persona que recibe” (puede no ser user del sistema)
+
+  correspondenceType CorrespondenceType
+  status             CorrespondenceStatus @default(RECEIVED)
+
+  // Entrega y Evidencia
+  deliveredAt         DateTime?
+  deliveredToName     String?
+  deliveryEvidenceUrl String?
+  deliveryNotes       String?
+
+  observations String?
+
+  // Anulación (alineado con los otros)
+  voidReason String?
+  voidedAt   DateTime?
+  voidedById String?
+  voidedBy   User?     @relation("CorrespondenceVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
+
+  // Auditoría transversal
+  source      RecordSource @default(WEB)
+  externalRef String?
+
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation("CorrespondenceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("CorrespondenceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("CorrespondenceDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  mediaAttachments MediaAttachment[]
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([unitId])
+  @@index([recipientResidentId])
+  @@index([tenantId, clientId])
+  @@index([tenantId, date])
+  @@index([tenantId, occurredAt])
+  @@index([tenantId, status])
+  @@index([trackingNumber])
+  @@index([guardOnDutyId])
+  @@map("correspondence_received_control")
+}

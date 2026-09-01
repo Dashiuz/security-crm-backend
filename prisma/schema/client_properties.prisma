@@ -1,0 +1,55 @@
+model ClientProperties {
+    id       String @id @default(cuid(2))
+    tenantId String
+    tenant   Tenant @relation(fields: [tenantId], references: [id])
+    clientId String @unique
+    client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+    structureType         ResidentialComplexType @default(BUILDING_CLUSTER)
+    towersAmount          Int?                   @default(0)
+    unitsAmount           Int?                   @default(0)
+    hasSocialRoom         Boolean?               @default(false)
+    socialRoomAmount      Int?                   @default(0)
+    hasGym                Boolean?               @default(false)
+    gymAmount             Int?                   @default(0)
+    hasPool               Boolean?               @default(false)
+    poolAmount            Int?                   @default(0)
+    hasTennisCourt        Boolean? @default(false)
+    tennisCourtAmount     Int?     @default(0)
+    hasBasketballCourt    Boolean? @default(false)
+    basketballCourtAmount Int?     @default(0)
+    hasFootballCourt      Boolean? @default(false)
+    footballCourtAmount   Int?     @default(0)
+    hasVolleyballCourt    Boolean? @default(false)
+    volleyballCourtAmount Int?     @default(0)
+    hasSquashCourt        Boolean? @default(false)
+    squashCourtAmount     Int?     @default(0)
+    hasPlayground         Boolean? @default(false)
+    playgroundAmount      Int?     @default(0)
+    hasParking            Boolean? @default(false)
+    parkingAmount         Int?     @default(0)
+    hasGuestParking       Boolean? @default(false)
+    guestParkingAmount    Int?     @default(0)
+    hasBicycleRack        Boolean? @default(false)
+    bicycleRackAmount     Int?     @default(0)
+    hasCommercialStores   Boolean? @default(false)
+    commercialStoresAmount Int?    @default(0)
+    hasStorageRoom        Boolean? @default(false)
+    storageRoomAmount     Int?     @default(0)
+
+    entriesDescription Json? @db.JsonB
+    entriesMediaFiles  Json? @db.JsonB
+
+    mediaAttachments MediaAttachment[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+    createdBy String?
+    updatedBy String?
+    deletedBy String?
+
+    @@index([tenantId])
+    @@index([clientId])
+    @@map("client_properties")
+}

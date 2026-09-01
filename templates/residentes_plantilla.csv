@@ -1,0 +1,6 @@
+firstName,lastName,document,phoneNumber,email,residentType,unitName,idType,gender
+Carlos,Gómez Restrepo,1018456789,3101112233,carlos.gomez@gmail.com,OWNER,Torre 1 - Apto 101,CC,M
+María Paula,Rodríguez Silva,1020789456,3112223344,maria.rodriguez@hotmail.com,TENANT,Torre 1 - Apto 102,CC,F
+Andrés Felipe,Martínez Vargas,1032654987,3123334455,andres.martinez@outlook.com,OWNER,Torre 2 - Apto 201,CC,M
+Laura Camila,Hernández Castro,52987456,3134445566,laura.hernandez@gmail.com,FAMILY_MEMBER,Torre 2 - Apto 202,CC,F
+Juan Sebastián,Daza Torres,1015632145,3145556677,juan.daza@yahoo.com,OWNER,Torre 3 - Apto 301,CC,M

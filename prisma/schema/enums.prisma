@@ -1,0 +1,104 @@
+enum RecordStatus {
+  ACTIVE
+  CORRECTED
+  VOIDED
+}
+
+enum RecordSource {
+  WEB
+  MOBILE
+  IMPORT
+  API
+}
+
+enum VehicleCondition {
+  GOOD
+  BAD
+}
+
+enum VisitorMode {
+  PEDESTRIAN
+  VEHICLE
+}
+
+enum CorrespondenceType {
+  BOX
+  ENVELOPE
+  OTHER
+}
+
+enum CorrespondenceStatus {
+  RECEIVED
+  DELIVERED
+  RETURNED
+  VOIDED
+}
+
+enum ClientStatus {
+  PROSPECT
+  ACTIVE
+  INACTIVE
+}
+
+enum AdministrationType {
+  ENTERPRISE
+  INDIVIDUAL
+}
+
+enum ContractStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+  RENEWED
+  TERMINATED
+}
+
+enum ClientSector {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  GOVERNMENT
+  OTHER
+}
+
+enum ResidentialComplexType {
+  SINGLE_BUILDING
+  BUILDING_CLUSTER
+  HOUSE_CLUSTER
+  MIXED
+  OTHER
+}
+
+enum ResidentType {
+  OWNER
+  TENANT
+  FAMILY_MEMBER
+  OTHER
+}
+
+enum IdType {
+  CI
+  CE
+  PASSPORT
+  NIT
+  OTHER
+}
+
+enum ResidencePlaceholder {
+  LETTER
+  NUMBER
+  ALPHANUMERIC
+}
+
+enum UnitType {
+  APARTMENT
+  HOUSE
+  OFFICE
+  WAREHOUSE
+  OTHER
+  TOWNHOUSE
+  BODEGA
+}

@@ -1,0 +1,36 @@
+model Tenant {
+  id             String   @id @default(cuid(2))
+  name           String
+  slug           String   @unique
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String?
+  updatedBy      String?
+  logoUrl        String?
+  primaryColor   String?  @default("#1976d2")
+  secondaryColor String?  @default("#9c27b0")
+  sidebarColor   String?
+
+  employees   Employee[]
+  users       User[]
+  roles       Role[]
+  departments Department[]
+  positions   Position[]
+  features    Feature[]
+
+  minutas                        Minuta[]
+  parkingResidentVehicleControls ParkingResidentVehicleControl[]
+  visitorEntryControls           VisitorEntryControl[]
+  correspondenceReceivedControls CorrespondenceReceivedControl[]
+  clients                        Client[]
+  residents                      Resident[]
+  clientProperties               ClientProperties[]
+  towers                         Tower[]
+  floors                         Floor[]
+  units                          Unit[]
+  mediaAttachments               MediaAttachment[]
+  fileImportLogs                 FileImportLog[]
+
+  @@map("tenant")
+}

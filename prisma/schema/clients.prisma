@@ -1,0 +1,91 @@
+model Client {
+  id             String         @id @default(cuid(2))
+  tenantId       String
+  tenant         Tenant         @relation(fields: [tenantId], references: [id])
+  internalCode   String         @unique
+  clientStatus   ClientStatus   @default(ACTIVE)
+  contractStatus ContractStatus @default(ACTIVE)
+
+  contractNumber String? @unique
+  nit            String  @unique
+  name           String
+  email          String?
+  phone          String?
+  receptionPhone String?
+  zipCode        String?
+  address        String?
+  country        String?
+  city           String?
+  state          String?
+  commune        String?
+  neighborhood   String?
+  quadrant       String?
+  quadrantPhone  String?
+  cai            String?
+  observations   String?
+
+  sector ClientSector @default(RESIDENTIAL)
+
+  coordinatorInChargeId String?
+  coordinatorInCharge   Employee? @relation("ClientCoordinator", fields: [coordinatorInChargeId], references: [id], onDelete: SetNull)
+
+  commercialContactId String?
+  commercialContact   Employee? @relation("ClientCommercialContact", fields: [commercialContactId], references: [id], onDelete: SetNull)
+
+  installedTech      Boolean @default(false)
+  securityStudy      String?
+  weaponsAmount      Int     @default(0)
+  administrator      String?
+  administratorPhone String?
+  administratorEmail String?
+
+  contractDate     DateTime? @db.Date
+  lastContractDate DateTime? @db.Date
+
+  // Extended Contract Information
+  renewedContract    Boolean?  @default(false)
+  contractEndDate    DateTime?
+  contractMediaFiles Json?     @db.JsonB
+
+  // Extended Administrative & Contact Information
+  administrationType        AdministrationType?
+  administrationCompanyData Json?               @db.JsonB
+  councilData               Json?               @db.JsonB
+
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("ClientUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("ClientDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  isActive Boolean @default(true)
+
+  users            User[]
+  employees        Employee[]
+  minutas          Minuta[]
+  visitorEntries   VisitorEntryControl[]
+  correspondences  CorrespondenceReceivedControl[]
+  parkingVehicles  ParkingResidentVehicleControl[]
+  mediaAttachments MediaAttachment[]
+
+  clientProperties ClientProperties?
+  residents        Resident[]
+  towers           Tower[]
+  floors           Floor[]
+  units            Unit[]
+
+  @@unique([tenantId, nit])
+  @@unique([tenantId, internalCode])
+  @@unique([tenantId, contractNumber])
+  @@index([tenantId])
+  @@index([coordinatorInChargeId])
+  @@index([commercialContactId])
+  @@index([createdById])
+  @@map("client")
+}

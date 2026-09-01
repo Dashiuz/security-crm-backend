@@ -1,0 +1,24 @@
+export type EmployeeWithRefs = {
+  id: string;
+  tenantId: string;
+  fullName: string;
+  firstName: string;
+  secondName: string | null;
+  lastName: string;
+  maternalSurname: string | null;
+  documentType: string;
+  document: string;
+  gender: string;
+  address: string;
+  email: string | null;
+  phone: string | null;
+  birthdate: Date;
+  entryDate: Date;
+  isActive: boolean;
+  departmentId: string | null;
+  positionId: string | null;
+  clientId?: string | null;
+  client?: { name: string } | null;
+  departmentRef?: { name: string } | null;
+  positionRef?: { name: string } | null;
+};

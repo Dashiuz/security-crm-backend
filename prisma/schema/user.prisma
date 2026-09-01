@@ -1,0 +1,70 @@
+model User {
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  document     String @unique
+  fullName     String
+  department   String
+  position     String
+  passwordHash String
+
+  isRetired    Boolean @default(false)
+  isActive     Boolean @default(true)
+  isFirstLogin Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  createdBy String?
+  updatedBy String?
+  retiredAt DateTime? @db.Date
+  deletedAt DateTime?
+
+  roles    UserRole[]
+  sessions UserSession[]
+
+  // Minuta audit fields
+  minutasCreated Minuta[] @relation("MinutaCreatedBy")
+  minutasUpdated Minuta[] @relation("MinutaUpdatedBy")
+  minutasDeleted Minuta[] @relation("MinutaDeletedBy")
+  minutasVoided  Minuta[] @relation("MinutaVoidedBy")
+
+  // Parking vehicle control
+  parkingVehicleCreated ParkingResidentVehicleControl[] @relation("ParkingVehicleCreatedBy")
+  parkingVehicleUpdated ParkingResidentVehicleControl[] @relation("ParkingVehicleUpdatedBy")
+  parkingVehicleDeleted ParkingResidentVehicleControl[] @relation("ParkingVehicleDeletedBy")
+  parkingVehicleVoided  ParkingResidentVehicleControl[] @relation("ParkingVehicleVoidedBy")
+  parkingVehicleGuard   ParkingResidentVehicleControl[] @relation("ParkingVehicleGuard")
+
+  // Visitor entry control
+  visitorEntryCreated VisitorEntryControl[] @relation("VisitorEntryCreatedBy")
+  visitorEntryUpdated VisitorEntryControl[] @relation("VisitorEntryUpdatedBy")
+  visitorEntryDeleted VisitorEntryControl[] @relation("VisitorEntryDeletedBy")
+  visitorEntryVoided  VisitorEntryControl[] @relation("VisitorEntryVoidedBy")
+  visitorEntryGuard   VisitorEntryControl[] @relation("VisitorEntryGuard")
+
+  // Correspondence
+  correspondenceCreated     CorrespondenceReceivedControl[] @relation("CorrespondenceCreatedBy")
+  correspondenceUpdated     CorrespondenceReceivedControl[] @relation("CorrespondenceUpdatedBy")
+  correspondenceDeleted     CorrespondenceReceivedControl[] @relation("CorrespondenceDeletedBy")
+  correspondenceVoided      CorrespondenceReceivedControl[] @relation("CorrespondenceVoidedBy")
+  correspondenceGuardOnDuty CorrespondenceReceivedControl[] @relation("CorrespondenceGuardOnDuty")
+
+  // Client audit fields
+  clientsCreated Client[] @relation("ClientCreatedBy")
+  clientsUpdated Client[] @relation("ClientUpdatedBy")
+  clientsDeleted Client[] @relation("ClientDeletedBy")
+
+  // Resident audit fields
+  residentsCreated Resident[] @relation("ResidentCreatedBy")
+  residentsUpdated Resident[] @relation("ResidentUpdatedBy")
+  residentsDeleted Resident[] @relation("ResidentDeletedBy")
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([document])
+  @@map("users")
+}
