@@ -2,6 +2,7 @@ import {
   Injectable,
   OnModuleInit,
   OnApplicationShutdown,
+  Logger,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { auditExtension } from '../common/prisma-extension/audit-extension';
@@ -12,10 +13,24 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnApplicationShutdown
 {
+  private readonly logger = new Logger(PrismaService.name);
   private _extendedClient: any;
 
   constructor(private readonly contextService: RequestContextService) {
-    super();
+    const isProd = process.env.NODE_ENV === 'production';
+    const databaseUrl = isProd
+      ? process.env.DATABASE_URL_PROD || process.env.DATABASE_URL
+      : process.env.DATABASE_URL_DEV || process.env.DATABASE_URL;
+
+    super({
+      datasources: databaseUrl
+        ? {
+            db: {
+              url: databaseUrl,
+            },
+          }
+        : undefined,
+    });
     this._extendedClient = this.$extends(auditExtension(this.contextService));
 
     // Return a proxy that prioritizes the extended client for all calls (like .user, .employee, etc.)
@@ -36,6 +51,9 @@ export class PrismaService
   }
 
   async onModuleInit() {
+    const isProd = process.env.NODE_ENV === 'production';
+    const targetDb = isProd ? 'Supabase (Production)' : 'Local PostgreSQL (Development)';
+    this.logger.log(`Conectando a base de datos: ${targetDb}`);
     await this.$connect();
   }
 

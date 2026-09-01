@@ -8,6 +8,7 @@ import {
   EmployeeRepositoryService,
   UserRepositoryService,
 } from '../../../common/repository/index';
+import { S3Service } from '../../storage/services/s3.service';
 import {
   CreateEmployeeDto,
   UpdateEmployeeDto,
@@ -22,6 +23,7 @@ export class EmployeeService {
   constructor(
     private readonly employeeRepository: EmployeeRepositoryService,
     private readonly userRepository: UserRepositoryService,
+    private readonly s3Service: S3Service,
   ) {}
 
   private buildFullName(input: {
@@ -42,7 +44,16 @@ export class EmployeeService {
       .trim();
   }
 
-  private mapEmployeeToResponse(row: EmployeeWithRefs): EmployeeResponseDto {
+  private async mapEmployeeToResponse(row: any): Promise<EmployeeResponseDto> {
+    let avatarUrl: string | null = null;
+    if (row.mediaAttachments && row.mediaAttachments.length > 0) {
+      try {
+        avatarUrl = await this.s3Service.getPresignedUrl(row.mediaAttachments[0].s3Key);
+      } catch {
+        avatarUrl = null;
+      }
+    }
+
     return {
       id: row.id,
       tenantId: row.tenantId,
@@ -66,6 +77,8 @@ export class EmployeeService {
       departmentName: row.departmentRef?.name ?? null,
       positionId: row.positionId,
       positionName: row.positionRef?.name ?? null,
+      avatarUrl,
+      mediaAttachments: row.mediaAttachments ?? [],
     };
   }
 
@@ -150,12 +163,14 @@ export class EmployeeService {
       }
     }
 
-    return this.mapEmployeeToResponse(employee as any);
+    return await this.mapEmployeeToResponse(employee as any);
   }
 
   async findAll(): Promise<EmployeeResponseDto[]> {
     const employees = await this.employeeRepository.findAll();
-    return employees.map((emp) => this.mapEmployeeToResponse(emp as any));
+    return Promise.all(
+      employees.map((emp) => this.mapEmployeeToResponse(emp as any)),
+    );
   }
 
   async findActiveByDocument(
@@ -166,7 +181,7 @@ export class EmployeeService {
 
     if (!employee) return null;
 
-    return this.mapEmployeeToResponse(employee as any);
+    return await this.mapEmployeeToResponse(employee as any);
   }
 
   async findAnyEmployeeById(id: string): Promise<EmployeeResponseDto | null> {
@@ -174,7 +189,7 @@ export class EmployeeService {
 
     if (!employeeWithRefs) return null;
 
-    return this.mapEmployeeToResponse(employeeWithRefs as any);
+    return await this.mapEmployeeToResponse(employeeWithRefs as any);
   }
 
   async updateEmployee(
@@ -319,7 +334,7 @@ export class EmployeeService {
       }
     }
 
-    return this.mapEmployeeToResponse(updatedEmployee);
+    return await this.mapEmployeeToResponse(updatedEmployee);
   }
 
   async softDeleteEmployee(employeeId: string): Promise<DeletedEmployeeDto> {
@@ -364,7 +379,7 @@ export class EmployeeService {
       // Ignore if user doesn't exist
     }
 
-    return this.mapEmployeeToResponse(retired as any);
+    return await this.mapEmployeeToResponse(retired as any);
   }
 
   async reactivateEmployee(employeeId: string): Promise<EmployeeResponseDto> {
@@ -372,6 +387,6 @@ export class EmployeeService {
     if (!current) throw new NotFoundException('Employee not found.');
 
     const reactivated = await this.employeeRepository.reactivateEmployee(employeeId);
-    return this.mapEmployeeToResponse(reactivated as any);
+    return await this.mapEmployeeToResponse(reactivated as any);
   }
 }

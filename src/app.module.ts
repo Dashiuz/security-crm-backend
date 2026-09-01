@@ -22,13 +22,13 @@ import {
   ClientModule,
   ResidentModule,
   ProspectModule,
+  StorageModule,
 } from './modules/index';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      envFilePath: configuration[process.env.NODE_ENV || ''] || '.env',
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
       load: [configuration],
       isGlobal: true,
     }),
@@ -47,6 +47,7 @@ import {
     EmployeeModule,
     UserModule,
     MinutaModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [

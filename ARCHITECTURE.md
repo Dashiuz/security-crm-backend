@@ -77,3 +77,27 @@ sequenceDiagram
 1. **Prevención de Fuga Cruzada (Cross-Tenant Bleed)**: La extensión de Prisma jamás desactiva la obligación de `tenantId` basada en el contexto. El usuario Godlike se somete a las mismas leyes de aislamiento que un usuario regular mientras está suplantando (impersonando) a otro tenant, mitigando cualquier vulnerabilidad de lectura lateral.
 2. **Rotación Cíclica Activa**: Por cada transición entre empresas, el `AuthService` emite un nuevo `Access Token` y `Refresh Token`, neutralizando instantáneamente (`revokedAt = Date.now()`) los tokens de transición anteriores para prevenir una saturación y vectores de acumulación maliciosa de sesiones Zombie.
 3. **Pivote Físico de Auditoría**: Cuando un usuario Godlike opera sobre un tenant suplantado, el `AuditInterceptor` rastrea y reporta su UUID original, y no el del tenant en cuestión, garantizando una trazabilidad legal perfecta en los `Audit Logs`.
+
+---
+
+## 6. Evolución de Módulos y Funcionalidades Recientes
+
+A medida que el proyecto ha ido escalando, se han implementado e integrado nuevos submódulos que refuerzan tanto la parte administrativa como operativa del CRM de seguridad:
+
+### 6.1. Módulo Administrativo (`administrative`)
+Este módulo se ha expandido para gestionar la estructura física y humana de los conjuntos residenciales o corporativos:
+- **Client y Prospect**: Gestión de clientes actuales (con contrato firmado) y prospectos (clientes potenciales). Se manejan bajo una arquitectura similar pero con ciclos de vida de venta distintos.
+- **Unit (Unidades Habitacionales)**: Provee una estructura jerárquica física (Bloque/Torre -> Piso -> Apartamento/Oficina).
+- **Resident (Residentes)**: Vincula a las personas físicas (propietarios, arrendatarios, empleados) con una `Unit` específica, permitiendo un control granular de quién habita o labora en cada espacio.
+
+### 6.2. Módulo de Operaciones - Minutas (`operation/minuta`)
+El núcleo operativo de los guardas de seguridad se ha robustecido con 4 submódulos principales, todos estandarizados bajo un mismo estilo de arquitectura en backend y frontend (con soporte de filtros por cliente para roles globales):
+- **Minuta General**: Registro cronológico de novedades e incidentes generales del turno.
+- **Control de Parqueaderos**: Registro de entrada/salida de vehículos (placas, marca, estado de ingreso) vinculados al recinto.
+- **Control de Visitas**: Gestión de acceso de visitantes. Permite vincular el ingreso de un visitante directamente a una `Unit` y a un `Resident` (quien autoriza), registrando hora de entrada, salida y datos del vehículo si aplica.
+- **Control de Correspondencia (Paquetería)**: Flujo de recepción de paquetes en portería y su posterior entrega física al residente. Cuenta con validación estricta de tipos de correspondencia (`BOX`, `ENVELOPE`, `OTHER`) controlada desde Prisma, e incluye un flujo interactivo de comprobación de entrega con evidencia fotográfica (preparado para integración con Amazon S3).
+
+### 6.3. Sinergia de Permisos y Roles (RBAC Operativo)
+Se ha refinado el modelo de seguridad para adaptar la realidad operativa en porterías:
+- **Aislamiento Operativo vs. Administrativo**: Un usuario con rol operativo (ej. `GUARDA`) requiere registrar minutas (`minuta:create`), lo cual inevitablemente implica consultar listas de apartamentos (`Units`) y `Residentes`.
+- **Resolución de Mínimo Privilegio**: Para evitar otorgar permisos administrativos puros de lectura (`client:read` o `resident:read`) a los guardas, los endpoints de consulta operativa en el backend (`GET /client/:id` y `GET /resident/by-client/:clientId`) fueron autorizados explícitamente para aceptar el permiso transversal `minuta:create`. De esta forma, el frontend puede poblar sus desplegables operativos (UI) sin romper el encapsulamiento de datos administrativos sensibles.

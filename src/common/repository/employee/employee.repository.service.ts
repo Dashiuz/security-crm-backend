@@ -57,6 +57,15 @@ export class EmployeeRepositoryService {
     updatedBy: true,
     retiredAt: true,
     deletedAt: true,
+    mediaAttachments: {
+      select: {
+        id: true,
+        url: true,
+        fileName: true,
+        mimeType: true,
+        s3Key: true,
+      },
+    },
   } as const;
 
   private readonly deletedEmployeeSelect = {
