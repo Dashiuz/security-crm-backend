@@ -31,7 +31,7 @@ export class RoleRepositoryService {
   async findRoleId(roleId: string) {
     return this.prisma.role.findFirst({
       where: { id: roleId },
-      select: { id: true },
+      select: { id: true, name: true, tenantId: true },
     });
   }
 
