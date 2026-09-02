@@ -1,18 +1,18 @@
 model FileImportLog {
-  id          String   @id @default(cuid(2))
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  entityType  String   // "CLIENT", "RESIDENT"
-  fileName    String
-  status      String   // "SUCCESS", "PARTIAL", "FAILED"
-  totalRows   Int
-  successRows Int
-  errorRows   Int
-  errorDetails Json?   @db.JsonB
+  entityType   String // "CLIENT", "RESIDENT"
+  fileName     String
+  status       String // "SUCCESS", "PARTIAL", "FAILED"
+  totalRows    Int
+  successRows  Int
+  errorRows    Int
+  errorDetails Json?  @db.JsonB
 
-  uploadedBy  String   // userId
-  createdAt   DateTime @default(now())
+  uploadedBy String // userId
+  createdAt  DateTime @default(now())
 
   @@index([tenantId])
   @@map("file_import_logs")

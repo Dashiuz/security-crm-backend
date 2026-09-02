@@ -3,16 +3,16 @@ model UserSession {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  refreshTokenHash String
-  userAgent        String?
-  ip               String?
+  refreshTokenHash     String
+  userAgent            String?
+  ip                   String?
   impersonatedTenantId String?
-  createdAt        DateTime      @default(now())
-  expiresAt        DateTime
-  revokedAt        DateTime?
-  replacedById     String?
-  replacedBy       UserSession?  @relation("SessionRotation", fields: [replacedById], references: [id])
-  replaces         UserSession[] @relation("SessionRotation")
+  createdAt            DateTime      @default(now())
+  expiresAt            DateTime
+  revokedAt            DateTime?
+  replacedById         String?
+  replacedBy           UserSession?  @relation("SessionRotation", fields: [replacedById], references: [id])
+  replaces             UserSession[] @relation("SessionRotation")
 
   @@index([userId])
   @@index([expiresAt])

@@ -30,7 +30,10 @@ export class TenantService {
   }
 
   async update(id: string, dto: UpdateTenantDto): Promise<TenantResponseDto> {
-    await this.findOne(id);
+    const tenant = await this.findOne(id);
+    if ((tenant.slug === 'system' || tenant.id === 'system') && dto.isActive === false) {
+      throw new BadRequestException('Cannot deactivate the system master tenant');
+    }
     const updated = await this.tenantRepository.update(id, dto);
     return this.mapTenant(updated);
   }
