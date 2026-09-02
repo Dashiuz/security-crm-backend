@@ -1,10 +1,12 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
 import { RoleRepositoryService, UserRepositoryService } from '../../../common/repository/index';
+import { RequestContextService } from '../../../common/context/request-context.service';
 import {
   CreateRoleDto,
   UpdateRoleDto,
@@ -17,6 +19,7 @@ export class RoleService {
   constructor(
     private readonly roleRepository: RoleRepositoryService,
     private readonly userRepository: UserRepositoryService,
+    private readonly contextService: RequestContextService,
   ) {}
 
   private mapRoleToResponse(row: any, userName?: string): any {
@@ -38,6 +41,12 @@ export class RoleService {
     const name = dto.name.trim().toUpperCase();
 
     if (!name) throw new BadRequestException('Role name is required');
+
+    if (['GODLIKE', 'SUPERADMIN'].includes(name) && (!this.contextService.isGodlike || tenantId !== 'system')) {
+      throw new ForbiddenException(
+        'El nombre de rol GODLIKE o SUPERADMIN está reservado exclusivamente para el sistema.',
+      );
+    }
 
     try {
       // tenantId is now automatically handled by the repository extension
@@ -82,6 +91,11 @@ export class RoleService {
 
     if (dto.name) {
       const name = dto.name.trim().toUpperCase();
+      if (['GODLIKE', 'SUPERADMIN'].includes(name) && (!this.contextService.isGodlike || tenantId !== 'system')) {
+        throw new ForbiddenException(
+          'El nombre de rol GODLIKE o SUPERADMIN está reservado exclusivamente para el sistema.',
+        );
+      }
       try {
         const updated = await this.roleRepository.updateRole(roleId, name);
         return this.mapRoleToResponse(updated);
@@ -100,6 +114,10 @@ export class RoleService {
   async remove(tenantId: string, roleId: string): Promise<RoleResponseDto> {
     const role = await this.roleRepository.findRoleId(roleId);
     if (!role) throw new NotFoundException('Role not found');
+
+    if (role.name === 'GODLIKE' || role.tenantId === 'system') {
+      throw new ForbiddenException('No es posible eliminar roles reservados del sistema.');
+    }
 
     try {
       const deleted = await this.roleRepository.deleteRole(roleId);
@@ -129,6 +147,16 @@ export class RoleService {
 
     if (addKeys.length === 0 && removeKeys.length === 0 && !dto.keys) {
       throw new BadRequestException('Provide add, remove or keys');
+    }
+
+    // Security check: Verify that non-godlike users / non-system roles cannot be granted godlike permissions
+    const requestedGodlikeKeys = [...addKeys, ...syncKeys].filter((k) => k.startsWith('godlike:'));
+    if (requestedGodlikeKeys.length > 0) {
+      if (!this.contextService.isGodlike || role.tenantId !== 'system') {
+        throw new ForbiddenException(
+          'No tienes autorización para asignar o manipular permisos reservados de nivel Godlike/SuperAdmin.',
+        );
+      }
     }
 
     const currentState = await this.roleRepository.getCurrentState(roleId);
