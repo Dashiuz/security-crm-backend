@@ -1,7 +1,7 @@
 model MediaAttachment {
-  id        String @id @default(cuid(2))
-  tenantId  String
-  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  id       String @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   url       String @db.Text
   s3Key     String @unique
@@ -11,21 +11,21 @@ model MediaAttachment {
 
   // Foreign Key Relations
   clientId           String?
-  client             Client?                         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client             Client?                        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientPropertiesId String?
-  clientProperties   ClientProperties?               @relation(fields: [clientPropertiesId], references: [id], onDelete: Cascade)
+  clientProperties   ClientProperties?              @relation(fields: [clientPropertiesId], references: [id], onDelete: Cascade)
   residentId         String?
-  resident           Resident?                       @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  resident           Resident?                      @relation(fields: [residentId], references: [id], onDelete: Cascade)
   minutaId           String?
-  minuta             Minuta?                         @relation(fields: [minutaId], references: [id], onDelete: Cascade)
+  minuta             Minuta?                        @relation(fields: [minutaId], references: [id], onDelete: Cascade)
   correspondenceId   String?
-  correspondence     CorrespondenceReceivedControl?  @relation(fields: [correspondenceId], references: [id], onDelete: Cascade)
+  correspondence     CorrespondenceReceivedControl? @relation(fields: [correspondenceId], references: [id], onDelete: Cascade)
   parkingVehicleId   String?
-  parkingVehicle     ParkingResidentVehicleControl?  @relation(fields: [parkingVehicleId], references: [id], onDelete: Cascade)
+  parkingVehicle     ParkingResidentVehicleControl? @relation(fields: [parkingVehicleId], references: [id], onDelete: Cascade)
   visitorEntryId     String?
-  visitorEntry       VisitorEntryControl?            @relation(fields: [visitorEntryId], references: [id], onDelete: Cascade)
+  visitorEntry       VisitorEntryControl?           @relation(fields: [visitorEntryId], references: [id], onDelete: Cascade)
   employeeId         String?
-  employee           Employee?                       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee           Employee?                      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   uploadedById String
   createdAt    DateTime @default(now())

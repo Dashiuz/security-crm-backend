@@ -61,4 +61,62 @@ export class DepartmentService {
       id,
     ) as Promise<DepartmentResponseDto>;
   }
+
+  async importDepartmentsFromCsv(
+    data: Array<Record<string, string>>,
+    fileName: string,
+    user: any,
+  ) {
+    const existingDepartments = await this.departmentRepository.findMany();
+    let successRows = 0;
+    let errorRows = 0;
+    const errors: Array<{ row: number; reason: string }> = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNum = i + 1;
+
+      try {
+        const rawName = row.Nombre || row.name || '';
+        if (!rawName.trim()) {
+          throw new Error('El campo "Nombre" es obligatorio.');
+        }
+
+        const name = rawName.trim().toUpperCase();
+
+        const exists = existingDepartments.find(
+          (d: any) => d.name.toUpperCase() === name,
+        );
+        if (exists) {
+          throw new Error(`El departamento "${name}" ya existe.`);
+        }
+
+        const rawStatus = row.EstadoActivo || row.isActive || '';
+        const isActive = rawStatus ? rawStatus.toString().trim().toUpperCase() === 'SI' : true;
+
+        const newDept = await this.departmentRepository.create({
+          name,
+          isActive,
+          createdBy: user.sub !== 'system' ? user.sub : null,
+        } as any);
+
+        existingDepartments.push(newDept);
+        successRows++;
+      } catch (err: any) {
+        errorRows++;
+        errors.push({
+          row: rowNum,
+          reason: err.message || 'Error desconocido al crear departamento.',
+        });
+      }
+    }
+
+    return {
+      status: 'completed',
+      totalRows: data.length,
+      successRows,
+      errorRows,
+      errors,
+    };
+  }
 }
