@@ -5,7 +5,7 @@ model Position {
   level    Int?
   isActive Boolean @default(true)
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   employees Employee[] @relation("EmployeePosition")
 
   createdAt DateTime @default(now())

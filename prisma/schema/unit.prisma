@@ -1,31 +1,31 @@
 model Unit {
-    id       String @id @default(cuid(2))
-    tenantId String
-    tenant   Tenant @relation(fields: [tenantId], references: [id])
-    clientId String
-    client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-    towerId  String?
-    tower    Tower? @relation(fields: [towerId], references: [id], onDelete: Cascade)
-    floorId  String?
-    floor    Floor? @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  id       String  @id @default(cuid(2))
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  towerId  String?
+  tower    Tower?  @relation(fields: [towerId], references: [id], onDelete: Cascade)
+  floorId  String?
+  floor    Floor?  @relation(fields: [floorId], references: [id], onDelete: Cascade)
 
-    unitName String   @db.VarChar(50)
-    unitType UnitType @default(APARTMENT)
+  unitName String   @db.VarChar(50)
+  unitType UnitType @default(APARTMENT)
 
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    deletedAt DateTime?
-    createdBy String?
-    updatedBy String?
-    deletedBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
 
-    residents       Resident[]
-    visitorEntries  VisitorEntryControl[]
-    correspondences CorrespondenceReceivedControl[]
+  residents       Resident[]
+  visitorEntries  VisitorEntryControl[]
+  correspondences CorrespondenceReceivedControl[]
 
-    @@index([tenantId])
-    @@index([clientId])
-    @@index([towerId])
-    @@index([floorId])
-    @@map("units")
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([towerId])
+  @@index([floorId])
+  @@map("units")
 }

@@ -7,6 +7,8 @@ import { Prisma } from '@prisma/client';
 import {
   EmployeeRepositoryService,
   UserRepositoryService,
+  DepartmentRepositoryService,
+  PositionRepositoryService,
 } from '../../../common/repository/index';
 import { S3Service } from '../../storage/services/s3.service';
 import {
@@ -23,6 +25,8 @@ export class EmployeeService {
   constructor(
     private readonly employeeRepository: EmployeeRepositoryService,
     private readonly userRepository: UserRepositoryService,
+    private readonly departmentRepository: DepartmentRepositoryService,
+    private readonly positionRepository: PositionRepositoryService,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -388,5 +392,139 @@ export class EmployeeService {
 
     const reactivated = await this.employeeRepository.reactivateEmployee(employeeId);
     return await this.mapEmployeeToResponse(reactivated as any);
+  }
+
+  async importEmployeesFromCsv(
+    data: Array<Record<string, string>>,
+    fileName: string,
+    user: any,
+  ) {
+    const existingDepartments = await this.departmentRepository.findMany();
+    const existingPositions = await this.positionRepository.findMany();
+    
+    let successRows = 0;
+    let errorRows = 0;
+    const errors: Array<{ row: number; reason: string }> = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNum = i + 1;
+
+      try {
+        const firstName = row.Nombre || row.firstName || '';
+        const lastName = row.Apellido || row.lastName || '';
+        const documentType = row.TipoDocumento || row.documentType || '';
+        const document = row.Documento || row.document || '';
+        const phone = row.Telefono || row.phone || '';
+
+        if (!firstName.trim() || !lastName.trim() || !document.trim() || !documentType.trim() || !phone.trim()) {
+          throw new Error('Campos obligatorios faltantes: Nombre, Apellido, TipoDocumento, Documento, Telefono.');
+        }
+
+        // Check active employee uniqueness
+        const exists = await this.employeeRepository.findActiveByDocument(document.trim());
+        if (exists) {
+          throw new Error(`El empleado con documento ${document} ya existe y está activo.`);
+        }
+
+        // Handle Department
+        let departmentId: string | null = null;
+        const deptNameRaw = row.Departamento || row.department;
+        if (deptNameRaw) {
+          const deptName = deptNameRaw.toString().trim().toUpperCase();
+          const matchedDept = existingDepartments.find((d: any) => d.name.toUpperCase() === deptName);
+          if (matchedDept) {
+            departmentId = matchedDept.id;
+          } else {
+            // Auto-create Department
+            const newDept = await this.departmentRepository.create({
+              name: deptName,
+              isActive: true,
+              createdBy: user.sub !== 'system' ? user.sub : null,
+            } as any);
+            existingDepartments.push(newDept);
+            departmentId = newDept.id;
+          }
+        }
+
+        // Handle Position
+        let positionId: string | null = null;
+        const posNameRaw = row.Cargo || row.position;
+        if (posNameRaw) {
+          const posName = posNameRaw.toString().trim().toUpperCase();
+          const matchedPos = existingPositions.find((p: any) => p.name.toUpperCase() === posName);
+          if (matchedPos) {
+            positionId = matchedPos.id;
+          } else {
+            // Auto-create Position
+            const newPos = await this.positionRepository.create({
+              name: posName,
+              level: 1,
+              isActive: true,
+              createdBy: user.sub !== 'system' ? user.sub : null,
+            } as any);
+            existingPositions.push(newPos);
+            positionId = newPos.id;
+          }
+        }
+
+        const fullName = this.buildFullName({
+          firstName: firstName.trim(),
+          secondName: row.SegundoNombre || null,
+          lastName: lastName.trim(),
+          maternalSurname: row.SegundoApellido || null,
+        });
+
+        // Handle dates
+        const birthdateStr = row.FechaNacimiento || row.birthdate;
+        const birthdate = birthdateStr ? new Date(birthdateStr) : new Date('1990-01-01');
+        
+        const entryDateStr = row.FechaIngreso || row.entryDate;
+        const entryDate = entryDateStr ? new Date(entryDateStr) : new Date();
+
+        if (Number.isNaN(birthdate.getTime())) throw new Error('FechaNacimiento inválida.');
+        if (Number.isNaN(entryDate.getTime())) throw new Error('FechaIngreso inválida.');
+
+        const emailRaw = row.Email || row.email;
+
+        // Create Employee
+        await this.employeeRepository.createEmployee({
+          firstName: firstName.trim(),
+          secondName: row.SegundoNombre || null,
+          lastName: lastName.trim(),
+          maternalSurname: row.SegundoApellido || null,
+          fullName,
+          documentType: documentType.trim(),
+          document: document.trim(),
+          birthdate,
+          gender: (row.Genero || row.gender || 'M').trim().toUpperCase(),
+          address: (row.Direccion || row.address || 'ND').trim(),
+          departmentId,
+          positionId,
+          email: emailRaw ? emailRaw.trim().toLowerCase() : null,
+          phone: phone.trim(),
+          entryDate,
+          isRetired: false,
+          isActive: true,
+          createdBy: user.sub !== 'system' ? user.sub : null,
+        } as any);
+
+        successRows++;
+      } catch (err: any) {
+        errorRows++;
+        errors.push({
+          row: rowNum,
+          reason: err.message || 'Error desconocido al crear empleado.',
+        });
+      }
+    }
+
+    return {
+      status: 'completed',
+      totalRows: data.length,
+      successRows,
+      errorRows,
+      errors,
+    };
   }
 }

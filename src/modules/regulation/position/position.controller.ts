@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -70,5 +71,23 @@ export class PositionController {
   @ApiOkResponse({ type: PositionResponseDto })
   remove(@Param('id') id: string) {
     return this.positionService.remove(id);
+  }
+
+  @Post('import/csv')
+  @RequirePermissions('position:manage', 'position:create')
+  @ApiOperation({ summary: 'Bulk import positions from JSON/CSV payload' })
+  importCsv(
+    @Body()
+    body: {
+      data: Array<Record<string, string>>;
+      fileName?: string;
+    },
+    @Request() req,
+  ) {
+    return this.positionService.importPositionsFromCsv(
+      body.data || [],
+      body.fileName || 'cargos.csv',
+      req.user,
+    );
   }
 }

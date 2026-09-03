@@ -4,7 +4,7 @@ model Department {
   name     String
   isActive Boolean @default(true)
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   employees Employee[] @relation("EmployeeDepartment")
 
   createdAt DateTime @default(now())
