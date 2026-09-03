@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Request,
 } from '@nestjs/common';
 import {
   ApiResponse,
@@ -150,5 +151,23 @@ export class EmployeeController {
   })
   async reactivate(@Param('id') id: string): Promise<EmployeeResponseDto> {
     return this.employeeService.reactivateEmployee(id);
+  }
+
+  @Post('import/csv')
+  @RequirePermissions('employee:manage', 'employee:create')
+  @ApiOperation({ summary: 'Bulk import employees from JSON/CSV payload' })
+  importCsv(
+    @Body()
+    body: {
+      data: Array<Record<string, string>>;
+      fileName?: string;
+    },
+    @Request() req,
+  ) {
+    return this.employeeService.importEmployeesFromCsv(
+      body.data || [],
+      body.fileName || 'empleados.csv',
+      req.user,
+    );
   }
 }

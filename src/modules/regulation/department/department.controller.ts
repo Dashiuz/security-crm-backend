@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -70,5 +71,23 @@ export class DepartmentController {
   @ApiOkResponse({ type: DepartmentResponseDto })
   remove(@Param('id') id: string) {
     return this.departmentService.remove(id);
+  }
+
+  @Post('import/csv')
+  @RequirePermissions('department:manage', 'department:create')
+  @ApiOperation({ summary: 'Bulk import departments from JSON/CSV payload' })
+  importCsv(
+    @Body()
+    body: {
+      data: Array<Record<string, string>>;
+      fileName?: string;
+    },
+    @Request() req,
+  ) {
+    return this.departmentService.importDepartmentsFromCsv(
+      body.data || [],
+      body.fileName || 'departamentos.csv',
+      req.user,
+    );
   }
 }

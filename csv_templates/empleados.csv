@@ -1,0 +1,16 @@
+Nombre,SegundoNombre,Apellido,SegundoApellido,TipoDocumento,Documento,FechaNacimiento,Genero,Direccion,Telefono,Email,FechaIngreso,Cargo,Departamento
+Juan,Carlos,Perez,Gomez,CC,1001001001,1985-05-15,M,Calle 1 # 2-3,3001234561,juan.perez@empresa.com,2023-01-10,Gerente,Operaciones
+Maria,Fernanda,Rodriguez,Lopez,CC,1001001002,1990-08-22,F,Carrera 4 # 5-6,3001234562,maria.rodriguez@empresa.com,2023-02-15,Supervisor,Recursos Humanos
+Luis,Alberto,Gonzalez,Martinez,CC,1001001003,1982-11-30,M,Avenida 7 # 8-9,3001234563,luis.gonzalez@empresa.com,2022-11-01,Analista,Sistemas
+Ana,Maria,Gomez,Hernandez,CC,1001001004,1995-03-10,F,Transversal 10 # 11-12,3001234564,ana.gomez@empresa.com,2023-05-20,Guardia de Seguridad,Seguridad
+Carlos,Eduardo,Lopez,Garcia,CC,1001001005,1988-07-25,M,Diagonal 13 # 14-15,3001234565,carlos.lopez@empresa.com,2021-09-15,Técnico,Mantenimiento
+Laura,Camila,Martinez,Perez,CC,1001001006,1992-12-05,F,Calle 16 # 17-18,3001234566,laura.martinez@empresa.com,2023-06-01,Analista,Operaciones
+Jose,Manuel,Hernandez,Rodriguez,CC,1001001007,1979-04-18,M,Carrera 19 # 20-21,3001234567,jose.hernandez@empresa.com,2020-03-10,Guardia de Seguridad,Seguridad
+Pedro,Pablo,Garcia,Gonzalez,CE,2002002001,1984-09-12,M,Avenida 22 # 23-24,3001234568,pedro.garcia@empresa.com,2022-07-22,Técnico,Sistemas
+Diana,Marcela,Sanchez,Gomez,CC,1001001008,1991-01-28,F,Transversal 25 # 26-27,3001234569,diana.sanchez@empresa.com,2023-04-05,Supervisor,Operaciones
+Andres,Felipe,Ramirez,Lopez,CC,1001001009,1987-06-14,M,Diagonal 28 # 29-30,3001234570,andres.ramirez@empresa.com,2021-12-01,Guardia de Seguridad,Seguridad
+Natalia,Andrea,Torres,Martinez,CC,1001001010,1994-10-09,F,Calle 31 # 32-33,3001234571,natalia.torres@empresa.com,2023-08-15,Analista,Recursos Humanos
+Diego,Alejandro,Flores,Hernandez,CC,1001001011,1983-02-17,M,Carrera 34 # 35-36,3001234572,diego.flores@empresa.com,2022-05-10,Supervisor,Sistemas
+Carolina,,Vargas,Garcia,CC,1001001012,1989-11-21,F,Avenida 37 # 38-39,3001234573,carolina.vargas@empresa.com,2023-01-25,Técnico,Mantenimiento
+Jorge,Luis,Rojas,Sanchez,PAS,3003003001,1975-08-03,M,Transversal 40 # 41-42,3001234574,jorge.rojas@empresa.com,2019-10-18,Gerente,Sistemas
+Valeria,Sofia,Castro,Ramirez,CC,1001001013,1996-05-29,F,Diagonal 43 # 44-45,3001234575,valeria.castro@empresa.com,2023-09-01,Analista,Operaciones

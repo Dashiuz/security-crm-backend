@@ -1,0 +1,6 @@
+Nombre,Nivel,EstadoActivo
+Gerente,3,true
+Supervisor,2,true
+Analista,1,true
+Guardia de Seguridad,1,true
+Técnico,1,true
