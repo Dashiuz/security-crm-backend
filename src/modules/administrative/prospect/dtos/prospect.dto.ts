@@ -76,7 +76,10 @@ export class CreateProspectDto {
   @IsOptional()
   quadrantPhone?: string;
 
-  @ApiProperty({ example: 'Interesado en cotización de 5 guardias', required: false })
+  @ApiProperty({
+    example: 'Interesado en cotización de 5 guardias',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   observations?: string;
@@ -110,7 +113,10 @@ export class ConvertProspectDto {
   contractNumber: string;
 
   @ApiProperty({ example: '2026-03-01' })
-  @IsDateString({}, { message: 'La fecha inicial de contrato debe ser válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha inicial de contrato debe ser válida.' },
+  )
   @IsNotEmpty({ message: 'La fecha inicial de contrato es requerida.' })
   contractDate: string;
 
@@ -120,7 +126,12 @@ export class ConvertProspectDto {
   lastContractDate: string;
 
   @ApiProperty({ example: '2027-02-28', required: false })
-  @ValidateIf((o) => o.contractEndDate !== undefined && o.contractEndDate !== null && o.contractEndDate !== '')
+  @ValidateIf(
+    (o) =>
+      o.contractEndDate !== undefined &&
+      o.contractEndDate !== null &&
+      o.contractEndDate !== '',
+  )
   @IsDateString({}, { message: 'La fecha final de contrato debe ser válida.' })
   @IsOptional()
   contractEndDate?: string;

@@ -16,9 +16,25 @@ export class PositionService {
 
   async create(dto: CreatePositionDto): Promise<PositionResponseDto> {
     const name = dto.name?.trim().toUpperCase();
-    return this.positionRepository.create(
-      { ...dto, name } as any,
-    ) as Promise<PositionResponseDto>;
+    return this.positionRepository.create({
+      ...dto,
+      name,
+    } as any) as Promise<PositionResponseDto>;
+  }
+
+  private parseBoolean(val: any, defaultValue = true): boolean {
+    if (val === undefined || val === null || val === '') return defaultValue;
+    if (typeof val === 'boolean') return val;
+    const str = String(val).trim().toLowerCase();
+    if (
+      ['true', '1', 'si', 'sí', 'yes', 'activo', 'activa', 'active'].includes(
+        str,
+      )
+    )
+      return true;
+    if (['false', '0', 'no', 'inactivo', 'inactiva', 'inactive'].includes(str))
+      return false;
+    return defaultValue;
   }
 
   async findAll(): Promise<any[]> {
@@ -28,7 +44,10 @@ export class PositionService {
 
     return positions.map((p: any) => ({
       ...p,
-      createdBy: p.createdBy === 'system' ? 'Sistema' : (userMap.get(p.createdBy) || p.createdBy || 'Sistema'),
+      createdBy:
+        p.createdBy && p.createdBy !== 'system' && userMap.get(p.createdBy)
+          ? userMap.get(p.createdBy)
+          : 'system',
     }));
   }
 
@@ -40,7 +59,12 @@ export class PositionService {
     );
     return {
       ...pos,
-      createdBy: pos.createdBy === 'system' ? 'Sistema' : (userMap.get(pos.createdBy) || pos.createdBy || 'Sistema'),
+      createdBy:
+        pos.createdBy &&
+        pos.createdBy !== 'system' &&
+        userMap.get(pos.createdBy)
+          ? userMap.get(pos.createdBy)
+          : 'system',
     };
   }
 
@@ -100,14 +124,25 @@ export class PositionService {
           }
         }
 
-        const rawStatus = row.EstadoActivo || row.isActive || '';
-        const isActive = rawStatus ? rawStatus.toString().trim().toUpperCase() === 'SI' : true;
+        const rawStatus =
+          row.EstadoActivo ??
+          row.estadoActivo ??
+          row.isActive ??
+          row.Activo ??
+          row.activo;
+        const isActive = this.parseBoolean(rawStatus, true);
+
+        const isGodlike =
+          user?.roles?.includes('GODLIKE') ||
+          user?.tenantId === 'system' ||
+          user?.sub === 'system';
+        const createdBy = isGodlike ? 'system' : user?.sub;
 
         const newPos = await this.positionRepository.create({
           name,
           level,
           isActive,
-          createdBy: user.sub !== 'system' ? user.sub : null,
+          createdBy,
         } as any);
 
         existingPositions.push(newPos);

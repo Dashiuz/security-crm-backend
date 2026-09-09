@@ -21,8 +21,12 @@ export class CorrespondenceRepositoryService {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
-        recipientResident: { select: { id: true, firstName: true, lastName: true, document: true } },
-        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+        recipientResident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -31,7 +35,9 @@ export class CorrespondenceRepositoryService {
       createdBy: r.createdBy?.fullName || 'Sistema',
       clientName: r.client?.name || null,
       unitName: r.unit?.unitName || null,
-      recipientResidentName: r.recipientResident ? `${r.recipientResident.firstName} ${r.recipientResident.lastName}` : null,
+      recipientResidentName: r.recipientResident
+        ? `${r.recipientResident.firstName} ${r.recipientResident.lastName}`
+        : null,
     }));
   }
 
@@ -44,8 +50,12 @@ export class CorrespondenceRepositoryService {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
-        recipientResident: { select: { id: true, firstName: true, lastName: true, document: true } },
-        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+        recipientResident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
       },
     });
   }

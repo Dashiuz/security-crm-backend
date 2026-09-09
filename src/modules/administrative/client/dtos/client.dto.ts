@@ -51,7 +51,10 @@ export class CreateClientDto {
   @ValidateIf(
     (o) => o.email !== undefined && o.email !== null && o.email !== '',
   )
-  @IsEmail({}, { message: 'El correo electrónico principal no tiene un formato válido.' })
+  @IsEmail(
+    {},
+    { message: 'El correo electrónico principal no tiene un formato válido.' },
+  )
   @IsOptional()
   email?: string;
 

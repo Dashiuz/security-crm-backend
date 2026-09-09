@@ -20,7 +20,9 @@ export class ParkingControlRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
-        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -39,7 +41,9 @@ export class ParkingControlRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
-        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
       },
     });
   }

@@ -46,7 +46,9 @@ export class ProspectService {
   private handlePrismaError(error: any): never {
     if (error?.code === 'P2002') {
       const target = (error?.meta?.target as string[]) || [];
-      const targetStr = Array.isArray(target) ? target.join(', ') : String(target);
+      const targetStr = Array.isArray(target)
+        ? target.join(', ')
+        : String(target);
       if (targetStr.includes('nit')) {
         throw new ConflictException(
           'Ya existe un prospecto o cliente registrado con este número de NIT.',

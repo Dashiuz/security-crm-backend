@@ -12,17 +12,19 @@ export class VisitorControlRepositoryService {
     return this.prisma.visitorEntryControl.create({ data });
   }
 
-  async findMany(
-    where?: Prisma.VisitorEntryControlWhereInput,
-  ): Promise<any[]> {
+  async findMany(where?: Prisma.VisitorEntryControlWhereInput): Promise<any[]> {
     const rows = await this.prisma.visitorEntryControl.findMany({
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
-        resident: { select: { id: true, firstName: true, lastName: true, document: true } },
-        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+        resident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -31,7 +33,9 @@ export class VisitorControlRepositoryService {
       createdBy: r.createdBy?.fullName || 'Sistema',
       clientName: r.client?.name || null,
       unitName: r.unit?.unitName || null,
-      residentName: r.resident ? `${r.resident.firstName} ${r.resident.lastName}` : null,
+      residentName: r.resident
+        ? `${r.resident.firstName} ${r.resident.lastName}`
+        : null,
     }));
   }
 
@@ -44,8 +48,12 @@ export class VisitorControlRepositoryService {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
-        resident: { select: { id: true, firstName: true, lastName: true, document: true } },
-        mediaAttachments: { select: { id: true, url: true, fileName: true, mimeType: true } },
+        resident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
       },
     });
   }

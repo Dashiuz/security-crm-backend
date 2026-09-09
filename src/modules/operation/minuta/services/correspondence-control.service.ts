@@ -13,7 +13,16 @@ export class CorrespondenceControlService {
   constructor(private readonly repository: CorrespondenceRepositoryService) {}
 
   async create(dto: CreateCorrespondenceDto, userId: string, tenantId: string) {
-    const { date, time, occurredAt, receivedTime, clientId, unitId, recipientResidentId, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      receivedTime,
+      clientId,
+      unitId,
+      recipientResidentId,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -56,14 +65,26 @@ export class CorrespondenceControlService {
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record || record.deletedAt) throw new NotFoundException('Correspondence record not found');
+    if (!record || record.deletedAt)
+      throw new NotFoundException('Correspondence record not found');
     return record;
   }
 
   async update(id: string, dto: UpdateCorrespondenceDto, userId: string) {
-    const { date, time, occurredAt, receivedTime, deliveredAt, unitId, recipientResidentId, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      receivedTime,
+      deliveredAt,
+      unitId,
+      recipientResidentId,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
-      t.includes('T') ? new Date(t) : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
 
     const updateData: Record<string, unknown> = { ...others };
     if (date) updateData.date = new Date(date);
@@ -72,7 +93,10 @@ export class CorrespondenceControlService {
     if (receivedTime) updateData.receivedTime = parseTime(receivedTime);
     if (deliveredAt) updateData.deliveredAt = new Date(deliveredAt);
     if (unitId) (updateData as any).unit = { connect: { id: unitId } };
-    if (recipientResidentId) (updateData as any).recipientResident = { connect: { id: recipientResidentId } };
+    if (recipientResidentId)
+      (updateData as any).recipientResident = {
+        connect: { id: recipientResidentId },
+      };
 
     return this.repository.update({ id }, {
       ...updateData,
@@ -86,7 +110,9 @@ export class CorrespondenceControlService {
       status: CorrespondenceStatus.DELIVERED,
       deliveredAt: new Date(),
       deliveredToName: dto.deliveredToName,
-      ...(dto.deliveryEvidenceUrl ? { deliveryEvidenceUrl: dto.deliveryEvidenceUrl } : {}),
+      ...(dto.deliveryEvidenceUrl
+        ? { deliveryEvidenceUrl: dto.deliveryEvidenceUrl }
+        : {}),
       ...(dto.deliveryNotes ? { deliveryNotes: dto.deliveryNotes } : {}),
     };
 

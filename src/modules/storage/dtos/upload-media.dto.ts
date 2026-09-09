@@ -22,21 +22,24 @@ export class UploadMediaDto {
   entityType: MediaTypeCategory;
 
   @ApiProperty({
-    description: 'ID de la entidad principal (minutaId, visitorEntryId, employeeId, etc.)',
+    description:
+      'ID de la entidad principal (minutaId, visitorEntryId, employeeId, etc.)',
   })
   @IsString()
   @IsNotEmpty()
   entityId: string;
 
   @ApiPropertyOptional({
-    description: 'ID del cliente si la entidad está ligada a un conjunto/cliente',
+    description:
+      'ID del cliente si la entidad está ligada a un conjunto/cliente',
   })
   @IsString()
   @IsOptional()
   clientId?: string;
 
   @ApiPropertyOptional({
-    description: 'Subtipo o subcarpeta específica (ej: general, visitor, correspondence, parking, avatar, documents)',
+    description:
+      'Subtipo o subcarpeta específica (ej: general, visitor, correspondence, parking, avatar, documents)',
   })
   @IsString()
   @IsOptional()

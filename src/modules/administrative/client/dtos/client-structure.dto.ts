@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsEnum,
   IsInt,
@@ -36,7 +36,9 @@ export class TowerDefinitionDto {
   floorsAmount: number;
 
   @ApiProperty({ example: 4 })
-  @IsInt({ message: 'La cantidad de apartamentos por piso debe ser un entero.' })
+  @IsInt({
+    message: 'La cantidad de apartamentos por piso debe ser un entero.',
+  })
   @Min(1, { message: 'La cantidad mínima de apartamentos por piso es 1.' })
   apartmentsPerFloor: number;
 
@@ -55,8 +57,13 @@ export class TowerDefinitionDto {
 }
 
 export class StructureConfigDto {
-  @ApiProperty({ enum: ResidentialComplexType, default: ResidentialComplexType.BUILDING_CLUSTER })
-  @IsEnum(ResidentialComplexType, { message: 'El tipo de complejo residencial no es válido.' })
+  @ApiProperty({
+    enum: ResidentialComplexType,
+    default: ResidentialComplexType.BUILDING_CLUSTER,
+  })
+  @IsEnum(ResidentialComplexType, {
+    message: 'El tipo de complejo residencial no es válido.',
+  })
   structureType: ResidentialComplexType;
 
   @ApiProperty({ example: 2, required: false })
@@ -78,7 +85,9 @@ export class StructureConfigDto {
   apartmentsPerFloor?: number;
 
   @ApiProperty({ example: 50, required: false })
-  @IsInt({ message: 'La cantidad total de inmuebles/casas debe ser un entero.' })
+  @IsInt({
+    message: 'La cantidad total de inmuebles/casas debe ser un entero.',
+  })
   @Min(1, { message: 'La cantidad mínima de inmuebles es 1.' })
   @IsOptional()
   unitsAmount?: number;
@@ -144,12 +153,16 @@ export class StructureConfigDto {
   tennisCourtAmount?: number;
 
   @ApiProperty({ default: false, required: false })
-  @IsBoolean({ message: 'El indicador de cancha de baloncesto debe ser booleano.' })
+  @IsBoolean({
+    message: 'El indicador de cancha de baloncesto debe ser booleano.',
+  })
   @IsOptional()
   hasBasketballCourt?: boolean;
 
   @ApiProperty({ default: 0, required: false })
-  @IsInt({ message: 'La cantidad de canchas de baloncesto debe ser un entero.' })
+  @IsInt({
+    message: 'La cantidad de canchas de baloncesto debe ser un entero.',
+  })
   @IsOptional()
   basketballCourtAmount?: number;
 
@@ -164,7 +177,9 @@ export class StructureConfigDto {
   footballCourtAmount?: number;
 
   @ApiProperty({ default: false, required: false })
-  @IsBoolean({ message: 'El indicador de cancha de voleibol debe ser booleano.' })
+  @IsBoolean({
+    message: 'El indicador de cancha de voleibol debe ser booleano.',
+  })
   @IsOptional()
   hasVolleyballCourt?: boolean;
 
@@ -194,22 +209,30 @@ export class StructureConfigDto {
   playgroundAmount?: number;
 
   @ApiProperty({ default: false, required: false })
-  @IsBoolean({ message: 'El indicador de parqueadero privado debe ser booleano.' })
+  @IsBoolean({
+    message: 'El indicador de parqueadero privado debe ser booleano.',
+  })
   @IsOptional()
   hasParking?: boolean;
 
   @ApiProperty({ default: 0, required: false })
-  @IsInt({ message: 'La cantidad de parqueaderos privados debe ser un entero.' })
+  @IsInt({
+    message: 'La cantidad de parqueaderos privados debe ser un entero.',
+  })
   @IsOptional()
   parkingAmount?: number;
 
   @ApiProperty({ default: false, required: false })
-  @IsBoolean({ message: 'El indicador de parqueadero de visitantes debe ser booleano.' })
+  @IsBoolean({
+    message: 'El indicador de parqueadero de visitantes debe ser booleano.',
+  })
   @IsOptional()
   hasGuestParking?: boolean;
 
   @ApiProperty({ default: 0, required: false })
-  @IsInt({ message: 'La cantidad de parqueaderos de visitantes debe ser un entero.' })
+  @IsInt({
+    message: 'La cantidad de parqueaderos de visitantes debe ser un entero.',
+  })
   @IsOptional()
   guestParkingAmount?: number;
 
@@ -224,7 +247,9 @@ export class StructureConfigDto {
   bicycleRackAmount?: number;
 
   @ApiProperty({ default: false, required: false })
-  @IsBoolean({ message: 'El indicador de locales comerciales debe ser booleano.' })
+  @IsBoolean({
+    message: 'El indicador de locales comerciales debe ser booleano.',
+  })
   @IsOptional()
   hasCommercialStores?: boolean;
 
@@ -259,3 +284,5 @@ export class CreateClientWithStructureDto extends CreateClientDto {
   @IsOptional()
   structureConfig?: StructureConfigDto;
 }
+
+export class UpdateClientWithStructureDto extends PartialType(CreateClientWithStructureDto) {}

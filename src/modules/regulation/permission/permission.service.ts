@@ -54,7 +54,8 @@ export class PermissionService {
     if (!permission) throw new NotFoundException('Permission not found');
 
     if (
-      (permission.key.startsWith('godlike:') || dto.key?.startsWith('godlike:')) &&
+      (permission.key.startsWith('godlike:') ||
+        dto.key?.startsWith('godlike:')) &&
       !this.contextService.isGodlike
     ) {
       throw new ForbiddenException(
@@ -78,7 +79,10 @@ export class PermissionService {
     const permission = await this.permissionRepository.findPermissionById(id);
     if (!permission) throw new NotFoundException('Permission not found');
 
-    if (permission.key.startsWith('godlike:') && !this.contextService.isGodlike) {
+    if (
+      permission.key.startsWith('godlike:') &&
+      !this.contextService.isGodlike
+    ) {
       throw new ForbiddenException(
         'No tienes autorización para eliminar permisos reservados de nivel Godlike/SuperAdmin.',
       );
@@ -101,7 +105,10 @@ export class PermissionService {
     const permission = await this.permissionRepository.findPermissionById(id);
     if (!permission) throw new NotFoundException('Permission not found');
 
-    if (permission.key.startsWith('godlike:') && !this.contextService.isGodlike) {
+    if (
+      permission.key.startsWith('godlike:') &&
+      !this.contextService.isGodlike
+    ) {
       throw new NotFoundException('Permission not found');
     }
     return permission;

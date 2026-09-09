@@ -11,7 +11,10 @@ import { RecordSource, VehicleCondition } from '@prisma/client';
 
 export class CreateParkingControlDto {
   @ApiProperty({ example: '2024-02-19' })
-  @IsDateString({}, { message: 'La fecha del registro debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha del registro debe ser una fecha válida.' },
+  )
   @IsNotEmpty({ message: 'La fecha es requerida.' })
   date!: string;
 
@@ -21,7 +24,10 @@ export class CreateParkingControlDto {
   time!: string;
 
   @ApiProperty({ example: '2024-02-19T08:00:00Z' })
-  @IsDateString({}, { message: 'La marca de tiempo de entrada debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo de entrada debe ser una fecha ISO válida.' },
+  )
   @IsNotEmpty({ message: 'La marca de tiempo es requerida.' })
   occurredAt!: string;
 
@@ -81,12 +87,16 @@ export class CreateParkingControlDto {
   radio?: boolean;
 
   @ApiPropertyOptional()
-  @IsBoolean({ message: 'El indicador de llanta de repuesto debe ser un valor booleano.' })
+  @IsBoolean({
+    message: 'El indicador de llanta de repuesto debe ser un valor booleano.',
+  })
   @IsOptional()
   spareTire?: boolean;
 
   @ApiPropertyOptional()
-  @IsBoolean({ message: 'El indicador de copas/rines debe ser un valor booleano.' })
+  @IsBoolean({
+    message: 'El indicador de copas/rines debe ser un valor booleano.',
+  })
   @IsOptional()
   hubcaps?: boolean;
 
@@ -98,7 +108,9 @@ export class CreateParkingControlDto {
     enum: VehicleCondition,
     default: VehicleCondition.GOOD,
   })
-  @IsEnum(VehicleCondition, { message: 'El estado o condición del vehículo no es válido.' })
+  @IsEnum(VehicleCondition, {
+    message: 'El estado o condición del vehículo no es válido.',
+  })
   @IsOptional()
   condition?: VehicleCondition;
 
@@ -125,7 +137,10 @@ export class UpdateParkingControlDto {
   time?: string;
 
   @ApiPropertyOptional()
-  @IsDateString({}, { message: 'La marca de tiempo debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo debe ser una fecha ISO válida.' },
+  )
   @IsOptional()
   occurredAt?: string;
 
@@ -150,7 +165,9 @@ export class UpdateParkingControlDto {
   observations?: string;
 
   @ApiPropertyOptional({ enum: VehicleCondition })
-  @IsEnum(VehicleCondition, { message: 'La condición del vehículo no es válida.' })
+  @IsEnum(VehicleCondition, {
+    message: 'La condición del vehículo no es válida.',
+  })
   @IsOptional()
   condition?: VehicleCondition;
 

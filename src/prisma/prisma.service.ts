@@ -52,7 +52,9 @@ export class PrismaService
 
   async onModuleInit() {
     const isProd = process.env.NODE_ENV === 'production';
-    const targetDb = isProd ? 'Supabase (Production)' : 'Local PostgreSQL (Development)';
+    const targetDb = isProd
+      ? 'Supabase (Production)'
+      : 'Local PostgreSQL (Development)';
     this.logger.log(`Conectando a base de datos: ${targetDb}`);
     await this.$connect();
   }

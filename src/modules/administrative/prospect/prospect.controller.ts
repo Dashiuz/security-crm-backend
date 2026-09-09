@@ -47,7 +47,10 @@ export class ProspectController {
   @RequirePermissions('client:manage', 'client:create')
   @ApiOperation({ summary: 'Create prospect with residential structure' })
   @ApiCreatedResponse({ type: ProspectResponseDto })
-  createWithStructure(@Body() dto: CreateProspectWithStructureDto, @Request() req) {
+  createWithStructure(
+    @Body() dto: CreateProspectWithStructureDto,
+    @Request() req,
+  ) {
     return this.prospectService.create(dto, req.user);
   }
 
