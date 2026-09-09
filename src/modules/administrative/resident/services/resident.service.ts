@@ -140,7 +140,11 @@ export class ResidentService {
       createdBy: true,
     });
 
-    if (!resident || resident.tenantId !== user.tenantId || resident.deletedAt) {
+    if (
+      !resident ||
+      resident.tenantId !== user.tenantId ||
+      resident.deletedAt
+    ) {
       throw new NotFoundException('Residente no encontrado');
     }
 
@@ -186,7 +190,8 @@ export class ResidentService {
     if (dto.residentType) data.residentType = dto.residentType;
     if (dto.idType !== undefined) data.idType = dto.idType || null;
     if (dto.unitId) data.unit = { connect: { id: dto.unitId } };
-    if (dto.birthdate !== undefined) data.birthdate = this.parseDate(dto.birthdate);
+    if (dto.birthdate !== undefined)
+      data.birthdate = this.parseDate(dto.birthdate);
     if (dto.residentSince !== undefined)
       data.residentSince = this.parseDate(dto.residentSince) || new Date();
     if (dto.accessStartDate !== undefined)
@@ -234,7 +239,8 @@ export class ResidentService {
     const totalRows = csvData.length;
     let successRows = 0;
     let errorRows = 0;
-    const errors: Array<{ row: number; document?: string; reason: string }> = [];
+    const errors: Array<{ row: number; document?: string; reason: string }> =
+      [];
     const createdResidents: any[] = [];
 
     // Pre-fetch units for this client
@@ -247,7 +253,12 @@ export class ResidentService {
       const rowNum = i + 1;
 
       try {
-        if (!row.firstName || !row.lastName || !row.document || !row.phoneNumber) {
+        if (
+          !row.firstName ||
+          !row.lastName ||
+          !row.document ||
+          !row.phoneNumber
+        ) {
           throw new Error(
             'Campos obligatorios faltantes: Nombre, Apellido, Documento y Teléfono.',
           );
@@ -297,7 +308,9 @@ export class ResidentService {
           }
         }
 
-        const rawResidentType = (row.residentType || 'OWNER').trim().toUpperCase();
+        const rawResidentType = (row.residentType || 'OWNER')
+          .trim()
+          .toUpperCase();
         let residentType: ResidentType = ResidentType.OWNER;
         if (
           rawResidentType === 'TENANT' ||
@@ -352,7 +365,10 @@ export class ResidentService {
         // Normalize idType (mapping common Colombian CC / Cedula to CI)
         let idType: IdType | null = null;
         if (row.idType && row.idType.trim() !== '') {
-          const rawIdType = row.idType.trim().toUpperCase().replace(/[\.\-\s]/g, '');
+          const rawIdType = row.idType
+            .trim()
+            .toUpperCase()
+            .replace(/[\.\-\s]/g, '');
           if (
             rawIdType === 'CC' ||
             rawIdType === 'CI' ||
@@ -417,11 +433,7 @@ export class ResidentService {
     }
 
     const status =
-      errorRows === 0
-        ? 'SUCCESS'
-        : successRows === 0
-          ? 'FAILED'
-          : 'PARTIAL';
+      errorRows === 0 ? 'SUCCESS' : successRows === 0 ? 'FAILED' : 'PARTIAL';
 
     await this.prisma.fileImportLog.create({
       data: {

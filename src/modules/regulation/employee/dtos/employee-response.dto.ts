@@ -53,7 +53,10 @@ export class EmployeeResponseDto {
   @ApiPropertyOptional({ nullable: true, example: 'client-id' })
   clientId!: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: 'Conjunto Residencial Las Margaritas' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 'Conjunto Residencial Las Margaritas',
+  })
   clientName!: string | null;
 
   @ApiPropertyOptional({ nullable: true, example: 'department-id' })
@@ -68,7 +71,10 @@ export class EmployeeResponseDto {
   @ApiPropertyOptional({ nullable: true, example: 'Supervisor Motorizado' })
   positionName!: string | null;
 
-  @ApiPropertyOptional({ nullable: true, description: 'Presigned S3 URL for employee avatar' })
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'Presigned S3 URL for employee avatar',
+  })
   avatarUrl?: string | null;
 
   @ApiPropertyOptional({ description: 'List of media attachments' })

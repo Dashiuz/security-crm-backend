@@ -9,7 +9,9 @@ import {
 
 export class CreatePositionDto {
   @ApiProperty({ example: 'Supervisor de Seguridad' })
-  @IsString({ message: 'El nombre del cargo o posición debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre del cargo o posición debe ser un texto válido.',
+  })
   @IsNotEmpty({ message: 'El nombre del cargo o posición es requerido.' })
   name!: string;
 
@@ -26,7 +28,9 @@ export class CreatePositionDto {
 
 export class UpdatePositionDto {
   @ApiProperty({ example: 'Director Operativo', required: false })
-  @IsString({ message: 'El nombre del cargo o posición debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre del cargo o posición debe ser un texto válido.',
+  })
   @IsOptional()
   name?: string;
 

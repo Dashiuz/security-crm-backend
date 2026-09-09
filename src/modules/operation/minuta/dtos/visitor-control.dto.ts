@@ -12,7 +12,10 @@ import { RecordSource, VisitorMode } from '@prisma/client';
 
 export class CreateVisitorEntryDto {
   @ApiProperty({ example: '2024-02-19' })
-  @IsDateString({}, { message: 'La fecha del registro debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha del registro debe ser una fecha válida.' },
+  )
   @IsNotEmpty({ message: 'La fecha es requerida.' })
   date!: string;
 
@@ -22,17 +25,24 @@ export class CreateVisitorEntryDto {
   time!: string;
 
   @ApiProperty({ example: '2024-02-19T10:00:00Z' })
-  @IsDateString({}, { message: 'La marca de tiempo debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo debe ser una fecha ISO válida.' },
+  )
   @IsNotEmpty({ message: 'La marca de tiempo de la entrada es requerida.' })
   occurredAt!: string;
 
   @ApiProperty({ example: 'Juan Perez' })
-  @IsString({ message: 'El nombre completo del visitante debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre completo del visitante debe ser un texto válido.',
+  })
   @IsNotEmpty({ message: 'El nombre completo del visitante es requerido.' })
   visitorFullName!: string;
 
   @ApiProperty({ example: '1098765432' })
-  @IsString({ message: 'El número de documento del visitante debe ser un texto válido.' })
+  @IsString({
+    message: 'El número de documento del visitante debe ser un texto válido.',
+  })
   @IsNotEmpty({ message: 'El documento del visitante es requerido.' })
   visitorIdNumber!: string;
 
@@ -47,7 +57,9 @@ export class CreateVisitorEntryDto {
   entryTime!: string;
 
   @ApiPropertyOptional({ example: 'Admin' })
-  @IsString({ message: 'El nombre de quien autoriza debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre de quien autoriza debe ser un texto válido.',
+  })
   @IsOptional()
   authorizedByFullName?: string;
 
@@ -58,7 +70,9 @@ export class CreateVisitorEntryDto {
   peopleCount?: number;
 
   @ApiProperty({ enum: VisitorMode })
-  @IsEnum(VisitorMode, { message: 'El modo de ingreso del visitante no es válido.' })
+  @IsEnum(VisitorMode, {
+    message: 'El modo de ingreso del visitante no es válido.',
+  })
   @IsNotEmpty({ message: 'El modo de ingreso es requerido.' })
   mode!: VisitorMode;
 
@@ -103,7 +117,9 @@ export class CreateVisitorEntryDto {
   clientId?: string;
 
   @ApiPropertyOptional({ example: 'unit-id-123' })
-  @IsString({ message: 'El ID de la unidad o apartamento debe ser un texto válido.' })
+  @IsString({
+    message: 'El ID de la unidad o apartamento debe ser un texto válido.',
+  })
   @IsOptional()
   unitId?: string;
 
@@ -172,7 +188,10 @@ export class RegisterVisitorExitDto {
   exitTime?: string;
 
   @ApiPropertyOptional({ example: '2026-08-29T18:30:00Z' })
-  @IsDateString({}, { message: 'La fecha/hora de salida debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha/hora de salida debe ser una fecha válida.' },
+  )
   @IsOptional()
   exitAt?: string;
 

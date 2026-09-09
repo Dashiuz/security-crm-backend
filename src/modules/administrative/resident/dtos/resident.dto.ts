@@ -17,17 +17,25 @@ export class CreateResidentDto {
   clientId: string;
 
   @ApiProperty({ example: 'cuid-unit-id' })
-  @IsString({ message: 'El ID de la vivienda u objeto debe ser un texto válido.' })
+  @IsString({
+    message: 'El ID de la vivienda u objeto debe ser un texto válido.',
+  })
   @IsNotEmpty({ message: 'La vivienda/unidad residencial es requerida.' })
   unitId: string;
 
   @ApiProperty({ enum: ResidentType, default: ResidentType.OWNER })
-  @IsEnum(ResidentType, { message: 'El tipo de residente especificado no es válido.' })
+  @IsEnum(ResidentType, {
+    message: 'El tipo de residente especificado no es válido.',
+  })
   residentType: ResidentType;
 
   @ApiProperty({ enum: IdType, required: false })
-  @ValidateIf((o) => o.idType !== undefined && o.idType !== null && o.idType !== '')
-  @IsEnum(IdType, { message: 'El tipo de documento de identidad no es válido.' })
+  @ValidateIf(
+    (o) => o.idType !== undefined && o.idType !== null && o.idType !== '',
+  )
+  @IsEnum(IdType, {
+    message: 'El tipo de documento de identidad no es válido.',
+  })
   @IsOptional()
   idType?: IdType;
 
@@ -52,38 +60,78 @@ export class CreateResidentDto {
   phoneNumber: string;
 
   @ApiProperty({ example: 'carlos.mendoza@gmail.com', required: false })
-  @ValidateIf((o) => o.email !== undefined && o.email !== null && o.email !== '')
-  @IsEmail({}, { message: 'El correo electrónico del residente no tiene un formato válido.' })
+  @ValidateIf(
+    (o) => o.email !== undefined && o.email !== null && o.email !== '',
+  )
+  @IsEmail(
+    {},
+    {
+      message:
+        'El correo electrónico del residente no tiene un formato válido.',
+    },
+  )
   @IsOptional()
   email?: string;
 
   @ApiProperty({ example: 'M', required: false })
-  @ValidateIf((o) => o.gender !== undefined && o.gender !== null && o.gender !== '')
+  @ValidateIf(
+    (o) => o.gender !== undefined && o.gender !== null && o.gender !== '',
+  )
   @IsString({ message: 'El género debe ser un texto válido.' })
   @IsOptional()
   gender?: string;
 
   @ApiProperty({ example: '1990-05-15', required: false })
-  @ValidateIf((o) => o.birthdate !== undefined && o.birthdate !== null && o.birthdate !== '')
-  @IsDateString({}, { message: 'La fecha de nacimiento debe ser una fecha válida.' })
+  @ValidateIf(
+    (o) =>
+      o.birthdate !== undefined && o.birthdate !== null && o.birthdate !== '',
+  )
+  @IsDateString(
+    {},
+    { message: 'La fecha de nacimiento debe ser una fecha válida.' },
+  )
   @IsOptional()
   birthdate?: string;
 
   @ApiProperty({ example: '2024-01-01', required: false })
-  @ValidateIf((o) => o.residentSince !== undefined && o.residentSince !== null && o.residentSince !== '')
-  @IsDateString({}, { message: 'La fecha de inicio de residencia debe ser una fecha válida.' })
+  @ValidateIf(
+    (o) =>
+      o.residentSince !== undefined &&
+      o.residentSince !== null &&
+      o.residentSince !== '',
+  )
+  @IsDateString(
+    {},
+    { message: 'La fecha de inicio de residencia debe ser una fecha válida.' },
+  )
   @IsOptional()
   residentSince?: string;
 
   @ApiProperty({ example: '2024-01-01', required: false })
-  @ValidateIf((o) => o.accessStartDate !== undefined && o.accessStartDate !== null && o.accessStartDate !== '')
-  @IsDateString({}, { message: 'La fecha de inicio de acceso debe ser una fecha válida.' })
+  @ValidateIf(
+    (o) =>
+      o.accessStartDate !== undefined &&
+      o.accessStartDate !== null &&
+      o.accessStartDate !== '',
+  )
+  @IsDateString(
+    {},
+    { message: 'La fecha de inicio de acceso debe ser una fecha válida.' },
+  )
   @IsOptional()
   accessStartDate?: string;
 
   @ApiProperty({ example: '2025-12-31', required: false })
-  @ValidateIf((o) => o.accessEndDate !== undefined && o.accessEndDate !== null && o.accessEndDate !== '')
-  @IsDateString({}, { message: 'La fecha de fin de acceso debe ser una fecha válida.' })
+  @ValidateIf(
+    (o) =>
+      o.accessEndDate !== undefined &&
+      o.accessEndDate !== null &&
+      o.accessEndDate !== '',
+  )
+  @IsDateString(
+    {},
+    { message: 'La fecha de fin de acceso debe ser una fecha válida.' },
+  )
   @IsOptional()
   accessEndDate?: string;
 }

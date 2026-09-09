@@ -33,7 +33,10 @@ export class ResidentRepositoryService {
     });
   }
 
-  async update(id: string, data: Prisma.ResidentUpdateInput): Promise<Resident> {
+  async update(
+    id: string,
+    data: Prisma.ResidentUpdateInput,
+  ): Promise<Resident> {
     return this.prisma.resident.update({
       where: { id },
       data,

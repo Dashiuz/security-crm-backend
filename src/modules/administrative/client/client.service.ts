@@ -15,7 +15,11 @@ import { CreateClientWithStructureDto } from './dtos/client-structure.dto';
 import { ClientStructureGeneratorService } from './services/client-structure-generator.service';
 import { UserContext } from '../../../common/interfaces/user-context.interface';
 import { toDateOnlyIso } from '../../../common/utils/convertDate';
-import { ClientStatus, ClientSector } from '@prisma/client';
+import {
+  ClientStatus,
+  ClientSector,
+  ResidentialComplexType,
+} from '@prisma/client';
 
 @Injectable()
 export class ClientService {
@@ -55,7 +59,9 @@ export class ClientService {
   private handlePrismaError(error: any): never {
     if (error?.code === 'P2002') {
       const target = (error?.meta?.target as string[]) || [];
-      const targetStr = Array.isArray(target) ? target.join(', ') : String(target);
+      const targetStr = Array.isArray(target)
+        ? target.join(', ')
+        : String(target);
       if (targetStr.includes('nit')) {
         throw new ConflictException(
           'Ya existe un cliente o conjunto residencial registrado con este número de NIT.',
@@ -94,7 +100,7 @@ export class ClientService {
       internalCode,
       clientStatus: clientFields.clientStatus || ClientStatus.ACTIVE,
       tenant: { connect: { id: user.tenantId } },
-    } as any;
+    };
 
     // Clean relation scalar fields
     delete data.coordinatorInChargeId;
@@ -219,8 +225,8 @@ export class ClientService {
   ): Promise<ClientResponseDto> {
     await this.findOne(id, user);
 
-    const { structureConfig, ...clientFields } = dto as any;
-    const data = { ...clientFields } as any;
+    const { structureConfig, ...clientFields } = dto;
+    const data = { ...clientFields };
 
     delete data.coordinatorInChargeId;
     delete data.commercialContactId;
@@ -346,29 +352,44 @@ export class ClientService {
       const rowNum = i + 1;
 
       try {
-        if (!row.nit || !row.name) {
+        const rawNit = (row.nit || row.NIT || '').trim();
+        const rawName = (
+          row.name ||
+          row.Nombre ||
+          row.nombre ||
+          row.razonSocial ||
+          ''
+        ).trim();
+
+        if (!rawNit || !rawName) {
           throw new Error('Los campos NIT y Nombre son obligatorios.');
         }
 
         const existing = await this.prisma.client.findFirst({
           where: {
             tenantId: user.tenantId,
-            nit: row.nit.trim(),
+            nit: rawNit,
           },
         });
 
         if (existing) {
-          throw new Error(`Ya existe un cliente con el NIT ${row.nit}`);
+          throw new Error(`Ya existe un cliente con el NIT ${rawNit}`);
         }
 
+        const rawCode =
+          row.internalCode ||
+          row.CodigoInterno ||
+          row.codigo ||
+          row.codigoInterno;
         const internalCode =
-          row.internalCode && row.internalCode.trim() !== ''
-            ? row.internalCode.trim()
+          rawCode && rawCode.trim() !== ''
+            ? rawCode.trim()
             : `CLI-${Math.floor(1000 + Math.random() * 9000)}`;
 
         let sector: ClientSector = ClientSector.RESIDENTIAL;
-        if (row.sector && row.sector.trim() !== '') {
-          const s = row.sector.trim().toUpperCase();
+        const rawSector = row.sector || row.Sector;
+        if (rawSector && rawSector.trim() !== '') {
+          const s = rawSector.trim().toUpperCase();
           if (s === 'RESIDENCIAL' || s === 'RESIDENTIAL') {
             sector = ClientSector.RESIDENTIAL;
           } else if (s === 'COMERCIAL' || s === 'COMMERCIAL') {
@@ -384,35 +405,59 @@ export class ClientService {
           }
         }
 
+        const rawContract =
+          row.contractNumber ||
+          row.NumeroContrato ||
+          row.contrato ||
+          row.numeroContrato;
+        const rawEmail = row.email || row.Email || row.Correo || row.correo;
+        const rawPhone = row.phone || row.Telefono || row.telefono;
+        const rawAddress = row.address || row.Direccion || row.direccion;
+        const rawCity = row.city || row.Ciudad || row.ciudad;
+
         const clientData: any = {
           tenant: { connect: { id: user.tenantId } },
-          nit: row.nit.trim(),
-          name: row.name.trim(),
+          nit: rawNit,
+          name: rawName,
           internalCode,
           contractNumber:
-            row.contractNumber?.trim() ||
+            rawContract?.trim() ||
             `CONT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-          email: row.email?.trim() || null,
-          phone: row.phone?.trim() || null,
-          address: row.address?.trim() || null,
-          city: row.city?.trim() || 'Bogotá',
+          email: rawEmail?.trim() || null,
+          phone: rawPhone?.trim() || null,
+          address: rawAddress?.trim() || null,
+          city: rawCity?.trim() || 'Bogotá',
           sector,
           clientStatus: ClientStatus.ACTIVE,
         };
 
-        if (user.sub && user.sub !== 'system') {
+        const isGodlike =
+          user.roles?.includes('GODLIKE') || user.tenantId === 'system';
+        if (user.sub && user.sub !== 'system' && !isGodlike) {
           clientData.createdBy = { connect: { id: user.sub } };
           clientData.updatedBy = { connect: { id: user.sub } };
         }
 
         const created = await this.prisma.client.create({ data: clientData });
+
+        await this.prisma.clientProperties.create({
+          data: {
+            tenantId: user.tenantId,
+            clientId: created.id,
+            structureType: ResidentialComplexType.BUILDING_CLUSTER,
+            towersAmount: 0,
+            unitsAmount: 0,
+            createdBy: user.sub !== 'system' ? user.sub : undefined,
+          },
+        });
+
         createdClients.push(created);
         successRows++;
       } catch (err: any) {
         errorRows++;
         errors.push({
           row: rowNum,
-          nit: row.nit,
+          nit: row.nit || row.NIT,
           reason: err.message || 'Error desconocido al procesar fila',
         });
       }
@@ -420,11 +465,7 @@ export class ClientService {
 
     // Record FileImportLog
     const status =
-      errorRows === 0
-        ? 'SUCCESS'
-        : successRows === 0
-          ? 'FAILED'
-          : 'PARTIAL';
+      errorRows === 0 ? 'SUCCESS' : successRows === 0 ? 'FAILED' : 'PARTIAL';
 
     await this.prisma.fileImportLog.create({
       data: {

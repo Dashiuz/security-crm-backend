@@ -8,7 +8,9 @@ export class CreatePermissionDto {
   })
   @IsString({ message: 'La clave del permiso debe ser un texto válido.' })
   @IsNotEmpty({ message: 'La clave del permiso es requerida.' })
-  @MaxLength(100, { message: 'La clave del permiso no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'La clave del permiso no puede superar 100 caracteres.',
+  })
   key!: string;
 
   @ApiProperty({
@@ -17,7 +19,9 @@ export class CreatePermissionDto {
     required: false,
   })
   @IsString({ message: 'La descripción del permiso debe ser un texto válido.' })
-  @MaxLength(255, { message: 'La descripción no puede superar 255 caracteres.' })
+  @MaxLength(255, {
+    message: 'La descripción no puede superar 255 caracteres.',
+  })
   @IsOptional()
   desc?: string;
 }

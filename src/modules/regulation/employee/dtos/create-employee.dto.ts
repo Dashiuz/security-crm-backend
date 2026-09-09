@@ -14,24 +14,32 @@ export class CreateEmployeeDto {
   @ApiProperty({ example: 'Juan' })
   @IsString({ message: 'El primer nombre debe ser un texto válido.' })
   @IsNotEmpty({ message: 'El primer nombre es requerido.' })
-  @MaxLength(100, { message: 'El primer nombre no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El primer nombre no puede superar 100 caracteres.',
+  })
   firstName!: string;
 
   @ApiProperty({ example: 'Camilo' })
   @IsString({ message: 'El segundo nombre debe ser un texto válido.' })
-  @MaxLength(100, { message: 'El segundo nombre no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El segundo nombre no puede superar 100 caracteres.',
+  })
   @IsOptional()
   secondName?: string | null;
 
   @ApiProperty({ example: 'Perez' })
   @IsString({ message: 'El primer apellido debe ser un texto válido.' })
   @IsNotEmpty({ message: 'El primer apellido es requerido.' })
-  @MaxLength(100, { message: 'El primer apellido no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El primer apellido no puede superar 100 caracteres.',
+  })
   lastName!: string;
 
   @ApiProperty({ example: 'Gomez' })
   @IsString({ message: 'El segundo apellido debe ser un texto válido.' })
-  @MaxLength(100, { message: 'El segundo apellido no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El segundo apellido no puede superar 100 caracteres.',
+  })
   @IsOptional()
   maternalSurname?: string | null;
 
@@ -46,7 +54,10 @@ export class CreateEmployeeDto {
   document!: string;
 
   @ApiProperty({ example: '1990-01-01' })
-  @IsDateString({}, { message: 'La fecha de nacimiento debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de nacimiento debe ser una fecha válida.' },
+  )
   birthdate!: string;
 
   @ApiProperty({ example: 'M' })
@@ -75,7 +86,9 @@ export class CreateEmployeeDto {
   positionId?: string | null;
 
   @ApiProperty({ example: 'juan.perez@example.com' })
-  @ValidateIf((o) => o.email !== undefined && o.email !== null && o.email !== '')
+  @ValidateIf(
+    (o) => o.email !== undefined && o.email !== null && o.email !== '',
+  )
   @IsEmail({}, { message: 'El correo electrónico no tiene un formato válido.' })
   @IsOptional()
   email?: string | null;
@@ -86,7 +99,10 @@ export class CreateEmployeeDto {
   phone?: string | null;
 
   @ApiProperty({ example: '2020-05-15' })
-  @IsDateString({}, { message: 'La fecha de ingreso debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de ingreso debe ser una fecha válida.' },
+  )
   entryDate!: string;
 
   @ApiProperty({ example: false })
@@ -100,7 +116,10 @@ export class CreateEmployeeDto {
   isActive?: boolean;
 
   @ApiProperty({ example: '2023-12-31' })
-  @IsDateString({}, { message: 'La fecha de retiro debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de retiro debe ser una fecha válida.' },
+  )
   @IsOptional()
   retiredAt?: string | null;
 }

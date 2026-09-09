@@ -24,6 +24,8 @@ enum VisitorMode {
 enum CorrespondenceType {
   BOX
   ENVELOPE
+  DOCUMENT
+  FOOD_DELIVERY
   OTHER
 }
 

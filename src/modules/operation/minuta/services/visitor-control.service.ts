@@ -13,7 +13,16 @@ export class VisitorControlService {
   constructor(private readonly repository: VisitorControlRepositoryService) {}
 
   async create(dto: CreateVisitorEntryDto, userId: string, tenantId: string) {
-    const { date, time, occurredAt, entryTime, clientId, unitId, residentId, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      entryTime,
+      clientId,
+      unitId,
+      residentId,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -56,13 +65,23 @@ export class VisitorControlService {
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record || record.deletedAt) throw new NotFoundException('Visitor record not found');
+    if (!record || record.deletedAt)
+      throw new NotFoundException('Visitor record not found');
     return record;
   }
 
   async update(id: string, dto: UpdateVisitorEntryDto, userId: string) {
-    const { date, time, occurredAt, entryTime, exitTime, exitAt, unitId, residentId, ...others } =
-      dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      entryTime,
+      exitTime,
+      exitAt,
+      unitId,
+      residentId,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -76,7 +95,8 @@ export class VisitorControlService {
     if (exitTime) updateData.exitTime = parseTime(exitTime);
     if (exitAt) updateData.exitAt = new Date(exitAt);
     if (unitId) (updateData as any).unit = { connect: { id: unitId } };
-    if (residentId) (updateData as any).resident = { connect: { id: residentId } };
+    if (residentId)
+      (updateData as any).resident = { connect: { id: residentId } };
 
     return this.repository.update(
       { id },
@@ -87,7 +107,11 @@ export class VisitorControlService {
     );
   }
 
-  async registerExit(id: string, dto?: RegisterVisitorExitDto, userId?: string) {
+  async registerExit(
+    id: string,
+    dto?: RegisterVisitorExitDto,
+    userId?: string,
+  ) {
     await this.findOne(id);
     const now = new Date();
     const parseTime = (t: string) =>

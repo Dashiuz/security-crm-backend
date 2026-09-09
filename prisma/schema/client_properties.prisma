@@ -39,6 +39,7 @@ model ClientProperties {
 
   entriesDescription Json? @db.JsonB
   entriesMediaFiles  Json? @db.JsonB
+  structureConfig    Json? @db.JsonB
 
   mediaAttachments MediaAttachment[]
 

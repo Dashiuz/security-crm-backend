@@ -14,17 +14,25 @@ import {
 
 export class CreateCorrespondenceDto {
   @ApiProperty({ example: '2024-02-19' })
-  @IsDateString({}, { message: 'La fecha de recepción debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de recepción debe ser una fecha válida.' },
+  )
   @IsNotEmpty({ message: 'La fecha es requerida.' })
   date!: string;
 
   @ApiProperty({ example: '16:00:00' })
-  @IsString({ message: 'La hora de recepción debe ser un texto en formato HH:mm:ss.' })
+  @IsString({
+    message: 'La hora de recepción debe ser un texto en formato HH:mm:ss.',
+  })
   @IsNotEmpty({ message: 'La hora es requerida.' })
   time!: string;
 
   @ApiProperty({ example: '2024-02-19T16:00:00Z' })
-  @IsDateString({}, { message: 'La marca de tiempo debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo debe ser una fecha ISO válida.' },
+  )
   @IsNotEmpty({ message: 'La marca de tiempo de recepción es requerida.' })
   occurredAt!: string;
 
@@ -34,7 +42,9 @@ export class CreateCorrespondenceDto {
   receivedTime!: string;
 
   @ApiProperty({ example: 'Apt 501' })
-  @IsString({ message: 'El destino o vivienda destinataria debe ser un texto válido.' })
+  @IsString({
+    message: 'El destino o vivienda destinataria debe ser un texto válido.',
+  })
   @IsNotEmpty({ message: 'El destino de la correspondencia es requerido.' })
   destination!: string;
 
@@ -49,17 +59,23 @@ export class CreateCorrespondenceDto {
   courierCompany?: string;
 
   @ApiPropertyOptional({ example: 'TRK-123456' })
-  @IsString({ message: 'El número de guía o seguimiento debe ser un texto válido.' })
+  @IsString({
+    message: 'El número de guía o seguimiento debe ser un texto válido.',
+  })
   @IsOptional()
   trackingNumber?: string;
 
   @ApiPropertyOptional({ example: 'Pepe' })
-  @IsString({ message: 'El nombre de quien recibe en portería debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre de quien recibe en portería debe ser un texto válido.',
+  })
   @IsOptional()
   receivedByName?: string;
 
   @ApiProperty({ enum: CorrespondenceType })
-  @IsEnum(CorrespondenceType, { message: 'El tipo de paquete/correspondencia no es válido.' })
+  @IsEnum(CorrespondenceType, {
+    message: 'El tipo de paquete/correspondencia no es válido.',
+  })
   @IsNotEmpty({ message: 'El tipo de correspondencia es requerido.' })
   correspondenceType!: CorrespondenceType;
 
@@ -74,12 +90,16 @@ export class CreateCorrespondenceDto {
   clientId?: string;
 
   @ApiPropertyOptional({ example: 'unit-id-123' })
-  @IsString({ message: 'El ID de la unidad o apartamento debe ser un texto válido.' })
+  @IsString({
+    message: 'El ID de la unidad o apartamento debe ser un texto válido.',
+  })
   @IsOptional()
   unitId?: string;
 
   @ApiPropertyOptional({ example: 'resident-id-123' })
-  @IsString({ message: 'El ID del residente destinatario debe ser un texto válido.' })
+  @IsString({
+    message: 'El ID del residente destinatario debe ser un texto válido.',
+  })
   @IsOptional()
   recipientResidentId?: string;
 
@@ -101,7 +121,10 @@ export class UpdateCorrespondenceDto {
   time?: string;
 
   @ApiPropertyOptional()
-  @IsDateString({}, { message: 'La marca de tiempo debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo debe ser una fecha ISO válida.' },
+  )
   @IsOptional()
   occurredAt?: string;
 
@@ -111,22 +134,31 @@ export class UpdateCorrespondenceDto {
   receivedTime?: string;
 
   @ApiPropertyOptional({ enum: CorrespondenceStatus })
-  @IsEnum(CorrespondenceStatus, { message: 'El estado de entrega no es válido.' })
+  @IsEnum(CorrespondenceStatus, {
+    message: 'El estado de entrega no es válido.',
+  })
   @IsOptional()
   status?: CorrespondenceStatus;
 
   @ApiPropertyOptional()
-  @IsDateString({}, { message: 'La fecha de entrega al residente debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha de entrega al residente debe ser una fecha válida.' },
+  )
   @IsOptional()
   deliveredAt?: string;
 
   @ApiPropertyOptional({ example: 'Resident Name' })
-  @IsString({ message: 'El nombre de la persona que recibe debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre de la persona que recibe debe ser un texto válido.',
+  })
   @IsOptional()
   deliveredToName?: string;
 
   @ApiPropertyOptional()
-  @IsString({ message: 'La URL o evidencia de entrega debe ser un texto válido.' })
+  @IsString({
+    message: 'La URL o evidencia de entrega debe ser un texto válido.',
+  })
   @IsOptional()
   deliveryEvidenceUrl?: string;
 
@@ -141,7 +173,9 @@ export class UpdateCorrespondenceDto {
   unitId?: string;
 
   @ApiPropertyOptional()
-  @IsString({ message: 'El ID del residente destinatario debe ser un texto válido.' })
+  @IsString({
+    message: 'El ID del residente destinatario debe ser un texto válido.',
+  })
   @IsOptional()
   recipientResidentId?: string;
 
@@ -153,7 +187,9 @@ export class UpdateCorrespondenceDto {
 
 export class DeliverCorrespondenceDto {
   @ApiProperty({ example: 'Carlos Gómez' })
-  @IsString({ message: 'El nombre de la persona que recibe debe ser un texto válido.' })
+  @IsString({
+    message: 'El nombre de la persona que recibe debe ser un texto válido.',
+  })
   @IsNotEmpty({ message: 'El nombre de quien recibe es requerido.' })
   deliveredToName!: string;
 

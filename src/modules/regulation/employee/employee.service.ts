@@ -52,7 +52,9 @@ export class EmployeeService {
     let avatarUrl: string | null = null;
     if (row.mediaAttachments && row.mediaAttachments.length > 0) {
       try {
-        avatarUrl = await this.s3Service.getPresignedUrl(row.mediaAttachments[0].s3Key);
+        avatarUrl = await this.s3Service.getPresignedUrl(
+          row.mediaAttachments[0].s3Key,
+        );
       } catch {
         avatarUrl = null;
       }
@@ -160,7 +162,9 @@ export class EmployeeService {
       try {
         const user = await this.userRepository.findByDocument(document);
         if (user) {
-          await this.userRepository.updateUser(user.id, { clientId: dto.clientId || null } as any);
+          await this.userRepository.updateUser(user.id, {
+            clientId: dto.clientId || null,
+          } as any);
         }
       } catch {
         // Ignore if user not found yet
@@ -329,9 +333,12 @@ export class EmployeeService {
     if (dto.clientId !== undefined) {
       try {
         const effectiveDocument = dto.document?.trim() ?? current.document;
-        const user = await this.userRepository.findByDocument(effectiveDocument);
+        const user =
+          await this.userRepository.findByDocument(effectiveDocument);
         if (user) {
-          await this.userRepository.updateUser(user.id, { clientId: dto.clientId || null } as any);
+          await this.userRepository.updateUser(user.id, {
+            clientId: dto.clientId || null,
+          } as any);
         }
       } catch {
         // Ignore if user not found
@@ -390,7 +397,8 @@ export class EmployeeService {
     const current = await this.employeeRepository.findAnyById(employeeId);
     if (!current) throw new NotFoundException('Employee not found.');
 
-    const reactivated = await this.employeeRepository.reactivateEmployee(employeeId);
+    const reactivated =
+      await this.employeeRepository.reactivateEmployee(employeeId);
     return await this.mapEmployeeToResponse(reactivated as any);
   }
 
@@ -401,7 +409,7 @@ export class EmployeeService {
   ) {
     const existingDepartments = await this.departmentRepository.findMany();
     const existingPositions = await this.positionRepository.findMany();
-    
+
     let successRows = 0;
     let errorRows = 0;
     const errors: Array<{ row: number; reason: string }> = [];
@@ -417,14 +425,26 @@ export class EmployeeService {
         const document = row.Documento || row.document || '';
         const phone = row.Telefono || row.phone || '';
 
-        if (!firstName.trim() || !lastName.trim() || !document.trim() || !documentType.trim() || !phone.trim()) {
-          throw new Error('Campos obligatorios faltantes: Nombre, Apellido, TipoDocumento, Documento, Telefono.');
+        if (
+          !firstName.trim() ||
+          !lastName.trim() ||
+          !document.trim() ||
+          !documentType.trim() ||
+          !phone.trim()
+        ) {
+          throw new Error(
+            'Campos obligatorios faltantes: Nombre, Apellido, TipoDocumento, Documento, Telefono.',
+          );
         }
 
         // Check active employee uniqueness
-        const exists = await this.employeeRepository.findActiveByDocument(document.trim());
+        const exists = await this.employeeRepository.findActiveByDocument(
+          document.trim(),
+        );
         if (exists) {
-          throw new Error(`El empleado con documento ${document} ya existe y está activo.`);
+          throw new Error(
+            `El empleado con documento ${document} ya existe y está activo.`,
+          );
         }
 
         // Handle Department
@@ -432,7 +452,9 @@ export class EmployeeService {
         const deptNameRaw = row.Departamento || row.department;
         if (deptNameRaw) {
           const deptName = deptNameRaw.toString().trim().toUpperCase();
-          const matchedDept = existingDepartments.find((d: any) => d.name.toUpperCase() === deptName);
+          const matchedDept = existingDepartments.find(
+            (d: any) => d.name.toUpperCase() === deptName,
+          );
           if (matchedDept) {
             departmentId = matchedDept.id;
           } else {
@@ -452,7 +474,9 @@ export class EmployeeService {
         const posNameRaw = row.Cargo || row.position;
         if (posNameRaw) {
           const posName = posNameRaw.toString().trim().toUpperCase();
-          const matchedPos = existingPositions.find((p: any) => p.name.toUpperCase() === posName);
+          const matchedPos = existingPositions.find(
+            (p: any) => p.name.toUpperCase() === posName,
+          );
           if (matchedPos) {
             positionId = matchedPos.id;
           } else {
@@ -477,13 +501,17 @@ export class EmployeeService {
 
         // Handle dates
         const birthdateStr = row.FechaNacimiento || row.birthdate;
-        const birthdate = birthdateStr ? new Date(birthdateStr) : new Date('1990-01-01');
-        
+        const birthdate = birthdateStr
+          ? new Date(birthdateStr)
+          : new Date('1990-01-01');
+
         const entryDateStr = row.FechaIngreso || row.entryDate;
         const entryDate = entryDateStr ? new Date(entryDateStr) : new Date();
 
-        if (Number.isNaN(birthdate.getTime())) throw new Error('FechaNacimiento inválida.');
-        if (Number.isNaN(entryDate.getTime())) throw new Error('FechaIngreso inválida.');
+        if (Number.isNaN(birthdate.getTime()))
+          throw new Error('FechaNacimiento inválida.');
+        if (Number.isNaN(entryDate.getTime()))
+          throw new Error('FechaIngreso inválida.');
 
         const emailRaw = row.Email || row.email;
 

@@ -17,4 +17,19 @@ export class CreateUserDto {
   @IsString({ each: true, message: 'Cada ID de rol debe ser un texto válido.' })
   @IsOptional()
   roleIds?: string[];
+
+  @ApiPropertyOptional({ example: 'Super Administrador' })
+  @IsString({ message: 'El nombre completo debe ser un texto válido.' })
+  @IsOptional()
+  fullName?: string;
+
+  @ApiPropertyOptional({ example: 'system' })
+  @IsString({ message: 'El departamento debe ser un texto válido.' })
+  @IsOptional()
+  department?: string;
+
+  @ApiPropertyOptional({ example: 'system manager' })
+  @IsString({ message: 'El cargo debe ser un texto válido.' })
+  @IsOptional()
+  position?: string;
 }

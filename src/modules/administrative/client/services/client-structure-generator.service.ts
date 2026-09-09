@@ -157,7 +157,8 @@ export class ClientStructureGeneratorService {
                   },
                 });
 
-                const aptsCount = variationsMap.get(f) ?? tDef.apartmentsPerFloor;
+                const aptsCount =
+                  variationsMap.get(f) ?? tDef.apartmentsPerFloor;
                 const unitsToInsert: Prisma.UnitCreateManyInput[] = [];
 
                 for (let a = 1; a <= aptsCount; a++) {
@@ -233,7 +234,11 @@ export class ClientStructureGeneratorService {
           }
 
           // In MIXED complexes, add commercial stores if defined
-          if (structureType === ResidentialComplexType.MIXED && hasCommercialStores && commercialStoresAmount > 0) {
+          if (
+            structureType === ResidentialComplexType.MIXED &&
+            hasCommercialStores &&
+            commercialStoresAmount > 0
+          ) {
             const storeUnits: Prisma.UnitCreateManyInput[] = [];
             for (let s = 1; s <= commercialStoresAmount; s++) {
               storeUnits.push({
@@ -323,6 +328,7 @@ export class ClientStructureGeneratorService {
           storageRoomAmount,
           entriesDescription: entriesDescription || undefined,
           entriesMediaFiles: entriesMediaFiles || undefined,
+          structureConfig: config as unknown as Prisma.InputJsonValue,
           createdBy: userId,
         },
       });

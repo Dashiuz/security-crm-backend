@@ -14,17 +14,27 @@ import { RecordSource } from '@prisma/client';
 
 export class CreateMinutaDto {
   @ApiProperty({ example: '2024-02-19' })
-  @IsDateString({}, { message: 'La fecha del evento debe ser una fecha válida.' })
+  @IsDateString(
+    {},
+    { message: 'La fecha del evento debe ser una fecha válida.' },
+  )
   @IsNotEmpty({ message: 'La fecha del evento es requerida.' })
   date!: string;
 
   @ApiProperty({ example: '14:30:00', description: 'Formato HH:mm:ss' })
-  @IsString({ message: 'La hora debe ser un texto válido en formato HH:mm:ss.' })
+  @IsString({
+    message: 'La hora debe ser un texto válido en formato HH:mm:ss.',
+  })
   @IsNotEmpty({ message: 'La hora del evento es requerida.' })
   time!: string;
 
   @ApiProperty({ example: '2024-02-19T14:30:00Z' })
-  @IsDateString({}, { message: 'La fecha/hora exacta del suceso debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    {
+      message: 'La fecha/hora exacta del suceso debe ser una fecha ISO válida.',
+    },
+  )
   @IsNotEmpty({ message: 'La marca de tiempo del evento es requerida.' })
   occurredAt!: string;
 
@@ -51,7 +61,9 @@ export class CreateMinutaDto {
   tags?: string[];
 
   @ApiPropertyOptional({ example: false })
-  @IsBoolean({ message: 'El indicador de confidencialidad debe ser un booleano.' })
+  @IsBoolean({
+    message: 'El indicador de confidencialidad debe ser un booleano.',
+  })
   @IsOptional()
   isConfidential?: boolean;
 
@@ -78,7 +90,10 @@ export class UpdateMinutaDto {
   time?: string;
 
   @ApiPropertyOptional()
-  @IsDateString({}, { message: 'La marca de tiempo de suceso debe ser válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo de suceso debe ser válida.' },
+  )
   @IsOptional()
   occurredAt?: string;
 
@@ -105,7 +120,9 @@ export class UpdateMinutaDto {
   tags?: string[];
 
   @ApiPropertyOptional()
-  @IsBoolean({ message: 'El indicador de confidencialidad debe ser un booleano.' })
+  @IsBoolean({
+    message: 'El indicador de confidencialidad debe ser un booleano.',
+  })
   @IsOptional()
   isConfidential?: boolean;
 }

@@ -5,7 +5,7 @@ import { SessionObjectInterface } from '../../../common/interfaces/index';
 
 @Injectable()
 export class UserRepositoryService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   // tenant table operation
   async checkTenantActive(tenantId: string) {
@@ -344,6 +344,16 @@ export class UserRepositoryService {
         ...data,
         isActive: true,
         isFirstLogin: true,
+      },
+    });
+  }
+
+  async countActiveInTenant(tenantId: string): Promise<number> {
+    return await (this.prisma.user as any).count({
+      bypassTenant: true,
+      where: {
+        tenantId,
+        isActive: true,
       },
     });
   }
