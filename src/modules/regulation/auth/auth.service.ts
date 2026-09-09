@@ -176,7 +176,9 @@ export class AuthService {
     oldRefreshTokenRaw?: string,
   ): Promise<LoginResult> {
     if (targetTenantId === 'system') {
-      throw new BadRequestException('Cannot impersonate the system master tenant');
+      throw new BadRequestException(
+        'Cannot impersonate the system master tenant',
+      );
     }
 
     const permissions = await this.userRepository.getUserPermissions(userId);

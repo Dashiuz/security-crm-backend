@@ -8,6 +8,7 @@ import {
   UserRepositoryService,
   EmployeeRepositoryService,
 } from '../../../common/repository/index';
+import { RequestContextService } from '../../../common/context/request-context.service';
 import { CreateUserDto, UserResponseDto } from './dtos/index';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepositoryService,
     private readonly employeeRepository: EmployeeRepositoryService,
+    private readonly contextService: RequestContextService,
   ) {}
 
   private mapUserToResponse(row: any): UserResponseDto {
@@ -53,15 +55,37 @@ export class UserService {
   }
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
-    // 1) Business validation: verify an existing active employee with same document
-    const employee = (await this.employeeRepository.findActiveByDocument(
-      dto.document,
-    )) as any;
+    const isSystemTenant = this.contextService.tenantId === 'system';
 
-    if (!employee) {
-      throw new BadRequestException(
-        'No active employee found with the provided document.',
-      );
+    let fullName = dto.fullName?.trim() || '';
+    let department = dto.department?.trim() || 'system';
+    let position = dto.position?.trim() || 'system manager';
+    let clientId: string | null = null;
+
+    if (isSystemTenant) {
+      if (!fullName) {
+        throw new BadRequestException(
+          'El nombre completo es requerido para usuarios administradores del sistema.',
+        );
+      }
+      department = 'system';
+      position = 'system manager';
+    } else {
+      // 1) Business validation: verify an existing active employee with same document
+      const employee = (await this.employeeRepository.findActiveByDocument(
+        dto.document,
+      )) as any;
+
+      if (!employee) {
+        throw new BadRequestException(
+          'No active employee found with the provided document.',
+        );
+      }
+
+      fullName = employee.fullName;
+      department = employee.departmentRef?.name || 'N/A';
+      position = employee.positionRef?.name || 'N/A';
+      clientId = employee.clientId || null;
     }
 
     // 2) Check if user record already exists (regardless of isActive)
@@ -69,7 +93,11 @@ export class UserService {
 
     if (existingUser) {
       if (existingUser.isActive) {
-        throw new BadRequestException('User already exists for this employee.');
+        throw new BadRequestException(
+          isSystemTenant
+            ? 'Ya existe un usuario registrado con este documento en el sistema.'
+            : 'User already exists for this employee.',
+        );
       }
 
       // REACTIVATION LOGIC
@@ -81,10 +109,10 @@ export class UserService {
         existingUser.id,
         {
           passwordHash,
-          fullName: employee.fullName,
-          department: employee.departmentRef?.name || 'N/A',
-          position: employee.positionRef?.name || 'N/A',
-          clientId: employee.clientId || null,
+          fullName,
+          department,
+          position,
+          clientId,
         } as any,
       );
 
@@ -113,11 +141,11 @@ export class UserService {
 
     const user = await this.userRepository.createUser({
       passwordHash,
-      fullName: employee.fullName,
+      fullName,
       document: dto.document,
-      department: employee.departmentRef?.name || 'N/A',
-      position: employee.positionRef?.name || 'N/A',
-      clientId: employee.clientId || null,
+      department,
+      position,
+      clientId,
     } as any);
 
     if (dto.roleIds && dto.roleIds.length > 0) {
@@ -131,6 +159,16 @@ export class UserService {
   async softDelete(userId: string): Promise<UserResponseDto> {
     const user = await this.userRepository.getMe(userId);
     if (!user) throw new NotFoundException('User not found');
+
+    if (user.tenantId === 'system') {
+      const activeCount =
+        await this.userRepository.countActiveInTenant('system');
+      if (activeCount <= 1) {
+        throw new BadRequestException(
+          'No se puede eliminar ni inhabilitar el único usuario administrador (GODLIKE) activo del sistema.',
+        );
+      }
+    }
 
     const deleted = await this.userRepository.softDeleteUser(userId);
     return this.mapUserToResponse(deleted);

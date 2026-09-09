@@ -19,6 +19,21 @@ export class DepartmentService {
     return this.departmentRepository.create({ ...dto, name } as any);
   }
 
+  private parseBoolean(val: any, defaultValue = true): boolean {
+    if (val === undefined || val === null || val === '') return defaultValue;
+    if (typeof val === 'boolean') return val;
+    const str = String(val).trim().toLowerCase();
+    if (
+      ['true', '1', 'si', 'sí', 'yes', 'activo', 'activa', 'active'].includes(
+        str,
+      )
+    )
+      return true;
+    if (['false', '0', 'no', 'inactivo', 'inactiva', 'inactive'].includes(str))
+      return false;
+    return defaultValue;
+  }
+
   async findAll(): Promise<any[]> {
     const depts = await this.departmentRepository.findMany();
     const createdByIds = depts.map((d: any) => d.createdBy).filter(Boolean);
@@ -26,7 +41,10 @@ export class DepartmentService {
 
     return depts.map((d: any) => ({
       ...d,
-      createdBy: d.createdBy === 'system' ? 'Sistema' : (userMap.get(d.createdBy) || d.createdBy || 'Sistema'),
+      createdBy:
+        d.createdBy && d.createdBy !== 'system' && userMap.get(d.createdBy)
+          ? userMap.get(d.createdBy)
+          : 'system',
     }));
   }
 
@@ -38,7 +56,12 @@ export class DepartmentService {
     );
     return {
       ...dept,
-      createdBy: dept.createdBy === 'system' ? 'Sistema' : (userMap.get(dept.createdBy) || dept.createdBy || 'Sistema'),
+      createdBy:
+        dept.createdBy &&
+        dept.createdBy !== 'system' &&
+        userMap.get(dept.createdBy)
+          ? userMap.get(dept.createdBy)
+          : 'system',
     };
   }
 
@@ -91,13 +114,24 @@ export class DepartmentService {
           throw new Error(`El departamento "${name}" ya existe.`);
         }
 
-        const rawStatus = row.EstadoActivo || row.isActive || '';
-        const isActive = rawStatus ? rawStatus.toString().trim().toUpperCase() === 'SI' : true;
+        const rawStatus =
+          row.EstadoActivo ??
+          row.estadoActivo ??
+          row.isActive ??
+          row.Activo ??
+          row.activo;
+        const isActive = this.parseBoolean(rawStatus, true);
+
+        const isGodlike =
+          user?.roles?.includes('GODLIKE') ||
+          user?.tenantId === 'system' ||
+          user?.sub === 'system';
+        const createdBy = isGodlike ? 'system' : user?.sub;
 
         const newDept = await this.departmentRepository.create({
           name,
           isActive,
-          createdBy: user.sub !== 'system' ? user.sub : null,
+          createdBy,
         } as any);
 
         existingDepartments.push(newDept);

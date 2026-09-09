@@ -22,7 +22,11 @@ export class UserResponseDto {
   @ApiProperty({ example: 'client_id_123', required: false, nullable: true })
   clientId?: string | null;
 
-  @ApiProperty({ example: 'Conjunto Residencial Las Margaritas', required: false, nullable: true })
+  @ApiProperty({
+    example: 'Conjunto Residencial Las Margaritas',
+    required: false,
+    nullable: true,
+  })
   clientName?: string | null;
 
   @ApiProperty({ example: true })

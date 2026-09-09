@@ -49,4 +49,3 @@ export * from './client/client.repository.service';
 // Resident
 export * from './resident/resident.repository.module';
 export * from './resident/resident.repository.service';
-

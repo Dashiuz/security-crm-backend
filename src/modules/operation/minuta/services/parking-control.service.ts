@@ -42,7 +42,8 @@ export class ParkingControlService {
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record || record.deletedAt) throw new NotFoundException('Parking record not found');
+    if (!record || record.deletedAt)
+      throw new NotFoundException('Parking record not found');
     return record;
   }
 
@@ -62,13 +63,10 @@ export class ParkingControlService {
     if (exitTime) updateData.exitTime = parseTime(exitTime);
     if (exitAt) updateData.exitAt = new Date(exitAt);
 
-    return this.repository.update(
-      { id },
-      {
-        ...updateData,
-        updatedBy: { connect: { id: userId } },
-      } as any,
-    );
+    return this.repository.update({ id }, {
+      ...updateData,
+      updatedBy: { connect: { id: userId } },
+    } as any);
   }
 
   async void(id: string, dto: VoidRecordDto, userId: string) {

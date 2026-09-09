@@ -27,7 +27,9 @@ export class StorageService {
     tenantId: string,
   ) {
     if (!file) {
-      throw new BadRequestException('No se ha proporcionado ningún archivo para cargar');
+      throw new BadRequestException(
+        'No se ha proporcionado ningún archivo para cargar',
+      );
     }
 
     // 1. Generate S3 Key
@@ -79,7 +81,9 @@ export class StorageService {
     });
 
     // 5. Generate secure Presigned URL for client immediate render
-    const presignedUrl = await this.s3Service.getPresignedUrl(mediaAttachment.s3Key);
+    const presignedUrl = await this.s3Service.getPresignedUrl(
+      mediaAttachment.s3Key,
+    );
 
     return {
       ...mediaAttachment,
@@ -118,14 +122,22 @@ export class StorageService {
   /**
    * Finds all attachments for a specific entity with generated Presigned URLs
    */
-  async findByEntity(entityType: MediaTypeCategory, entityId: string, tenantId: string) {
+  async findByEntity(
+    entityType: MediaTypeCategory,
+    entityId: string,
+    tenantId: string,
+  ) {
     const where: any = { tenantId };
 
     if (entityType === MediaTypeCategory.MINUTA) where.minutaId = entityId;
-    else if (entityType === MediaTypeCategory.VISITOR) where.visitorEntryId = entityId;
-    else if (entityType === MediaTypeCategory.CORRESPONDENCE) where.correspondenceId = entityId;
-    else if (entityType === MediaTypeCategory.PARKING) where.parkingVehicleId = entityId;
-    else if (entityType === MediaTypeCategory.EMPLOYEE) where.employeeId = entityId;
+    else if (entityType === MediaTypeCategory.VISITOR)
+      where.visitorEntryId = entityId;
+    else if (entityType === MediaTypeCategory.CORRESPONDENCE)
+      where.correspondenceId = entityId;
+    else if (entityType === MediaTypeCategory.PARKING)
+      where.parkingVehicleId = entityId;
+    else if (entityType === MediaTypeCategory.EMPLOYEE)
+      where.employeeId = entityId;
     else if (entityType === MediaTypeCategory.CLIENT) where.clientId = entityId;
 
     const items = await (this.prisma as any).mediaAttachment.findMany({

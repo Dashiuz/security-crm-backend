@@ -5,7 +5,10 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { RoleRepositoryService, UserRepositoryService } from '../../../common/repository/index';
+import {
+  RoleRepositoryService,
+  UserRepositoryService,
+} from '../../../common/repository/index';
 import { RequestContextService } from '../../../common/context/request-context.service';
 import {
   CreateRoleDto,
@@ -28,7 +31,9 @@ export class RoleService {
       name: row.name,
       tenantId: row.tenantId,
       createdAt: row.createdAt,
-      createdBy: userName || (row.createdBy === 'system' ? 'Sistema' : row.createdBy || 'Sistema'),
+      createdBy:
+        userName ||
+        (row.createdBy && row.createdBy !== 'system' ? 'system' : 'system'),
       permissions:
         row.perms?.map((p: any) => ({
           key: p.permission.key,
@@ -42,7 +47,10 @@ export class RoleService {
 
     if (!name) throw new BadRequestException('Role name is required');
 
-    if (['GODLIKE', 'SUPERADMIN'].includes(name) && (!this.contextService.isGodlike || tenantId !== 'system')) {
+    if (
+      ['GODLIKE', 'SUPERADMIN'].includes(name) &&
+      (!this.contextService.isGodlike || tenantId !== 'system')
+    ) {
       throw new ForbiddenException(
         'El nombre de rol GODLIKE o SUPERADMIN está reservado exclusivamente para el sistema.',
       );
@@ -64,13 +72,17 @@ export class RoleService {
 
   async list(tenantId: string): Promise<any[]> {
     const rows = await this.roleRepository.listRoles(tenantId);
-    const createdByIds = rows.map((r: any) => r.createdBy).filter((id): id is string => Boolean(id));
+    const createdByIds = rows
+      .map((r: any) => r.createdBy)
+      .filter((id): id is string => Boolean(id));
     const userMap = await this.userRepository.findNamesByIds(createdByIds);
 
     return rows.map((r) =>
       this.mapRoleToResponse(
         r,
-        r.createdBy === 'system' ? 'Sistema' : (r.createdBy ? userMap.get(r.createdBy) : undefined),
+        r.createdBy && r.createdBy !== 'system' && userMap.get(r.createdBy)
+          ? userMap.get(r.createdBy)
+          : 'system',
       ),
     );
   }
@@ -91,7 +103,10 @@ export class RoleService {
 
     if (dto.name) {
       const name = dto.name.trim().toUpperCase();
-      if (['GODLIKE', 'SUPERADMIN'].includes(name) && (!this.contextService.isGodlike || tenantId !== 'system')) {
+      if (
+        ['GODLIKE', 'SUPERADMIN'].includes(name) &&
+        (!this.contextService.isGodlike || tenantId !== 'system')
+      ) {
         throw new ForbiddenException(
           'El nombre de rol GODLIKE o SUPERADMIN está reservado exclusivamente para el sistema.',
         );
@@ -116,7 +131,9 @@ export class RoleService {
     if (!role) throw new NotFoundException('Role not found');
 
     if (role.name === 'GODLIKE' || role.tenantId === 'system') {
-      throw new ForbiddenException('No es posible eliminar roles reservados del sistema.');
+      throw new ForbiddenException(
+        'No es posible eliminar roles reservados del sistema.',
+      );
     }
 
     try {
@@ -150,7 +167,9 @@ export class RoleService {
     }
 
     // Security check: Verify that non-godlike users / non-system roles cannot be granted godlike permissions
-    const requestedGodlikeKeys = [...addKeys, ...syncKeys].filter((k) => k.startsWith('godlike:'));
+    const requestedGodlikeKeys = [...addKeys, ...syncKeys].filter((k) =>
+      k.startsWith('godlike:'),
+    );
     if (requestedGodlikeKeys.length > 0) {
       if (!this.contextService.isGodlike || role.tenantId !== 'system') {
         throw new ForbiddenException(

@@ -22,7 +22,7 @@ import {
   UpdateClientDto,
   ClientResponseDto,
 } from './dtos/client.dto';
-import { CreateClientWithStructureDto } from './dtos/client-structure.dto';
+import { CreateClientWithStructureDto, UpdateClientWithStructureDto } from './dtos/client-structure.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
@@ -46,7 +46,10 @@ export class ClientController {
   @RequirePermissions('client:manage', 'client:create')
   @ApiOperation({ summary: 'Create client with residential complex structure' })
   @ApiCreatedResponse({ type: ClientResponseDto })
-  createWithStructure(@Body() dto: CreateClientWithStructureDto, @Request() req) {
+  createWithStructure(
+    @Body() dto: CreateClientWithStructureDto,
+    @Request() req,
+  ) {
     return this.clientService.create(dto, req.user);
   }
 
@@ -59,7 +62,12 @@ export class ClientController {
   }
 
   @Get(':id')
-  @RequirePermissions('client:manage', 'client:read', 'minuta:manage', 'minuta:create')
+  @RequirePermissions(
+    'client:manage',
+    'client:read',
+    'minuta:manage',
+    'minuta:create',
+  )
   @ApiOperation({ summary: 'Get client by id' })
   @ApiOkResponse({ type: ClientResponseDto })
   findOne(@Param('id') id: string, @Request() req) {
@@ -72,7 +80,7 @@ export class ClientController {
   @ApiOkResponse({ type: ClientResponseDto })
   update(
     @Param('id') id: string,
-    @Body() dto: UpdateClientDto,
+    @Body() dto: UpdateClientWithStructureDto,
     @Request() req,
   ) {
     return this.clientService.update(id, dto, req.user);

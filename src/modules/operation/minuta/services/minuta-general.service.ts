@@ -40,7 +40,8 @@ export class MinutaGeneralService {
 
   async findOne(id: string) {
     const record = await this.repository.findUnique({ id });
-    if (!record || record.deletedAt) throw new NotFoundException('Minuta not found');
+    if (!record || record.deletedAt)
+      throw new NotFoundException('Minuta not found');
     return record;
   }
 
