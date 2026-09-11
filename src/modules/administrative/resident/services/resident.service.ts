@@ -129,6 +129,51 @@ export class ResidentService {
       .then((rows) => rows.map((r) => this.mapResidentToResponse(r))) as any;
   }
 
+  async autocomplete(
+    clientId: string,
+    query: string,
+    unitId: string | undefined,
+    user: UserContext,
+    limit = 15,
+  ) {
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId: user.tenantId,
+      deletedAt: null,
+    };
+    if (clientId) {
+      where.clientId = clientId;
+    }
+    if (unitId) {
+      where.unitId = unitId;
+    }
+
+    if (trimmed) {
+      where.OR = [
+        { firstName: { contains: trimmed, mode: 'insensitive' } },
+        { lastName: { contains: trimmed, mode: 'insensitive' } },
+        { document: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
+
+    const rows = await this.prisma.resident.findMany({
+      where,
+      take: Math.min(limit, 50),
+      include: {
+        unit: {
+          select: {
+            id: true,
+            unitName: true,
+            tower: { select: { id: true, towerName: true } },
+          },
+        },
+      },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+    });
+
+    return rows.map((r) => this.mapResidentToResponse(r));
+  }
+
   async findOne(id: string, user: UserContext): Promise<ResidentResponseDto> {
     const resident = await this.residentRepository.findOne(id, {
       unit: {

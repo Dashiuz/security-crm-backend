@@ -3,6 +3,8 @@ import { ParkingControlRepositoryService } from '../../../../common/repository/m
 import {
   CreateParkingControlDto,
   UpdateParkingControlDto,
+  RegisterParkingExitDto,
+  ParkingFilterQueryDto,
 } from '../dtos/parking-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { RecordStatus } from '@prisma/client';
@@ -12,12 +14,22 @@ export class ParkingControlService {
   constructor(private readonly repository: ParkingControlRepositoryService) {}
 
   async create(dto: CreateParkingControlDto, userId: string, tenantId: string) {
-    const { date, time, occurredAt, entryTime, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      entryTime,
+      unitId,
+      residentId,
+      clientId,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
         : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
-    return this.repository.create({
+
+    const dataToCreate: any = {
       ...others,
       date: new Date(date),
       time: parseTime(time),
@@ -26,16 +38,53 @@ export class ParkingControlService {
       tenant: { connect: { id: tenantId } },
       createdBy: { connect: { id: userId } },
       guard: { connect: { id: userId } },
-    } as any);
+    };
+
+    if (clientId) {
+      dataToCreate.client = { connect: { id: clientId } };
+    }
+    if (unitId) {
+      dataToCreate.unit = { connect: { id: unitId } };
+    }
+    if (residentId) {
+      dataToCreate.resident = { connect: { id: residentId } };
+    }
+
+    return this.repository.create(dataToCreate);
   }
 
-  async findAll(clientId?: string) {
+  async findAll(query?: ParkingFilterQueryDto | any) {
     const where: any = {
       status: { not: RecordStatus.VOIDED },
       deletedAt: null,
     };
-    if (clientId) {
-      where.clientId = clientId;
+    if (query?.isInternal === 'true') {
+      where.clientId = null;
+    } else if (query?.clientId) {
+      where.clientId = query.clientId;
+    }
+    if (query?.unitId) {
+      where.unitId = query.unitId;
+    }
+    if (query?.residentId) {
+      where.residentId = query.residentId;
+    }
+    if (query?.search) {
+      const search = query.search.trim();
+      where.OR = [
+        { plate: { contains: search, mode: 'insensitive' } },
+        { parkingNumber: { contains: search, mode: 'insensitive' } },
+        { ticketNumber: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (query?.startDate || query?.endDate) {
+      where.date = {};
+      if (query.startDate) {
+        where.date.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.date.lte = new Date(query.endDate);
+      }
     }
     return this.repository.findMany(where);
   }
@@ -48,8 +97,17 @@ export class ParkingControlService {
   }
 
   async update(id: string, dto: UpdateParkingControlDto, userId: string) {
-    const { date, time, occurredAt, entryTime, exitTime, exitAt, ...others } =
-      dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      entryTime,
+      exitTime,
+      exitAt,
+      unitId,
+      residentId,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -62,11 +120,52 @@ export class ParkingControlService {
     if (entryTime) updateData.entryTime = parseTime(entryTime);
     if (exitTime) updateData.exitTime = parseTime(exitTime);
     if (exitAt) updateData.exitAt = new Date(exitAt);
+    if (unitId !== undefined) {
+      (updateData as any).unit = unitId
+        ? { connect: { id: unitId } }
+        : { disconnect: true };
+    }
+    if (residentId !== undefined) {
+      (updateData as any).resident = residentId
+        ? { connect: { id: residentId } }
+        : { disconnect: true };
+    }
 
-    return this.repository.update({ id }, {
-      ...updateData,
-      updatedBy: { connect: { id: userId } },
-    } as any);
+    return this.repository.update(
+      { id },
+      {
+        ...updateData,
+        updatedBy: { connect: { id: userId } },
+      } as any,
+    );
+  }
+
+  async registerExit(
+    id: string,
+    dto?: RegisterParkingExitDto,
+    userId?: string,
+  ) {
+    await this.findOne(id);
+    const now = new Date();
+    const parseTime = (t: string) =>
+      t.includes('T')
+        ? new Date(t)
+        : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
+
+    const exitAt = dto?.exitAt ? new Date(dto.exitAt) : now;
+    const exitTime = dto?.exitTime ? parseTime(dto.exitTime) : now;
+
+    const updateData: any = {
+      exitAt,
+      exitTime,
+      ...(dto?.observations ? { observations: dto.observations } : {}),
+    };
+
+    if (userId && userId !== 'system') {
+      updateData.updatedBy = { connect: { id: userId } };
+    }
+
+    return this.repository.update({ id }, updateData);
   }
 
   async void(id: string, dto: VoidRecordDto, userId: string) {

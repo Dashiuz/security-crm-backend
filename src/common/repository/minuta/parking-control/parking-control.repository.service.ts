@@ -20,6 +20,10 @@ export class ParkingControlRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        resident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
@@ -30,22 +34,40 @@ export class ParkingControlRepositoryService {
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',
       clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || r.apartment || null,
+      residentName: r.resident
+        ? `${r.resident.firstName} ${r.resident.lastName}`
+        : null,
     }));
   }
 
   async findUnique(
     where: Prisma.ParkingResidentVehicleControlWhereUniqueInput,
   ): Promise<any> {
-    return this.prisma.parkingResidentVehicleControl.findUnique({
+    const r = await this.prisma.parkingResidentVehicleControl.findUnique({
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        resident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
       },
     });
+    if (!r) return null;
+    return {
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || r.apartment || null,
+      residentName: r.resident
+        ? `${r.resident.firstName} ${r.resident.lastName}`
+        : null,
+    };
   }
 
   async update(

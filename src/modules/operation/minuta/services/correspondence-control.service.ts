@@ -4,6 +4,7 @@ import {
   CreateCorrespondenceDto,
   UpdateCorrespondenceDto,
   DeliverCorrespondenceDto,
+  CorrespondenceFilterQueryDto,
 } from '../dtos/correspondence-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { CorrespondenceStatus } from '@prisma/client';
@@ -52,13 +53,39 @@ export class CorrespondenceControlService {
     return this.repository.create(dataToCreate);
   }
 
-  async findAll(clientId?: string) {
+  async findAll(query?: CorrespondenceFilterQueryDto | any) {
     const where: any = {
       status: { not: CorrespondenceStatus.VOIDED },
       deletedAt: null,
     };
-    if (clientId) {
-      where.clientId = clientId;
+    if (query?.isInternal === 'true') {
+      where.clientId = null;
+    } else if (query?.clientId) {
+      where.clientId = query.clientId;
+    }
+    if (query?.unitId) {
+      where.unitId = query.unitId;
+    }
+    if (query?.residentId) {
+      where.recipientResidentId = query.residentId;
+    }
+    if (query?.search) {
+      const search = query.search.trim();
+      where.OR = [
+        { trackingNumber: { contains: search, mode: 'insensitive' } },
+        { courierCompany: { contains: search, mode: 'insensitive' } },
+        { destination: { contains: search, mode: 'insensitive' } },
+        { sender: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (query?.startDate || query?.endDate) {
+      where.date = {};
+      if (query.startDate) {
+        where.date.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.date.lte = new Date(query.endDate);
+      }
     }
     return this.repository.findMany(where);
   }

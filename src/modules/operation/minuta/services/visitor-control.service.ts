@@ -4,6 +4,7 @@ import {
   CreateVisitorEntryDto,
   UpdateVisitorEntryDto,
   RegisterVisitorExitDto,
+  VisitorFilterQueryDto,
 } from '../dtos/visitor-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { RecordStatus } from '@prisma/client';
@@ -52,13 +53,39 @@ export class VisitorControlService {
     return this.repository.create(dataToCreate);
   }
 
-  async findAll(clientId?: string) {
+  async findAll(query?: VisitorFilterQueryDto | any) {
     const where: any = {
       status: { not: RecordStatus.VOIDED },
       deletedAt: null,
     };
-    if (clientId) {
-      where.clientId = clientId;
+    if (query?.isInternal === 'true') {
+      where.clientId = null;
+    } else if (query?.clientId) {
+      where.clientId = query.clientId;
+    }
+    if (query?.unitId) {
+      where.unitId = query.unitId;
+    }
+    if (query?.residentId) {
+      where.residentId = query.residentId;
+    }
+    if (query?.search) {
+      const search = query.search.trim();
+      where.OR = [
+        { visitorFullName: { contains: search, mode: 'insensitive' } },
+        { visitorIdNumber: { contains: search, mode: 'insensitive' } },
+        { ticketNumber: { contains: search, mode: 'insensitive' } },
+        { plate: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (query?.startDate || query?.endDate) {
+      where.date = {};
+      if (query.startDate) {
+        where.date.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.date.lte = new Date(query.endDate);
+      }
     }
     return this.repository.findMany(where);
   }

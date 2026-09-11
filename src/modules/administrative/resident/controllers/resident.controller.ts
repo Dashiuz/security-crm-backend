@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -52,6 +53,32 @@ export class ResidentController {
   @ApiOkResponse({ type: [ResidentResponseDto] })
   findByClient(@Param('clientId') clientId: string, @Request() req) {
     return this.residentService.findByClient(clientId, req.user);
+  }
+
+  @Get('autocomplete')
+  @RequirePermissions(
+    'resident:manage',
+    'resident:read',
+    'minuta:manage',
+    'minuta:create',
+    'minuta:read',
+  )
+  @ApiOperation({ summary: 'Search residents with autocomplete' })
+  @ApiOkResponse({ type: [ResidentResponseDto] })
+  autocomplete(
+    @Query('clientId') clientId: string,
+    @Query('query') query: string,
+    @Query('unitId') unitId: string,
+    @Query('limit') limit: string,
+    @Request() req,
+  ) {
+    return this.residentService.autocomplete(
+      clientId,
+      query,
+      unitId,
+      req.user,
+      limit ? parseInt(limit, 10) : 15,
+    );
   }
 
   @Get(':id')

@@ -22,6 +22,7 @@ import {
   CreateVisitorEntryDto,
   UpdateVisitorEntryDto,
   RegisterVisitorExitDto,
+  VisitorFilterQueryDto,
 } from '../dtos/visitor-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
@@ -45,9 +46,9 @@ export class VisitorControlController {
 
   @Get()
   @RequirePermissions('minuta:manage', 'minuta:read')
-  @ApiOperation({ summary: 'List visitor entry controls' })
-  findAll(@Query('clientId') clientId?: string) {
-    return this.service.findAll(clientId);
+  @ApiOperation({ summary: 'List visitor entry controls with filters' })
+  findAll(@Query() query: VisitorFilterQueryDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')

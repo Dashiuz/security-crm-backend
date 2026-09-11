@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -59,6 +60,29 @@ export class ClientController {
   @ApiOkResponse({ type: [ClientResponseDto] })
   findAll(@Request() req) {
     return this.clientService.findAll(req.user);
+  }
+
+  @Get(':id/units/autocomplete')
+  @RequirePermissions(
+    'client:manage',
+    'client:read',
+    'minuta:manage',
+    'minuta:create',
+    'minuta:read',
+  )
+  @ApiOperation({ summary: 'Search units with autocomplete for a client' })
+  autocompleteUnits(
+    @Param('id') clientId: string,
+    @Query('query') query: string,
+    @Query('limit') limit: string,
+    @Request() req,
+  ) {
+    return this.clientService.autocompleteUnits(
+      clientId,
+      query,
+      req.user,
+      limit ? parseInt(limit, 10) : 15,
+    );
   }
 
   @Get(':id')
