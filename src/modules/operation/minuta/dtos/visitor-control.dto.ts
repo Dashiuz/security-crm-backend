@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsBoolean,
   IsBooleanString,
   IsInt,
   Min,
@@ -129,6 +130,18 @@ export class CreateVisitorEntryDto {
   @IsOptional()
   residentId?: string;
 
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional({ example: 'cuid_employee_id' })
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -175,6 +188,18 @@ export class UpdateVisitorEntryDto {
   @IsString({ message: 'El ID del residente debe ser un texto válido.' })
   @IsOptional()
   residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
 
   @ApiPropertyOptional()
   @IsString({ message: 'Las observaciones deben ser un texto válido.' })
@@ -237,4 +262,9 @@ export class VisitorFilterQueryDto {
   @IsOptional()
   @IsString()
   residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
 }

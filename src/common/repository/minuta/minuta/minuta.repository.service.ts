@@ -37,9 +37,7 @@ export class MinutaRepositoryService {
     }));
   }
 
-  async findUnique(
-    where: Prisma.MinutaWhereUniqueInput,
-  ): Promise<any | null> {
+  async findUnique(where: Prisma.MinutaWhereUniqueInput): Promise<any | null> {
     const r = await this.prisma.minuta.findUnique({
       where,
       include: {

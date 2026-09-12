@@ -102,6 +102,13 @@ export class CreateMinutaDto {
   @IsOptional()
   clientId?: string;
 
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -189,6 +196,13 @@ export class UpdateMinutaDto {
   @IsString({ message: 'El identificador del residente debe ser válido.' })
   @IsOptional()
   residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
 }
 
 export class MinutaFilterQueryDto {

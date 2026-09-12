@@ -6,6 +6,11 @@ model VisitorEntryControl {
   clientId String?
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
+  isInternal Boolean @default(false)
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
 
@@ -76,7 +81,9 @@ model VisitorEntryControl {
   @@index([clientId])
   @@index([unitId])
   @@index([residentId])
+  @@index([employeeId])
   @@index([tenantId, clientId])
+  @@index([tenantId, isInternal])
   @@index([tenantId, date])
   @@index([tenantId, occurredAt])
   @@index([tenantId, visitorIdNumber])

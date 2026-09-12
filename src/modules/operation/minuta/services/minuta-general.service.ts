@@ -12,8 +12,16 @@ export class MinutaGeneralService {
   constructor(private readonly repository: MinutaRepositoryService) {}
 
   async create(dto: CreateMinutaDto, userId: string, tenantId: string) {
-    const { date, time, occurredAt, unitId, residentId, clientId, ...others } =
-      dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      unitId,
+      residentId,
+      clientId,
+      isInternal,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -21,6 +29,7 @@ export class MinutaGeneralService {
 
     const dataToCreate: any = {
       ...others,
+      isInternal: isInternal ?? false,
       date: new Date(date),
       time: parseTime(time),
       occurredAt: new Date(occurredAt),
@@ -47,7 +56,15 @@ export class MinutaGeneralService {
       deletedAt: null,
     };
     if (query?.isInternal === 'true') {
-      where.clientId = null;
+      where.isInternal = true;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.isInternal === 'false') {
+      where.isInternal = false;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
     } else if (query?.clientId) {
       where.clientId = query.clientId;
     }
@@ -80,7 +97,15 @@ export class MinutaGeneralService {
   }
 
   async update(id: string, dto: UpdateMinutaDto, userId: string) {
-    const { date, time, occurredAt, unitId, residentId, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      unitId,
+      residentId,
+      isInternal,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -90,6 +115,7 @@ export class MinutaGeneralService {
     if (date) updateData.date = new Date(date);
     if (time) updateData.time = parseTime(time);
     if (occurredAt) updateData.occurredAt = new Date(occurredAt);
+    if (isInternal !== undefined) updateData.isInternal = isInternal;
     if (unitId !== undefined) {
       (updateData as any).unit = unitId
         ? { connect: { id: unitId } }
@@ -120,7 +146,10 @@ export class MinutaGeneralService {
   }
 
   async remove(id: string, userId: string) {
-    // Soft delete if preferred, or hard delete
+    const existing = await this.repository.findUnique({ id });
+    if (!existing || existing.deletedAt) {
+      throw new NotFoundException('Registro de minuta no encontrado o ya eliminado.');
+    }
     return this.repository.update({ id }, {
       deletedAt: new Date(),
       deletedBy: { connect: { id: userId } },

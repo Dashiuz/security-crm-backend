@@ -18,9 +18,11 @@ model Minuta {
   tags           String[] @default([])
   isConfidential Boolean  @default(false)
 
+  isInternal Boolean @default(false)
+
   // Ubicación y Origen de Novedad
   guardPost        String?
-  isResidentLinked Boolean  @default(false)
+  isResidentLinked Boolean   @default(false)
   noveltySource    String?
   unitId           String?
   unit             Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
@@ -57,6 +59,7 @@ model Minuta {
   @@index([unitId])
   @@index([residentId])
   @@index([tenantId, clientId])
+  @@index([tenantId, isInternal])
   @@index([tenantId, date])
   @@index([tenantId, occurredAt])
   @@index([createdById])

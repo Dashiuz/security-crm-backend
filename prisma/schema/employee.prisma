@@ -37,6 +37,10 @@ model Employee {
   commercialClients  Client[]          @relation("ClientCommercialContact")
   mediaAttachments   MediaAttachment[]
 
+  parkingControls        ParkingResidentVehicleControl[]
+  visitorControls        VisitorEntryControl[]
+  correspondenceControls CorrespondenceReceivedControl[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

@@ -72,6 +72,18 @@ export class CreateParkingControlDto {
   @IsOptional()
   clientId?: string;
 
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional({ example: 'cuid_employee_id' })
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
+
   @ApiProperty({ example: 'ABC-123' })
   @IsString({ message: 'La placa del vehículo debe ser un texto válido.' })
   @IsNotEmpty({ message: 'La placa del vehículo es requerida.' })
@@ -197,6 +209,18 @@ export class UpdateParkingControlDto {
   @IsOptional()
   residentId?: string;
 
+  @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
+
   @IsOptional()
   @ApiPropertyOptional({ type: Object })
   vehicleChecklist?: any;
@@ -209,7 +233,10 @@ export class RegisterParkingExitDto {
   exitTime?: string;
 
   @ApiPropertyOptional({ example: '2024-02-19T18:00:00Z' })
-  @IsDateString({}, { message: 'La marca de tiempo de salida debe ser válida.' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo de salida debe ser válida.' },
+  )
   @IsOptional()
   exitAt?: string;
 
@@ -254,4 +281,9 @@ export class ParkingFilterQueryDto {
   @IsOptional()
   @IsString()
   residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
 }

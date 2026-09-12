@@ -6,6 +6,11 @@ model CorrespondenceReceivedControl {
   clientId String?
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
+  isInternal Boolean @default(false)
+
+  recipientEmployeeId String?
+  recipientEmployee   Employee? @relation(fields: [recipientEmployeeId], references: [id], onDelete: SetNull)
+
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
 
@@ -69,7 +74,9 @@ model CorrespondenceReceivedControl {
   @@index([clientId])
   @@index([unitId])
   @@index([recipientResidentId])
+  @@index([recipientEmployeeId])
   @@index([tenantId, clientId])
+  @@index([tenantId, isInternal])
   @@index([tenantId, date])
   @@index([tenantId, occurredAt])
   @@index([tenantId, status])

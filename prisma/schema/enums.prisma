@@ -25,6 +25,8 @@ enum CorrespondenceType {
   BOX
   ENVELOPE
   DOCUMENT
+  LETTER
+  PACKAGE
   FOOD_DELIVERY
   OTHER
 }
@@ -71,6 +73,7 @@ enum ResidentialComplexType {
   BUILDING_CLUSTER
   HOUSE_CLUSTER
   MIXED
+  COMMERCIAL
   OTHER
 }
 

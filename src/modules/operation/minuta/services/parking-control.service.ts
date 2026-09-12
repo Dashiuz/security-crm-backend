@@ -22,6 +22,8 @@ export class ParkingControlService {
       unitId,
       residentId,
       clientId,
+      employeeId,
+      isInternal,
       ...others
     } = dto;
     const parseTime = (t: string) =>
@@ -31,6 +33,7 @@ export class ParkingControlService {
 
     const dataToCreate: any = {
       ...others,
+      isInternal: isInternal ?? false,
       date: new Date(date),
       time: parseTime(time),
       occurredAt: new Date(occurredAt),
@@ -49,6 +52,9 @@ export class ParkingControlService {
     if (residentId) {
       dataToCreate.resident = { connect: { id: residentId } };
     }
+    if (employeeId) {
+      dataToCreate.employee = { connect: { id: employeeId } };
+    }
 
     return this.repository.create(dataToCreate);
   }
@@ -59,9 +65,20 @@ export class ParkingControlService {
       deletedAt: null,
     };
     if (query?.isInternal === 'true') {
-      where.clientId = null;
+      where.isInternal = true;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.isInternal === 'false') {
+      where.isInternal = false;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
     } else if (query?.clientId) {
       where.clientId = query.clientId;
+    }
+    if (query?.employeeId) {
+      where.employeeId = query.employeeId;
     }
     if (query?.unitId) {
       where.unitId = query.unitId;
@@ -106,6 +123,8 @@ export class ParkingControlService {
       exitAt,
       unitId,
       residentId,
+      employeeId,
+      isInternal,
       ...others
     } = dto;
     const parseTime = (t: string) =>
@@ -120,6 +139,7 @@ export class ParkingControlService {
     if (entryTime) updateData.entryTime = parseTime(entryTime);
     if (exitTime) updateData.exitTime = parseTime(exitTime);
     if (exitAt) updateData.exitAt = new Date(exitAt);
+    if (isInternal !== undefined) updateData.isInternal = isInternal;
     if (unitId !== undefined) {
       (updateData as any).unit = unitId
         ? { connect: { id: unitId } }
@@ -130,14 +150,16 @@ export class ParkingControlService {
         ? { connect: { id: residentId } }
         : { disconnect: true };
     }
+    if (employeeId !== undefined) {
+      (updateData as any).employee = employeeId
+        ? { connect: { id: employeeId } }
+        : { disconnect: true };
+    }
 
-    return this.repository.update(
-      { id },
-      {
-        ...updateData,
-        updatedBy: { connect: { id: userId } },
-      } as any,
-    );
+    return this.repository.update({ id }, {
+      ...updateData,
+      updatedBy: { connect: { id: userId } },
+    } as any);
   }
 
   async registerExit(

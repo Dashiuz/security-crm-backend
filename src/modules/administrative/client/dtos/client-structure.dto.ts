@@ -285,4 +285,6 @@ export class CreateClientWithStructureDto extends CreateClientDto {
   structureConfig?: StructureConfigDto;
 }
 
-export class UpdateClientWithStructureDto extends PartialType(CreateClientWithStructureDto) {}
+export class UpdateClientWithStructureDto extends PartialType(
+  CreateClientWithStructureDto,
+) {}

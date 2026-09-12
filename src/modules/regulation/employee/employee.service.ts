@@ -200,6 +200,10 @@ export class EmployeeService {
     return await this.mapEmployeeToResponse(employeeWithRefs as any);
   }
 
+  async autocomplete(query: string, tenantId: string, limit = 20) {
+    return this.employeeRepository.autocomplete(query, tenantId, limit);
+  }
+
   async updateEmployee(
     employeeId: string,
     dto: UpdateEmployeeDto,

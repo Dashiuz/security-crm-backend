@@ -24,6 +24,9 @@ export class ParkingControlRepositoryService {
         resident: {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
+        employee: {
+          select: { id: true, fullName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
@@ -38,6 +41,7 @@ export class ParkingControlRepositoryService {
       residentName: r.resident
         ? `${r.resident.firstName} ${r.resident.lastName}`
         : null,
+      employeeName: r.employee?.fullName || null,
     }));
   }
 
@@ -53,6 +57,9 @@ export class ParkingControlRepositoryService {
         resident: {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
+        employee: {
+          select: { id: true, fullName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
@@ -67,6 +74,7 @@ export class ParkingControlRepositoryService {
       residentName: r.resident
         ? `${r.resident.firstName} ${r.resident.lastName}`
         : null,
+      employeeName: r.employee?.fullName || null,
     };
   }
 

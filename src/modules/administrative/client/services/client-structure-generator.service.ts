@@ -271,6 +271,22 @@ export class ClientStructureGeneratorService {
           });
         }
         await tx.unit.createMany({ data: unitsToInsert });
+      } else if (structureType === ResidentialComplexType.COMMERCIAL) {
+        const uAmount = config.unitsAmount || 1;
+        const prefix = config.prefix || 'Local';
+        totalUnits = uAmount;
+
+        const unitsToInsert: Prisma.UnitCreateManyInput[] = [];
+        for (let i = 1; i <= uAmount; i++) {
+          unitsToInsert.push({
+            tenantId,
+            clientId,
+            unitName: `${prefix} ${i}`,
+            unitType: UnitType.OFFICE,
+            createdBy: userId,
+          });
+        }
+        await tx.unit.createMany({ data: unitsToInsert });
       } else {
         // OTHER
         const uAmount = config.unitsAmount || 1;

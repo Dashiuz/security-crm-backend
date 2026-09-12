@@ -40,4 +40,10 @@ export class UserResponseDto {
     required: false,
   })
   roles?: { id: string; name: string }[];
+
+  @ApiProperty({ example: 'Administrador', required: false })
+  roleName?: string;
+
+  @ApiProperty({ example: 'https://s3.amazonaws.com/...', required: false, nullable: true })
+  avatarUrl?: string | null;
 }

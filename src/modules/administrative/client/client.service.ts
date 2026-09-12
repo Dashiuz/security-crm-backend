@@ -218,6 +218,36 @@ export class ClientService {
     return this.mapClientToResponse(client);
   }
 
+  async autocomplete(query: string, user: UserContext, limit = 20) {
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId: user.tenantId,
+      deletedAt: null,
+      isActive: true,
+      clientStatus: { not: ClientStatus.PROSPECT },
+    };
+
+    if (trimmed) {
+      where.OR = [
+        { name: { contains: trimmed, mode: 'insensitive' } },
+        { internalCode: { contains: trimmed, mode: 'insensitive' } },
+        { nit: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
+
+    return this.prisma.client.findMany({
+      where,
+      take: Math.min(limit, 50),
+      select: {
+        id: true,
+        name: true,
+        internalCode: true,
+        nit: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async autocompleteUnits(
     clientId: string,
     query: string,

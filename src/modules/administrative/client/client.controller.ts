@@ -23,7 +23,10 @@ import {
   UpdateClientDto,
   ClientResponseDto,
 } from './dtos/client.dto';
-import { CreateClientWithStructureDto, UpdateClientWithStructureDto } from './dtos/client-structure.dto';
+import {
+  CreateClientWithStructureDto,
+  UpdateClientWithStructureDto,
+} from './dtos/client-structure.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
@@ -60,6 +63,27 @@ export class ClientController {
   @ApiOkResponse({ type: [ClientResponseDto] })
   findAll(@Request() req) {
     return this.clientService.findAll(req.user);
+  }
+
+  @Get('search/autocomplete')
+  @RequirePermissions(
+    'client:manage',
+    'client:read',
+    'minuta:manage',
+    'minuta:create',
+    'minuta:read',
+  )
+  @ApiOperation({ summary: 'Search active clients with autocomplete' })
+  autocomplete(
+    @Query('query') query: string,
+    @Query('limit') limit: string,
+    @Request() req,
+  ) {
+    return this.clientService.autocomplete(
+      query,
+      req.user,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Get(':id/units/autocomplete')

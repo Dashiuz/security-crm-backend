@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsBoolean,
   IsBooleanString,
 } from 'class-validator';
 import {
@@ -104,6 +105,20 @@ export class CreateCorrespondenceDto {
   @IsOptional()
   recipientResidentId?: string;
 
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional({ example: 'cuid_employee_id' })
+  @IsString({
+    message: 'El identificador del empleado destinatario debe ser válido.',
+  })
+  @IsOptional()
+  recipientEmployeeId?: string;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -181,6 +196,20 @@ export class UpdateCorrespondenceDto {
   recipientResidentId?: string;
 
   @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({
+    message: 'El identificador del empleado destinatario debe ser válido.',
+  })
+  @IsOptional()
+  recipientEmployeeId?: string;
+
+  @ApiPropertyOptional()
   @IsString({ message: 'Las observaciones deben ser un texto válido.' })
   @IsOptional()
   observations?: string;
@@ -240,4 +269,9 @@ export class CorrespondenceFilterQueryDto {
   @IsOptional()
   @IsString()
   residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  recipientEmployeeId?: string;
 }
