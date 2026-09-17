@@ -1,4 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TenantProfileResponseDto } from './tenant-profile.dto';
+import { TenantSubscriptionResponseDto } from './tenant-subscription.dto';
+import { TenantSettingsResponseDto } from './tenant-settings.dto';
 
 export class TenantResponseDto {
   @ApiProperty({ example: 'clk1234567890' })
@@ -14,16 +17,25 @@ export class TenantResponseDto {
   isActive!: boolean;
 
   @ApiPropertyOptional()
-  logoUrl?: string;
+  logoUrl?: string | null;
 
   @ApiPropertyOptional()
-  primaryColor?: string;
+  primaryColor?: string | null;
 
   @ApiPropertyOptional()
-  secondaryColor?: string;
+  secondaryColor?: string | null;
 
   @ApiPropertyOptional()
-  sidebarColor?: string;
+  sidebarColor?: string | null;
+
+  @ApiPropertyOptional({ type: () => TenantProfileResponseDto })
+  profile?: TenantProfileResponseDto | null;
+
+  @ApiPropertyOptional({ type: () => TenantSubscriptionResponseDto })
+  subscription?: TenantSubscriptionResponseDto | null;
+
+  @ApiPropertyOptional({ type: () => TenantSettingsResponseDto })
+  settings?: TenantSettingsResponseDto | null;
 
   @ApiPropertyOptional({ type: [String] })
   features?: string[];

@@ -112,3 +112,22 @@ enum UserType {
   EMPLOYEE
   RESIDENCE_MANAGER
 }
+
+enum PlanTier {
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum PasswordPolicy {
+  LOW
+  MEDIUM
+  STRICT
+}

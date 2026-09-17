@@ -4,8 +4,13 @@ import {
   IsBoolean,
   IsOptional,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CreateTenantProfileDto } from './tenant-profile.dto';
+import { CreateTenantSubscriptionDto } from './tenant-subscription.dto';
+import { CreateTenantSettingsDto } from './tenant-settings.dto';
 
 export class CreateTenantDto {
   @ApiProperty({ example: 'Mi Empresa Tenant' })
@@ -32,4 +37,42 @@ export class CreateTenantDto {
   @IsBoolean({ message: 'El estado activo debe ser un valor booleano.' })
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
+
+  @ApiPropertyOptional({ example: '#1976d2' })
+  @IsOptional()
+  @IsString()
+  primaryColor?: string;
+
+  @ApiPropertyOptional({ example: '#9c27b0' })
+  @IsOptional()
+  @IsString()
+  secondaryColor?: string;
+
+  @ApiPropertyOptional({ example: '#252b27' })
+  @IsOptional()
+  @IsString()
+  sidebarColor?: string;
+
+  @ApiPropertyOptional({ type: () => CreateTenantProfileDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateTenantProfileDto)
+  profile?: CreateTenantProfileDto;
+
+  @ApiPropertyOptional({ type: () => CreateTenantSubscriptionDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateTenantSubscriptionDto)
+  subscription?: CreateTenantSubscriptionDto;
+
+  @ApiPropertyOptional({ type: () => CreateTenantSettingsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateTenantSettingsDto)
+  settings?: CreateTenantSettingsDto;
 }

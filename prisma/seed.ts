@@ -1,4 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  PlanTier,
+  SubscriptionStatus,
+  PasswordPolicy,
+} from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -318,6 +323,17 @@ async function main() {
       key: 'resident:manage',
       desc: 'Manage all resident operations',
     },
+    // Tenant permissions
+    {
+      id: 'tenant_read_perm_id',
+      key: 'tenant:read',
+      desc: 'Read own tenant profile, settings and subscription limits',
+    },
+    {
+      id: 'tenant_manage_perm_id',
+      key: 'tenant:manage',
+      desc: 'Manage own tenant profile and settings',
+    },
   ];
 
   // 4. Role Permissions
@@ -571,6 +587,100 @@ async function main() {
     });
   }
   console.log('✅ Tenants seeded');
+
+  console.log('Seeding Tenant Profiles, Subscriptions & Settings...');
+  const tenantProfiles = [
+    {
+      tenantId: 'system',
+      legalName: 'Noxia Global System Corp',
+      taxId: '900000000-1',
+      contactEmail: 'system@noxia.io',
+      contactPhone: '+1 800 000 0000',
+      address: 'Headquarters System',
+      city: 'Bogota',
+      country: 'Colombia',
+      legalRepresentative: 'System Master',
+    },
+    {
+      tenantId: 'p1vk4imb6ugp1z0flglw86pk',
+      legalName: 'Seguridad Andina Ltda',
+      taxId: '800123456-9',
+      contactEmail: 'admin@seguridadandina.com',
+      contactPhone: '+57 310 123 4567',
+      address: 'Carrera 7 # 72-10 Oficina 301',
+      city: 'Bogota',
+      country: 'Colombia',
+      legalRepresentative: 'Carlos Andres Rodriguez',
+    },
+  ];
+
+  for (const prof of tenantProfiles) {
+    await prisma.tenantProfile.upsert({
+      where: { tenantId: prof.tenantId },
+      update: prof,
+      create: prof,
+    });
+  }
+
+  const tenantSubscriptions = [
+    {
+      tenantId: 'system',
+      planTier: PlanTier.ENTERPRISE,
+      status: SubscriptionStatus.ACTIVE,
+      maxClients: 999999,
+      maxUsers: 999999,
+      maxEmployees: 999999,
+    },
+    {
+      tenantId: 'p1vk4imb6ugp1z0flglw86pk',
+      planTier: PlanTier.PRO,
+      status: SubscriptionStatus.ACTIVE,
+      maxClients: 20,
+      maxUsers: 100,
+      maxEmployees: 200,
+    },
+  ];
+
+  for (const sub of tenantSubscriptions) {
+    await prisma.tenantSubscription.upsert({
+      where: { tenantId: sub.tenantId },
+      update: sub,
+      create: sub,
+    });
+  }
+
+  const tenantSettingsList = [
+    {
+      tenantId: 'system',
+      timezone: 'America/Bogota',
+      currency: 'COP',
+      dateFormat: 'DD/MM/YYYY',
+      mfaRequired: false,
+      sessionTimeoutMinutes: 120,
+      passwordPolicy: PasswordPolicy.STRICT,
+      supportEmail: 'support@noxia.io',
+    },
+    {
+      tenantId: 'p1vk4imb6ugp1z0flglw86pk',
+      timezone: 'America/Bogota',
+      currency: 'COP',
+      dateFormat: 'DD/MM/YYYY',
+      mfaRequired: false,
+      sessionTimeoutMinutes: 60,
+      passwordPolicy: PasswordPolicy.MEDIUM,
+      supportEmail: 'soporte@seguridadandina.com',
+      supportPhone: '+57 1 234 5678',
+    },
+  ];
+
+  for (const set of tenantSettingsList) {
+    await prisma.tenantSettings.upsert({
+      where: { tenantId: set.tenantId },
+      update: set,
+      create: set,
+    });
+  }
+  console.log('✅ Tenant profiles, subscriptions and settings seeded');
 
   console.log('Seeding Roles...');
   for (const item of roles) {

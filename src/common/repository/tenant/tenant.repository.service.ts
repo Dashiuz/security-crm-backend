@@ -8,7 +8,15 @@ export class TenantRepositoryService {
 
   async create(data: Prisma.TenantCreateInput) {
     try {
-      return await this.prisma.tenant.create({ data });
+      return await this.prisma.tenant.create({
+        data,
+        include: {
+          features: { select: { key: true } },
+          profile: true,
+          subscription: true,
+          settings: true,
+        },
+      });
     } catch (e: any) {
       if (e?.code === 'P2002') {
         throw new ConflictException(
@@ -22,14 +30,24 @@ export class TenantRepositoryService {
   async findAll() {
     return this.prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { features: { select: { key: true } } },
+      include: {
+        features: { select: { key: true } },
+        profile: true,
+        subscription: true,
+        settings: true,
+      },
     });
   }
 
   async findById(id: string) {
     return this.prisma.tenant.findUnique({
       where: { id },
-      include: { features: { select: { key: true } } },
+      include: {
+        features: { select: { key: true } },
+        profile: true,
+        subscription: true,
+        settings: true,
+      },
     });
   }
 
@@ -38,6 +56,12 @@ export class TenantRepositoryService {
       return await this.prisma.tenant.update({
         where: { id },
         data,
+        include: {
+          features: { select: { key: true } },
+          profile: true,
+          subscription: true,
+          settings: true,
+        },
       });
     } catch (e: any) {
       if (e?.code === 'P2002') {
@@ -49,9 +73,51 @@ export class TenantRepositoryService {
     }
   }
 
+  async updateProfile(
+    tenantId: string,
+    data: Prisma.TenantProfileUpdateInput,
+    defaultData: Prisma.TenantProfileCreateInput,
+  ) {
+    return this.prisma.tenantProfile.upsert({
+      where: { tenantId },
+      update: data,
+      create: defaultData,
+    });
+  }
+
+  async updateSettings(
+    tenantId: string,
+    data: Prisma.TenantSettingsUpdateInput,
+    defaultData: Prisma.TenantSettingsCreateInput,
+  ) {
+    return this.prisma.tenantSettings.upsert({
+      where: { tenantId },
+      update: data,
+      create: defaultData,
+    });
+  }
+
+  async updateSubscription(
+    tenantId: string,
+    data: Prisma.TenantSubscriptionUpdateInput,
+    defaultData: Prisma.TenantSubscriptionCreateInput,
+  ) {
+    return this.prisma.tenantSubscription.upsert({
+      where: { tenantId },
+      update: data,
+      create: defaultData,
+    });
+  }
+
   async remove(id: string) {
     return this.prisma.tenant.delete({
       where: { id },
+      include: {
+        features: { select: { key: true } },
+        profile: true,
+        subscription: true,
+        settings: true,
+      },
     });
   }
 
@@ -62,16 +128,20 @@ export class TenantRepositoryService {
   }
 
   async syncFeatures(tenantId: string, featureKeys: string[]) {
-    // We disconnect all and reconnect the new ones for a perfect sync
     return this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
         features: {
-          set: [], // Clear existing
-          connect: featureKeys.map((key) => ({ key })), // Connect new
+          set: [],
+          connect: featureKeys.map((key) => ({ key })),
         },
       },
-      include: { features: { select: { key: true } } },
+      include: {
+        features: { select: { key: true } },
+        profile: true,
+        subscription: true,
+        settings: true,
+      },
     });
   }
 }
