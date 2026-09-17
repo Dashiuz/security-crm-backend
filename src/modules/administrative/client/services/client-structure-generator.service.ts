@@ -89,6 +89,21 @@ export class ClientStructureGeneratorService {
           });
           totalTowers = 1;
 
+          if (!config.towers || config.towers.length === 0) {
+            config.towers = [
+              {
+                id: tower.id,
+                towerName: 'Edificio Principal',
+                floorsAmount,
+                apartmentsPerFloor: defaultApts,
+                elevators,
+                customFloorVariations: config.customFloorVariations,
+              },
+            ];
+          } else {
+            config.towers[0].id = tower.id;
+          }
+
           for (let f = 1; f <= floorsAmount; f++) {
             const floor = await tx.floor.create({
               data: {
@@ -145,6 +160,7 @@ export class ClientStructureGeneratorService {
                   createdBy: userId,
                 },
               });
+              tDef.id = tower.id;
 
               for (let f = 1; f <= tDef.floorsAmount; f++) {
                 const floor = await tx.floor.create({
@@ -186,6 +202,7 @@ export class ClientStructureGeneratorService {
             const floorsAmount = config.floorsAmount || 1;
             const defaultApts = config.apartmentsPerFloor || 1;
             totalTowers = towersAmount;
+            const generatedTowers: any[] = [];
 
             for (let t = 1; t <= towersAmount; t++) {
               const tower = await tx.tower.create({
@@ -197,6 +214,14 @@ export class ClientStructureGeneratorService {
                   elevators: 0,
                   createdBy: userId,
                 },
+              });
+
+              generatedTowers.push({
+                id: tower.id,
+                towerName: `Torre ${t}`,
+                floorsAmount,
+                apartmentsPerFloor: defaultApts,
+                elevators: 0,
               });
 
               for (let f = 1; f <= floorsAmount; f++) {
@@ -231,6 +256,7 @@ export class ClientStructureGeneratorService {
                 }
               }
             }
+            config.towers = generatedTowers;
           }
 
           // In MIXED complexes, add commercial stores if defined
@@ -267,6 +293,22 @@ export class ClientStructureGeneratorService {
             clientId,
             unitName: `${prefix} ${i}`,
             unitType: UnitType.HOUSE,
+            createdBy: userId,
+          });
+        }
+        await tx.unit.createMany({ data: unitsToInsert });
+      } else if (structureType === ResidentialComplexType.COMMERCIAL) {
+        const uAmount = config.unitsAmount || 1;
+        const prefix = config.prefix || 'Local';
+        totalUnits = uAmount;
+
+        const unitsToInsert: Prisma.UnitCreateManyInput[] = [];
+        for (let i = 1; i <= uAmount; i++) {
+          unitsToInsert.push({
+            tenantId,
+            clientId,
+            unitName: `${prefix} ${i}`,
+            unitType: UnitType.OFFICE,
             createdBy: userId,
           });
         }

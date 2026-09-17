@@ -8,4 +8,5 @@ export type JwtPayload = {
   isImpersonating?: boolean;
   originalTenantId?: string;
   clientId?: string | null;
+  userType?: string;
 };

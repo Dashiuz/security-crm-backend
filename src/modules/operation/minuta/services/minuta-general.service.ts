@@ -12,28 +12,79 @@ export class MinutaGeneralService {
   constructor(private readonly repository: MinutaRepositoryService) {}
 
   async create(dto: CreateMinutaDto, userId: string, tenantId: string) {
-    const { date, time, occurredAt, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      unitId,
+      residentId,
+      clientId,
+      isInternal,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
         : new Date(`1970-01-01T${t.length === 5 ? t + ':00' : t}`);
-    return this.repository.create({
+
+    const dataToCreate: any = {
       ...others,
+      isInternal: isInternal ?? false,
       date: new Date(date),
       time: parseTime(time),
       occurredAt: new Date(occurredAt),
       tenant: { connect: { id: tenantId } },
       createdBy: { connect: { id: userId } },
-    } as any);
+    };
+
+    if (clientId) {
+      dataToCreate.client = { connect: { id: clientId } };
+    }
+    if (unitId) {
+      dataToCreate.unit = { connect: { id: unitId } };
+    }
+    if (residentId) {
+      dataToCreate.resident = { connect: { id: residentId } };
+    }
+
+    return this.repository.create(dataToCreate);
   }
 
-  async findAll(clientId?: string) {
+  async findAll(query?: any) {
     const where: any = {
       status: { not: RecordStatus.VOIDED },
       deletedAt: null,
     };
-    if (clientId) {
-      where.clientId = clientId;
+    if (query?.isInternal === 'true') {
+      where.isInternal = true;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.isInternal === 'false') {
+      where.isInternal = false;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.clientId) {
+      where.clientId = query.clientId;
+    }
+    if (query?.unitId) {
+      where.unitId = query.unitId;
+    }
+    if (query?.residentId) {
+      where.residentId = query.residentId;
+    }
+    if (query?.search) {
+      where.annotation = { contains: query.search.trim(), mode: 'insensitive' };
+    }
+    if (query?.startDate || query?.endDate) {
+      where.date = {};
+      if (query.startDate) {
+        where.date.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.date.lte = new Date(query.endDate);
+      }
     }
     return this.repository.findMany(where);
   }
@@ -46,7 +97,15 @@ export class MinutaGeneralService {
   }
 
   async update(id: string, dto: UpdateMinutaDto, userId: string) {
-    const { date, time, occurredAt, ...others } = dto;
+    const {
+      date,
+      time,
+      occurredAt,
+      unitId,
+      residentId,
+      isInternal,
+      ...others
+    } = dto;
     const parseTime = (t: string) =>
       t.includes('T')
         ? new Date(t)
@@ -56,6 +115,17 @@ export class MinutaGeneralService {
     if (date) updateData.date = new Date(date);
     if (time) updateData.time = parseTime(time);
     if (occurredAt) updateData.occurredAt = new Date(occurredAt);
+    if (isInternal !== undefined) updateData.isInternal = isInternal;
+    if (unitId !== undefined) {
+      (updateData as any).unit = unitId
+        ? { connect: { id: unitId } }
+        : { disconnect: true };
+    }
+    if (residentId !== undefined) {
+      (updateData as any).resident = residentId
+        ? { connect: { id: residentId } }
+        : { disconnect: true };
+    }
 
     return this.repository.update(
       { id },
@@ -76,7 +146,10 @@ export class MinutaGeneralService {
   }
 
   async remove(id: string, userId: string) {
-    // Soft delete if preferred, or hard delete
+    const existing = await this.repository.findUnique({ id });
+    if (!existing || existing.deletedAt) {
+      throw new NotFoundException('Registro de minuta no encontrado o ya eliminado.');
+    }
     return this.repository.update({ id }, {
       deletedAt: new Date(),
       deletedBy: { connect: { id: userId } },

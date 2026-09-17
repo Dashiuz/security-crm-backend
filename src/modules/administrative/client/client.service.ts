@@ -177,12 +177,38 @@ export class ClientService {
   }
 
   async findAll(user: UserContext): Promise<ClientResponseDto[]> {
+    const where: any = {
+      tenantId: user.tenantId,
+      clientStatus: { not: ClientStatus.PROSPECT },
+    };
+
+    if (
+      !user.permissions.includes('client:manage') &&
+      !user.permissions.includes('client:read_all')
+    ) {
+      if (user.permissions.includes('client:read_assigned')) {
+        where.OR = [
+          { coordinatorInChargeId: user.sub },
+          { commercialContactId: user.sub },
+        ];
+      } else if (user.permissions.includes('client:read_workplace')) {
+        const currentUser = await this.prisma.user.findUnique({
+          where: { id: user.sub },
+          select: { clientId: true },
+        });
+        if (currentUser?.clientId) {
+          where.id = currentUser.clientId;
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    }
+
     return this.clientRepository
       .findMany({
-        where: {
-          tenantId: user.tenantId,
-          clientStatus: { not: ClientStatus.PROSPECT },
-        },
+        where,
         include: {
           coordinatorInCharge: true,
           commercialContact: true,
@@ -216,6 +242,109 @@ export class ClientService {
       throw new NotFoundException('Cliente no encontrado');
     }
     return this.mapClientToResponse(client);
+  }
+
+  async autocomplete(query: string, user: UserContext, limit = 20) {
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId: user.tenantId,
+      deletedAt: null,
+      isActive: true,
+      clientStatus: { not: ClientStatus.PROSPECT },
+    };
+
+    if (
+      !user.permissions.includes('client:manage') &&
+      !user.permissions.includes('client:read_all')
+    ) {
+      if (user.permissions.includes('client:read_assigned')) {
+        where.OR = [
+          { coordinatorInChargeId: user.sub },
+          { commercialContactId: user.sub },
+        ];
+      } else if (user.permissions.includes('client:read_workplace')) {
+        const currentUser = await this.prisma.user.findUnique({
+          where: { id: user.sub },
+          select: { clientId: true },
+        });
+        if (currentUser?.clientId) {
+          where.id = currentUser.clientId;
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    }
+
+    if (trimmed) {
+      const searchOr = [
+        { name: { contains: trimmed, mode: 'insensitive' } },
+        { internalCode: { contains: trimmed, mode: 'insensitive' } },
+        { nit: { contains: trimmed, mode: 'insensitive' } },
+      ];
+      
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchOr }];
+        delete where.OR;
+      } else {
+        where.OR = searchOr;
+      }
+    }
+
+    return this.prisma.client.findMany({
+      where,
+      take: Math.min(limit, 50),
+      select: {
+        id: true,
+        name: true,
+        internalCode: true,
+        nit: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async autocompleteUnits(
+    clientId: string,
+    query: string,
+    user: UserContext,
+    limit = 15,
+  ) {
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId: user.tenantId,
+      clientId,
+      deletedAt: null,
+    };
+
+    if (trimmed) {
+      where.OR = [
+        { unitName: { contains: trimmed, mode: 'insensitive' } },
+        { tower: { towerName: { contains: trimmed, mode: 'insensitive' } } },
+      ];
+    }
+
+    return this.prisma.unit.findMany({
+      where,
+      take: Math.min(limit, 50),
+      include: {
+        tower: { select: { id: true, towerName: true } },
+        floor: { select: { id: true, floorNumber: true } },
+        residents: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            document: true,
+            phoneNumber: true,
+            residentType: true,
+          },
+        },
+      },
+      orderBy: [{ tower: { towerName: 'asc' } }, { unitName: 'asc' }],
+    });
   }
 
   async update(

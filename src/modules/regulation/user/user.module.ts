@@ -6,10 +6,17 @@ import { UsersRolesController } from './users-roles.controller';
 import {
   UserRepositoryModule,
   EmployeeRepositoryModule,
+  RoleRepositoryModule,
 } from '../../../common/repository/index';
+import { ContextModule } from '../../../common/context/context.module';
 
 @Module({
-  imports: [UserRepositoryModule, EmployeeRepositoryModule],
+  imports: [
+    UserRepositoryModule,
+    EmployeeRepositoryModule,
+    RoleRepositoryModule,
+    ContextModule,
+  ],
   controllers: [UserController, UsersRolesController],
   providers: [UserService, UsersRolesService],
 })

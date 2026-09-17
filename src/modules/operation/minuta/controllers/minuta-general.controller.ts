@@ -22,6 +22,7 @@ import {
   CreateMinutaDto,
   UpdateMinutaDto,
   VoidRecordDto,
+  MinutaFilterQueryDto,
 } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../regulation/access-control/permissions.guard';
@@ -44,9 +45,9 @@ export class MinutaGeneralController {
 
   @Get()
   @RequirePermissions('minuta:manage', 'minuta:read')
-  @ApiOperation({ summary: 'List general logbook entries' })
-  findAll(@Query('clientId') clientId?: string) {
-    return this.service.findAll(clientId);
+  @ApiOperation({ summary: 'List general logbook entries with filters' })
+  findAll(@Query() query: MinutaFilterQueryDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')

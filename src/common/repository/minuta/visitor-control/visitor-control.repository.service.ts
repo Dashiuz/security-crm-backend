@@ -22,6 +22,9 @@ export class VisitorControlRepositoryService {
         resident: {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
+        employee: {
+          select: { id: true, fullName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
@@ -36,13 +39,14 @@ export class VisitorControlRepositoryService {
       residentName: r.resident
         ? `${r.resident.firstName} ${r.resident.lastName}`
         : null,
+      employeeName: r.employee?.fullName || null,
     }));
   }
 
   async findUnique(
     where: Prisma.VisitorEntryControlWhereUniqueInput,
   ): Promise<any> {
-    return this.prisma.visitorEntryControl.findUnique({
+    const r = await this.prisma.visitorEntryControl.findUnique({
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
@@ -51,11 +55,25 @@ export class VisitorControlRepositoryService {
         resident: {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
+        employee: {
+          select: { id: true, fullName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
       },
     });
+    if (!r) return null;
+    return {
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || null,
+      residentName: r.resident
+        ? `${r.resident.firstName} ${r.resident.lastName}`
+        : null,
+      employeeName: r.employee?.fullName || null,
+    };
   }
 
   async update(

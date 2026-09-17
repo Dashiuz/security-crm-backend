@@ -5,6 +5,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsBoolean,
+  IsBooleanString,
   IsInt,
   Min,
 } from 'class-validator';
@@ -128,6 +130,18 @@ export class CreateVisitorEntryDto {
   @IsOptional()
   residentId?: string;
 
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional({ example: 'cuid_employee_id' })
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -176,6 +190,18 @@ export class UpdateVisitorEntryDto {
   residentId?: string;
 
   @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
+
+  @ApiPropertyOptional()
   @IsString({ message: 'Las observaciones deben ser un texto válido.' })
   @IsOptional()
   observations?: string;
@@ -199,4 +225,46 @@ export class RegisterVisitorExitDto {
   @IsString({ message: 'Las observaciones deben ser un texto válido.' })
   @IsOptional()
   observations?: string;
+}
+
+export class VisitorFilterQueryDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBooleanString()
+  isInternal?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
 }

@@ -22,6 +22,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'VisitorEntryControl',
               'CorrespondenceReceivedControl',
               'ParkingResidentVehicleControl',
+              'Resident',
+              'Tower',
+              'Floor',
+              'Unit',
+              'ClientProperties',
             ];
             const multiTenantModels = [
               'User',
@@ -63,6 +68,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'VisitorEntryControl',
               'CorrespondenceReceivedControl',
               'ParkingResidentVehicleControl',
+              'Resident',
+              'Tower',
+              'Floor',
+              'Unit',
+              'ClientProperties',
             ];
             const isMultiClient = (multiClientModels as any[]).includes(model);
 
@@ -84,7 +94,13 @@ export const auditExtension = (contextService: RequestContextService) => {
                 // For search and targeted updates/deletes, Godlike users bypass the filter
                 if (!bypassTenant) {
                   anyArgs.where = { ...(anyArgs.where || {}), tenantId };
-                  if (clientId && isMultiClient && !anyArgs.where.clientId) {
+                  if (
+                    clientId &&
+                    isMultiClient &&
+                    !anyArgs.where.clientId &&
+                    anyArgs.where.isInternal !== true &&
+                    !['update', 'delete', 'findUnique'].includes(operation)
+                  ) {
                     anyArgs.where.clientId = clientId;
                   }
                 }
@@ -98,7 +114,8 @@ export const auditExtension = (contextService: RequestContextService) => {
                   clientId &&
                   isMultiClient &&
                   !anyArgs.data?.clientId &&
-                  !anyArgs.data?.client
+                  !anyArgs.data?.client &&
+                  anyArgs.data?.isInternal !== true
                 ) {
                   anyArgs.data.client = { connect: { id: clientId } };
                 }
@@ -106,7 +123,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                 if (Array.isArray(anyArgs.data)) {
                   anyArgs.data = anyArgs.data.map((item: any) => ({
                     tenantId: item.tenantId || tenantId,
-                    ...(clientId && isMultiClient
+                    ...(clientId && isMultiClient && item.isInternal !== true
                       ? { clientId: item.clientId || clientId }
                       : {}),
                     ...item,
@@ -120,13 +137,19 @@ export const auditExtension = (contextService: RequestContextService) => {
                   clientId &&
                   isMultiClient &&
                   !anyArgs.create?.clientId &&
-                  !anyArgs.create?.client
+                  !anyArgs.create?.client &&
+                  anyArgs.create?.isInternal !== true
                 ) {
                   anyArgs.create.client = { connect: { id: clientId } };
                 }
                 if (!bypassTenant) {
                   anyArgs.where = { ...(anyArgs.where || {}), tenantId };
-                  if (clientId && isMultiClient && !anyArgs.where.clientId) {
+                  if (
+                    clientId &&
+                    isMultiClient &&
+                    !anyArgs.where.clientId &&
+                    anyArgs.where.isInternal !== true
+                  ) {
                     anyArgs.where.clientId = clientId;
                   }
                 }
@@ -144,6 +167,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'CorrespondenceReceivedControl',
                 'ParkingResidentVehicleControl',
                 'Client',
+                'Resident',
               ];
               const isRelationAudit = relationAuditModels.includes(model);
 

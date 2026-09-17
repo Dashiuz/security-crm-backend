@@ -69,6 +69,11 @@ export class ResidentService {
       }
     }
 
+    if (user.userType === 'RESIDENCE_MANAGER') {
+      if (!user.clientId) throw new BadRequestException('Usuario administrador no tiene cliente asignado.');
+      dto.clientId = user.clientId;
+    }
+
     const data: any = {
       tenant: { connect: { id: user.tenantId } },
       client: { connect: { id: dto.clientId } },
@@ -108,6 +113,12 @@ export class ResidentService {
     clientId: string,
     user: UserContext,
   ): Promise<ResidentResponseDto[]> {
+    if (user.userType === 'RESIDENCE_MANAGER') {
+      if (clientId !== user.clientId) {
+        return [];
+      }
+    }
+
     return this.residentRepository
       .findMany({
         where: {
@@ -129,6 +140,55 @@ export class ResidentService {
       .then((rows) => rows.map((r) => this.mapResidentToResponse(r))) as any;
   }
 
+  async autocomplete(
+    clientId: string,
+    query: string,
+    unitId: string | undefined,
+    user: UserContext,
+    limit = 15,
+  ) {
+    if (user.userType === 'RESIDENCE_MANAGER') {
+      clientId = user.clientId || clientId;
+    }
+
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId: user.tenantId,
+      deletedAt: null,
+    };
+    if (clientId) {
+      where.clientId = clientId;
+    }
+    if (unitId) {
+      where.unitId = unitId;
+    }
+
+    if (trimmed) {
+      where.OR = [
+        { firstName: { contains: trimmed, mode: 'insensitive' } },
+        { lastName: { contains: trimmed, mode: 'insensitive' } },
+        { document: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
+
+    const rows = await this.prisma.resident.findMany({
+      where,
+      take: Math.min(limit, 50),
+      include: {
+        unit: {
+          select: {
+            id: true,
+            unitName: true,
+            tower: { select: { id: true, towerName: true } },
+          },
+        },
+      },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+    });
+
+    return rows.map((r) => this.mapResidentToResponse(r));
+  }
+
   async findOne(id: string, user: UserContext): Promise<ResidentResponseDto> {
     const resident = await this.residentRepository.findOne(id, {
       unit: {
@@ -146,6 +206,10 @@ export class ResidentService {
       resident.deletedAt
     ) {
       throw new NotFoundException('Residente no encontrado');
+    }
+
+    if (user.userType === 'RESIDENCE_MANAGER' && resident.clientId !== user.clientId) {
+      throw new NotFoundException('Residente no encontrado (fuera de scope)');
     }
 
     return this.mapResidentToResponse(resident);
@@ -229,6 +293,12 @@ export class ResidentService {
     fileName: string,
     user: UserContext,
   ) {
+    if (user.userType === 'RESIDENCE_MANAGER') {
+      if (clientId !== user.clientId) {
+        throw new BadRequestException('No tienes permisos para importar en este conjunto.');
+      }
+    }
+
     const client = await this.prisma.client.findFirst({
       where: { id: clientId, tenantId: user.tenantId },
     });
@@ -248,6 +318,12 @@ export class ResidentService {
       where: { clientId, tenantId: user.tenantId },
     });
 
+    if (existingUnits.length === 0) {
+      throw new BadRequestException(
+        'El conjunto residencial no tiene una estructura física ni unidades creadas. Genere la estructura primero antes de importar residentes.',
+      );
+    }
+
     for (let i = 0; i < csvData.length; i++) {
       const row = csvData[i];
       const rowNum = i + 1;
@@ -264,48 +340,31 @@ export class ResidentService {
           );
         }
 
-        // Unit resolution
+        // Unit resolution (Strict mode: units must pre-exist)
         let unitId = row.unitId;
-        if (!unitId && row.unitName) {
+        if (unitId) {
+          const matchedById = existingUnits.find((u) => u.id === unitId);
+          if (!matchedById) {
+            throw new Error(
+              `La unidad con ID "${unitId}" no existe en la estructura del conjunto residencial.`,
+            );
+          }
+        } else if (row.unitName && row.unitName.trim() !== '') {
+          const normalizedRowName = row.unitName.trim().toLowerCase();
           const matched = existingUnits.find(
-            (u) =>
-              u.unitName.toLowerCase().trim() ===
-              row.unitName.toLowerCase().trim(),
+            (u) => u.unitName.trim().toLowerCase() === normalizedRowName,
           );
           if (matched) {
             unitId = matched.id;
           } else {
-            // Find first or create unit
-            const newUnit = await this.prisma.unit.create({
-              data: {
-                tenantId: user.tenantId,
-                clientId,
-                unitName: row.unitName.trim(),
-                unitType: 'APARTMENT',
-                createdBy: user.sub !== 'system' ? user.sub : null,
-              },
-            });
-            existingUnits.push(newUnit);
-            unitId = newUnit.id;
+            throw new Error(
+              `Unidad "${row.unitName.trim()}" no encontrada en la estructura del conjunto residencial. Verifique la nomenclatura exacta.`,
+            );
           }
-        }
-
-        if (!unitId) {
-          if (existingUnits.length > 0) {
-            unitId = existingUnits[0].id;
-          } else {
-            const defaultUnit = await this.prisma.unit.create({
-              data: {
-                tenantId: user.tenantId,
-                clientId,
-                unitName: 'Unidad 101',
-                unitType: 'APARTMENT',
-                createdBy: user.sub !== 'system' ? user.sub : null,
-              },
-            });
-            existingUnits.push(defaultUnit);
-            unitId = defaultUnit.id;
-          }
+        } else {
+          throw new Error(
+            'Debe especificar una unidad válida existente (unitName o unitId).',
+          );
         }
 
         const rawResidentType = (row.residentType || 'OWNER')

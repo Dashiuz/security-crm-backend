@@ -16,6 +16,10 @@ export class MinutaRepositoryService {
       include: {
         createdBy: { select: { id: true, fullName: true } },
         client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        resident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
@@ -26,13 +30,38 @@ export class MinutaRepositoryService {
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',
       clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || null,
+      residentName: r.resident
+        ? `${r.resident.firstName} ${r.resident.lastName}`
+        : null,
     }));
   }
 
-  async findUnique(
-    where: Prisma.MinutaWhereUniqueInput,
-  ): Promise<Minuta | null> {
-    return this.prisma.minuta.findUnique({ where });
+  async findUnique(where: Prisma.MinutaWhereUniqueInput): Promise<any | null> {
+    const r = await this.prisma.minuta.findUnique({
+      where,
+      include: {
+        createdBy: { select: { id: true, fullName: true } },
+        client: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitName: true, unitType: true } },
+        resident: {
+          select: { id: true, firstName: true, lastName: true, document: true },
+        },
+        mediaAttachments: {
+          select: { id: true, url: true, fileName: true, mimeType: true },
+        },
+      },
+    });
+    if (!r) return null;
+    return {
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || null,
+      residentName: r.resident
+        ? `${r.resident.firstName} ${r.resident.lastName}`
+        : null,
+    };
   }
 
   async update(

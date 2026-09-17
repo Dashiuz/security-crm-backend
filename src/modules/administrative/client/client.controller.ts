@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,7 +23,10 @@ import {
   UpdateClientDto,
   ClientResponseDto,
 } from './dtos/client.dto';
-import { CreateClientWithStructureDto, UpdateClientWithStructureDto } from './dtos/client-structure.dto';
+import {
+  CreateClientWithStructureDto,
+  UpdateClientWithStructureDto,
+} from './dtos/client-structure.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
@@ -54,19 +58,78 @@ export class ClientController {
   }
 
   @Get()
-  @RequirePermissions('client:manage', 'client:read')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
+  )
   @ApiOperation({ summary: 'List clients' })
   @ApiOkResponse({ type: [ClientResponseDto] })
   findAll(@Request() req) {
     return this.clientService.findAll(req.user);
   }
 
+  @Get('search/autocomplete')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
+    'minuta:manage',
+    'minuta:create',
+    'minuta:read',
+  )
+  @ApiOperation({ summary: 'Search active clients with autocomplete' })
+  autocomplete(
+    @Query('query') query: string,
+    @Query('limit') limit: string,
+    @Request() req,
+  ) {
+    return this.clientService.autocomplete(
+      query,
+      req.user,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Get(':id/units/autocomplete')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
+    'minuta:manage',
+    'minuta:create',
+    'minuta:read',
+    'resident:manage',
+    'resident:read',
+  )
+  @ApiOperation({ summary: 'Search units with autocomplete for a client' })
+  autocompleteUnits(
+    @Param('id') clientId: string,
+    @Query('query') query: string,
+    @Query('limit') limit: string,
+    @Request() req,
+  ) {
+    return this.clientService.autocompleteUnits(
+      clientId,
+      query,
+      req.user,
+      limit ? parseInt(limit, 10) : 15,
+    );
+  }
+
   @Get(':id')
   @RequirePermissions(
     'client:manage',
-    'client:read',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
     'minuta:manage',
     'minuta:create',
+    'resident:manage',
+    'resident:read',
   )
   @ApiOperation({ summary: 'Get client by id' })
   @ApiOkResponse({ type: ClientResponseDto })

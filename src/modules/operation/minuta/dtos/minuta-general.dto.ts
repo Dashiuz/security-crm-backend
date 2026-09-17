@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
+  IsBooleanString,
   IsInt,
   Min,
   Max,
@@ -67,6 +68,47 @@ export class CreateMinutaDto {
   @IsOptional()
   isConfidential?: boolean;
 
+  @ApiPropertyOptional({ example: 'Recepción' })
+  @IsString({ message: 'El puesto o ubicación debe ser un texto válido.' })
+  @IsOptional()
+  guardPost?: string;
+
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de vínculo a residente debe ser un booleano.',
+  })
+  @IsOptional()
+  isResidentLinked?: boolean;
+
+  @ApiPropertyOptional({ example: 'Visitante particular' })
+  @IsString({
+    message: 'La fuente u origen de la novedad debe ser un texto válido.',
+  })
+  @IsOptional()
+  noveltySource?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_unit_id' })
+  @IsString({ message: 'El identificador de la unidad debe ser válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_resident_id' })
+  @IsString({ message: 'El identificador del residente debe ser válido.' })
+  @IsOptional()
+  residentId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_client_id' })
+  @IsString({ message: 'El identificador del cliente debe ser válido.' })
+  @IsOptional()
+  clientId?: string;
+
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
   @ApiPropertyOptional({ enum: RecordSource, default: RecordSource.WEB })
   @IsEnum(RecordSource, { message: 'El origen del registro no es válido.' })
   @IsOptional()
@@ -125,6 +167,79 @@ export class UpdateMinutaDto {
   })
   @IsOptional()
   isConfidential?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El puesto o ubicación debe ser un texto válido.' })
+  @IsOptional()
+  guardPost?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de vínculo a residente debe ser un booleano.',
+  })
+  @IsOptional()
+  isResidentLinked?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({
+    message: 'La fuente u origen de la novedad debe ser un texto válido.',
+  })
+  @IsOptional()
+  noveltySource?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador de la unidad debe ser válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador del residente debe ser válido.' })
+  @IsOptional()
+  residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+}
+
+export class MinutaFilterQueryDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBooleanString()
+  isInternal?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  residentId?: string;
 }
 
 export class VoidRecordDto {

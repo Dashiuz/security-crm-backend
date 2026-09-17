@@ -22,6 +22,8 @@ model Unit {
   residents       Resident[]
   visitorEntries  VisitorEntryControl[]
   correspondences CorrespondenceReceivedControl[]
+  minutas         Minuta[]
+  parkingControls ParkingResidentVehicleControl[]
 
   @@index([tenantId])
   @@index([clientId])
