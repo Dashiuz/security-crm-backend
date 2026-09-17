@@ -22,6 +22,7 @@ import {
   CreateCorrespondenceDto,
   UpdateCorrespondenceDto,
   DeliverCorrespondenceDto,
+  CorrespondenceFilterQueryDto,
 } from '../dtos/correspondence-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
@@ -45,9 +46,9 @@ export class CorrespondenceControlController {
 
   @Get()
   @RequirePermissions('minuta:manage', 'minuta:read')
-  @ApiOperation({ summary: 'List correspondence records' })
-  findAll(@Query('clientId') clientId?: string) {
-    return this.service.findAll(clientId);
+  @ApiOperation({ summary: 'List correspondence records with filters' })
+  findAll(@Query() query: CorrespondenceFilterQueryDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')

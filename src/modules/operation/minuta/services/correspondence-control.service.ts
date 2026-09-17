@@ -4,6 +4,7 @@ import {
   CreateCorrespondenceDto,
   UpdateCorrespondenceDto,
   DeliverCorrespondenceDto,
+  CorrespondenceFilterQueryDto,
 } from '../dtos/correspondence-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { CorrespondenceStatus } from '@prisma/client';
@@ -21,6 +22,8 @@ export class CorrespondenceControlService {
       clientId,
       unitId,
       recipientResidentId,
+      recipientEmployeeId,
+      isInternal,
       ...others
     } = dto;
     const parseTime = (t: string) =>
@@ -30,6 +33,7 @@ export class CorrespondenceControlService {
 
     const dataToCreate: any = {
       ...others,
+      isInternal: isInternal ?? false,
       date: new Date(date),
       time: parseTime(time),
       occurredAt: new Date(occurredAt),
@@ -48,17 +52,59 @@ export class CorrespondenceControlService {
     if (recipientResidentId) {
       dataToCreate.recipientResident = { connect: { id: recipientResidentId } };
     }
+    if (recipientEmployeeId) {
+      dataToCreate.recipientEmployee = {
+        connect: { id: recipientEmployeeId },
+      };
+    }
 
     return this.repository.create(dataToCreate);
   }
 
-  async findAll(clientId?: string) {
+  async findAll(query?: CorrespondenceFilterQueryDto | any) {
     const where: any = {
       status: { not: CorrespondenceStatus.VOIDED },
       deletedAt: null,
     };
-    if (clientId) {
-      where.clientId = clientId;
+    if (query?.isInternal === 'true') {
+      where.isInternal = true;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.isInternal === 'false') {
+      where.isInternal = false;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.clientId) {
+      where.clientId = query.clientId;
+    }
+    if (query?.recipientEmployeeId) {
+      where.recipientEmployeeId = query.recipientEmployeeId;
+    }
+    if (query?.unitId) {
+      where.unitId = query.unitId;
+    }
+    if (query?.residentId) {
+      where.recipientResidentId = query.residentId;
+    }
+    if (query?.search) {
+      const search = query.search.trim();
+      where.OR = [
+        { trackingNumber: { contains: search, mode: 'insensitive' } },
+        { courierCompany: { contains: search, mode: 'insensitive' } },
+        { destination: { contains: search, mode: 'insensitive' } },
+        { sender: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (query?.startDate || query?.endDate) {
+      where.date = {};
+      if (query.startDate) {
+        where.date.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.date.lte = new Date(query.endDate);
+      }
     }
     return this.repository.findMany(where);
   }
@@ -79,6 +125,8 @@ export class CorrespondenceControlService {
       deliveredAt,
       unitId,
       recipientResidentId,
+      recipientEmployeeId,
+      isInternal,
       ...others
     } = dto;
     const parseTime = (t: string) =>
@@ -92,11 +140,22 @@ export class CorrespondenceControlService {
     if (occurredAt) updateData.occurredAt = new Date(occurredAt);
     if (receivedTime) updateData.receivedTime = parseTime(receivedTime);
     if (deliveredAt) updateData.deliveredAt = new Date(deliveredAt);
-    if (unitId) (updateData as any).unit = { connect: { id: unitId } };
-    if (recipientResidentId)
-      (updateData as any).recipientResident = {
-        connect: { id: recipientResidentId },
-      };
+    if (isInternal !== undefined) updateData.isInternal = isInternal;
+    if (unitId !== undefined) {
+      (updateData as any).unit = unitId
+        ? { connect: { id: unitId } }
+        : { disconnect: true };
+    }
+    if (recipientResidentId !== undefined) {
+      (updateData as any).recipientResident = recipientResidentId
+        ? { connect: { id: recipientResidentId } }
+        : { disconnect: true };
+    }
+    if (recipientEmployeeId !== undefined) {
+      (updateData as any).recipientEmployee = recipientEmployeeId
+        ? { connect: { id: recipientEmployeeId } }
+        : { disconnect: true };
+    }
 
     return this.repository.update({ id }, {
       ...updateData,

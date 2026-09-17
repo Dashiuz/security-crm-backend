@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { SessionObjectInterface } from '../../../common/interfaces/index';
+import { S3Service } from '../../../modules/storage/services/s3.service';
 
 @Injectable()
 export class UserRepositoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly s3Service?: S3Service,
+  ) {}
 
   // tenant table operation
   async checkTenantActive(tenantId: string) {
@@ -43,27 +47,65 @@ export class UserRepositoryService {
   async findActiveByDocument(document: string) {
     return await this.prisma.user.findFirst({
       where: { document, isActive: true, tenant: { isActive: true } },
-      select: {
-        id: true,
-        tenantId: true,
-        clientId: true,
-        fullName: true,
-        document: true,
-        department: true,
-        position: true,
-        passwordHash: true,
-        isActive: true,
-      },
+      include: { tenant: true },
     });
   }
 
   async findByDocument(document: string) {
-    return await this.prisma.user.findFirst({
+    return await (this.prisma.user as any).findFirst({
+      bypassTenant: true,
+      where: { document },
+      include: { tenant: true },
+    });
+  }
+
+  async findById(id: string) {
+    return await this.prisma.user.findUnique({
+      where: { id },
+      include: { tenant: true },
+    });
+  }
+
+  async findByUsername(document: string) {
+    return await (this.prisma.user as any).findUnique({
+      bypassTenant: true,
       where: { document },
       include: {
-        roles: {
-          select: { role: { select: { id: true, name: true } } },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
+          },
         },
+      },
+    });
+  }
+
+  async findActiveById(id: string) {
+    return await this.prisma.user.findFirst({
+      where: { id, isActive: true, tenant: { isActive: true } },
+    });
+  }
+
+  async findOneWithRolesAndPermissions(id: string) {
+    return await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                perms: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        tenant: true,
       },
     });
   }
@@ -107,9 +149,23 @@ export class UserRepositoryService {
       select: {
         id: true,
         fullName: true,
+        document: true,
+        department: true,
+        position: true,
         tenantId: true,
         clientId: true,
+        userType: true,
         isActive: true,
+        roles: {
+          select: {
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         client: {
           select: {
             id: true,
@@ -157,8 +213,53 @@ export class UserRepositoryService {
 
     const { features, ...tenantData } = user.tenant;
 
+    const rolesList = (user.roles || [])
+      .map((r: any) => r.role?.name)
+      .filter(Boolean);
+    const roleName =
+      rolesList.length > 0
+        ? rolesList.join(', ')
+        : user.tenant?.slug === 'system'
+          ? 'Administrador Global'
+          : 'Usuario';
+
+    let avatarUrl: string | null = null;
+    if (user.document && this.s3Service) {
+      try {
+        const employee = await (this.prisma.employee as any).findFirst({
+          bypassTenant: true,
+          where: {
+            tenantId: user.tenantId,
+            document: user.document,
+          },
+          select: {
+            id: true,
+            mediaAttachments: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+              select: { s3Key: true },
+            },
+          },
+        });
+
+        if (employee?.mediaAttachments?.[0]?.s3Key) {
+          avatarUrl = await this.s3Service.getPresignedUrl(
+            employee.mediaAttachments[0].s3Key,
+          );
+        }
+      } catch {
+        avatarUrl = null;
+      }
+    }
+
     return {
       ...user,
+      roles: (user.roles || []).map((r: any) => ({
+        id: r.role?.id,
+        name: r.role?.name,
+      })),
+      roleName,
+      avatarUrl,
       tenant: {
         ...tenantData,
         enabledFeatures: features.map((f) => f.key),
@@ -234,6 +335,7 @@ export class UserRepositoryService {
             id: true,
             tenantId: true,
             clientId: true,
+            userType: true,
             isActive: true,
             tenant: { select: { isActive: true } },
           },
@@ -291,7 +393,7 @@ export class UserRepositoryService {
   async findUserInTenant(userId: string) {
     return this.prisma.user.findFirst({
       where: { id: userId },
-      select: { id: true },
+      select: { id: true, userType: true },
     });
   }
 

@@ -7,6 +7,7 @@ import * as argon2 from 'argon2';
 import {
   UserRepositoryService,
   EmployeeRepositoryService,
+  RoleRepositoryService,
 } from '../../../common/repository/index';
 import { RequestContextService } from '../../../common/context/request-context.service';
 import { CreateUserDto, UserResponseDto } from './dtos/index';
@@ -16,6 +17,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepositoryService,
     private readonly employeeRepository: EmployeeRepositoryService,
+    private readonly roleRepository: RoleRepositoryService,
     private readonly contextService: RequestContextService,
   ) {}
 
@@ -31,10 +33,13 @@ export class UserService {
       clientName: row.client?.name ?? null,
       isActive: row.isActive,
       isFirstLogin: row.isFirstLogin ?? false,
-      roles: row.roles?.map((ur: any) => ({
-        id: ur.role.id,
-        name: ur.role.name,
-      })),
+      roles: (row.roles || [])
+        .filter((ur: any) => ur.role)
+        .map((ur: any) => ({
+          id: ur.role.id,
+          name: ur.role.name,
+        })),
+      userType: row.userType,
     };
   }
 
@@ -56,11 +61,13 @@ export class UserService {
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
     const isSystemTenant = this.contextService.tenantId === 'system';
+    const isResidenceManager = dto.userType === 'RESIDENCE_MANAGER';
 
     let fullName = dto.fullName?.trim() || '';
     let department = dto.department?.trim() || 'system';
     let position = dto.position?.trim() || 'system manager';
-    let clientId: string | null = null;
+    let clientId: string | null = dto.clientId || null;
+    let userType = dto.userType || 'EMPLOYEE';
 
     if (isSystemTenant) {
       if (!fullName) {
@@ -70,6 +77,17 @@ export class UserService {
       }
       department = 'system';
       position = 'system manager';
+    } else if (isResidenceManager) {
+      if (!clientId) {
+        throw new BadRequestException(
+          'El ID del cliente es requerido para administradores de conjunto.',
+        );
+      }
+      if (!fullName) {
+        throw new BadRequestException('El nombre completo es requerido.');
+      }
+      department = 'ADMINISTRACION CLIENTE';
+      position = 'ADMINISTRADOR CLIENTE';
     } else {
       // 1) Business validation: verify an existing active employee with same document
       const employee = (await this.employeeRepository.findActiveByDocument(
@@ -96,7 +114,7 @@ export class UserService {
         throw new BadRequestException(
           isSystemTenant
             ? 'Ya existe un usuario registrado con este documento en el sistema.'
-            : 'User already exists for this employee.',
+            : 'User already exists for this document.',
         );
       }
 
@@ -113,6 +131,7 @@ export class UserService {
           department,
           position,
           clientId,
+          userType,
         } as any,
       );
 
@@ -146,9 +165,22 @@ export class UserService {
       department,
       position,
       clientId,
+      userType,
     } as any);
 
-    if (dto.roleIds && dto.roleIds.length > 0) {
+    if (isResidenceManager) {
+      // Find or create 'residence-manager' role
+      let role = await this.roleRepository.findByName('residence-manager', this.contextService.tenantId!);
+      if (!role) {
+        role = await this.roleRepository.create({
+          name: 'residence-manager',
+          tenantId: this.contextService.tenantId!,
+        });
+        // We can assign permissions here if needed using createRolePermissions, 
+        // but typically a residence manager would get assigned default permissions in the UI later or handled centrally.
+      }
+      await this.userRepository.addUserRoles(user.id, [role.id]);
+    } else if (dto.roleIds && dto.roleIds.length > 0) {
       await this.userRepository.addUserRoles(user.id, dto.roleIds);
     }
 
@@ -223,6 +255,46 @@ export class UserService {
   async findAll(tenantId: string): Promise<UserResponseDto[]> {
     const users = await this.userRepository.findAll(tenantId);
     return users.map((u) => this.mapUserToResponse(u));
+  }
+
+  async findUsersForAssignment(
+    tenantId: string,
+    type: string,
+    search: string,
+    limit: number,
+  ) {
+    const trimmed = (search || '').trim();
+    const where: any = {
+      tenantId,
+      isActive: true,
+    };
+
+    // Filtramos suavemente para dar prioridad, pero en la práctica 
+    // cualquier usuario podría ser asignado dependiendo de la empresa.
+    if (type === 'COORDINADOR') {
+      // where.position = { contains: 'coordinador', mode: 'insensitive' }
+    }
+
+    if (trimmed) {
+      where.OR = [
+        { fullName: { contains: trimmed, mode: 'insensitive' } },
+        { document: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
+
+    const prismaClient = (this.userRepository as any).prisma;
+    const users = await prismaClient.user.findMany({
+      where,
+      take: Math.min(limit, 50),
+      select: {
+        id: true,
+        fullName: true,
+        position: true,
+      },
+      orderBy: { fullName: 'asc' },
+    });
+
+    return users;
   }
 
   async getUserPermissions(userId: string): Promise<string[]> {

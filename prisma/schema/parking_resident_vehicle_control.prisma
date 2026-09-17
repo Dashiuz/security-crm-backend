@@ -19,6 +19,17 @@ model ParkingResidentVehicleControl {
   parkingNumber String
   ticketNumber  String? // número de ficha
 
+  isInternal Boolean @default(false)
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  unitId String?
+  unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  residentId String?
+  resident   Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
+
   interior  String?
   apartment String?
 
@@ -70,7 +81,11 @@ model ParkingResidentVehicleControl {
 
   @@index([tenantId])
   @@index([clientId])
+  @@index([unitId])
+  @@index([residentId])
+  @@index([employeeId])
   @@index([tenantId, clientId])
+  @@index([tenantId, isInternal])
   @@index([tenantId, date])
   @@index([tenantId, occurredAt])
   @@index([tenantId, plate])

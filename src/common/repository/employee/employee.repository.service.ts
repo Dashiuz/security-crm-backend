@@ -243,4 +243,35 @@ export class EmployeeRepositoryService {
       select: this.employeeSelect,
     });
   }
+
+  async autocomplete(query: string, tenantId: string, limit = 20) {
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId,
+      isActive: true,
+      isRetired: false,
+      deletedAt: null,
+    };
+    if (trimmed) {
+      where.OR = [
+        { fullName: { contains: trimmed, mode: 'insensitive' } },
+        { firstName: { contains: trimmed, mode: 'insensitive' } },
+        { lastName: { contains: trimmed, mode: 'insensitive' } },
+        { document: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
+    return this.prisma.employee.findMany({
+      where,
+      take: Math.min(limit, 50),
+      select: {
+        id: true,
+        fullName: true,
+        document: true,
+        documentType: true,
+        departmentRef: { select: { id: true, name: true } },
+        positionRef: { select: { id: true, name: true } },
+      },
+      orderBy: { fullName: 'asc' },
+    });
+  }
 }

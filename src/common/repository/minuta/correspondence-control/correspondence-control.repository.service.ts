@@ -24,6 +24,9 @@ export class CorrespondenceRepositoryService {
         recipientResident: {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
+        recipientEmployee: {
+          select: { id: true, fullName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
@@ -38,13 +41,14 @@ export class CorrespondenceRepositoryService {
       recipientResidentName: r.recipientResident
         ? `${r.recipientResident.firstName} ${r.recipientResident.lastName}`
         : null,
+      recipientEmployeeName: r.recipientEmployee?.fullName || null,
     }));
   }
 
   async findUnique(
     where: Prisma.CorrespondenceReceivedControlWhereUniqueInput,
   ): Promise<any> {
-    return this.prisma.correspondenceReceivedControl.findUnique({
+    const r = await this.prisma.correspondenceReceivedControl.findUnique({
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
@@ -53,11 +57,25 @@ export class CorrespondenceRepositoryService {
         recipientResident: {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
+        recipientEmployee: {
+          select: { id: true, fullName: true, document: true },
+        },
         mediaAttachments: {
           select: { id: true, url: true, fileName: true, mimeType: true },
         },
       },
     });
+    if (!r) return null;
+    return {
+      ...r,
+      createdBy: r.createdBy?.fullName || 'Sistema',
+      clientName: r.client?.name || null,
+      unitName: r.unit?.unitName || null,
+      recipientResidentName: r.recipientResident
+        ? `${r.recipientResident.firstName} ${r.recipientResident.lastName}`
+        : null,
+      recipientEmployeeName: r.recipientEmployee?.fullName || null,
+    };
   }
 
   async update(

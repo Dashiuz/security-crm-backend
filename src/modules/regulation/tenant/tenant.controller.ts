@@ -8,6 +8,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,19 +24,26 @@ import {
   CreateTenantDto,
   UpdateTenantDto,
   TenantResponseDto,
+  UpdateTenantProfileDto,
+  UpdateTenantSettingsDto,
+  TenantProfileResponseDto,
+  TenantSettingsResponseDto,
 } from './dtos/index';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../../../common/guards/super-admin.guard';
+import { PermissionsGuard } from '../access-control/permissions.guard';
+import { RequirePermissions } from '../access-control/permissions.decorator';
 
-@ApiTags('Tenant Management (SuperAdmin Only)')
+@ApiTags('Tenant Management')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, SuperAdminGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('tenants')
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new tenant' })
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Create a new tenant (GODLIKE only)' })
   @ApiCreatedResponse({ type: TenantResponseDto })
   @ApiForbiddenResponse({
     description: 'Only GODLIKE users can access this resource',
@@ -45,7 +53,8 @@ export class TenantController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all tenants' })
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'List all tenants (GODLIKE only)' })
   @ApiOkResponse({ type: [TenantResponseDto] })
   @ApiForbiddenResponse({
     description: 'Only GODLIKE users can access this resource',
@@ -54,8 +63,40 @@ export class TenantController {
     return this.tenantService.list();
   }
 
+  // --- Current Tenant Endpoints (Local Tenant Admin & GODLIKE) ---
+
+  @Get('me')
+  @RequirePermissions('tenant:read')
+  @ApiOperation({ summary: 'Get current tenant details' })
+  @ApiOkResponse({ type: TenantResponseDto })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  getMyTenant(@Request() req: any) {
+    return this.tenantService.findOne(req.user.tenantId);
+  }
+
+  @Patch('me/profile')
+  @RequirePermissions('tenant:manage')
+  @ApiOperation({ summary: 'Update own tenant profile / legal info' })
+  @ApiOkResponse({ type: TenantProfileResponseDto })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  updateMyProfile(@Request() req: any, @Body() dto: UpdateTenantProfileDto) {
+    return this.tenantService.updateProfile(req.user.tenantId, dto);
+  }
+
+  @Patch('me/settings')
+  @RequirePermissions('tenant:manage')
+  @ApiOperation({ summary: 'Update own tenant operational settings and branding' })
+  @ApiOkResponse({ type: TenantSettingsResponseDto })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  updateMySettings(@Request() req: any, @Body() dto: UpdateTenantSettingsDto) {
+    return this.tenantService.updateSettings(req.user.tenantId, dto);
+  }
+
+  // --- Parameterized Routes (GODLIKE only) ---
+
   @Get(':id')
-  @ApiOperation({ summary: 'Get tenant by ID' })
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Get tenant by ID (GODLIKE only)' })
   @ApiOkResponse({ type: TenantResponseDto })
   @ApiNotFoundResponse({ description: 'Tenant not found' })
   @ApiForbiddenResponse({
@@ -66,7 +107,8 @@ export class TenantController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a tenant' })
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Update a tenant (GODLIKE only)' })
   @ApiOkResponse({ type: TenantResponseDto })
   @ApiNotFoundResponse({ description: 'Tenant not found' })
   @ApiForbiddenResponse({
@@ -77,7 +119,8 @@ export class TenantController {
   }
 
   @Put(':id/features')
-  @ApiOperation({ summary: 'Sync features for a tenant' })
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Sync features for a tenant (GODLIKE only)' })
   @ApiOkResponse({ type: TenantResponseDto })
   @ApiNotFoundResponse({ description: 'Tenant not found' })
   @ApiForbiddenResponse({
@@ -91,7 +134,8 @@ export class TenantController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a tenant' })
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Delete a tenant (GODLIKE only)' })
   @ApiOkResponse({ type: TenantResponseDto })
   @ApiNotFoundResponse({ description: 'Tenant not found' })
   @ApiForbiddenResponse({

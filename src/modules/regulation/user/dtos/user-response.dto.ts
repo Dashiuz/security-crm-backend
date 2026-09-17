@@ -22,6 +22,9 @@ export class UserResponseDto {
   @ApiProperty({ example: 'client_id_123', required: false, nullable: true })
   clientId?: string | null;
 
+  @ApiProperty({ example: 'EMPLOYEE', required: false, nullable: true })
+  userType?: string | null;
+
   @ApiProperty({
     example: 'Conjunto Residencial Las Margaritas',
     required: false,
@@ -40,4 +43,10 @@ export class UserResponseDto {
     required: false,
   })
   roles?: { id: string; name: string }[];
+
+  @ApiProperty({ example: 'Administrador', required: false })
+  roleName?: string;
+
+  @ApiProperty({ example: 'https://s3.amazonaws.com/...', required: false, nullable: true })
+  avatarUrl?: string | null;
 }

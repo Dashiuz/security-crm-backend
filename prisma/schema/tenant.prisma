@@ -12,6 +12,10 @@ model Tenant {
   secondaryColor String?  @default("#9c27b0")
   sidebarColor   String?
 
+  profile                        TenantProfile?
+  subscription                   TenantSubscription?
+  settings                       TenantSettings?
+
   employees   Employee[]
   users       User[]
   roles       Role[]
@@ -33,4 +37,72 @@ model Tenant {
   fileImportLogs                 FileImportLog[]
 
   @@map("tenant")
+}
+
+model TenantProfile {
+  id                  String   @id @default(cuid(2))
+  tenantId            String   @unique
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  legalName           String   @db.VarChar(150)
+  taxId               String   @db.VarChar(50) // NIT/RUT
+  contactEmail        String   @db.VarChar(100)
+  contactPhone        String?  @db.VarChar(50)
+  address             String?  @db.VarChar(200)
+  city                String?  @db.VarChar(100)
+  country             String?  @db.VarChar(100)
+  legalRepresentative String?  @db.VarChar(150)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("tenant_profiles")
+}
+
+model TenantSubscription {
+  id                 String             @id @default(cuid(2))
+  tenantId           String             @unique
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  planTier           PlanTier           @default(BASIC)
+  status             SubscriptionStatus @default(TRIAL)
+
+  maxClients         Int                @default(5)
+  maxUsers           Int                @default(50)
+  maxEmployees       Int                @default(50)
+
+  subscriptionEndsAt DateTime?
+  paymentGatewayId   String?            @db.VarChar(100)
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("tenant_subscriptions")
+}
+
+model TenantSettings {
+  id                    String         @id @default(cuid(2))
+  tenantId              String         @unique
+  tenant                Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Operativa
+  timezone              String         @default("America/Bogota") @db.VarChar(50)
+  currency              String         @default("COP") @db.VarChar(10)
+  dateFormat            String         @default("DD/MM/YYYY") @db.VarChar(20)
+
+  // Seguridad
+  mfaRequired           Boolean        @default(false)
+  sessionTimeoutMinutes Int            @default(60)
+  passwordPolicy        PasswordPolicy @default(MEDIUM)
+
+  // White-labeling avanzado
+  faviconUrl            String?        @db.VarChar(255)
+  loginBackgroundUrl    String?        @db.VarChar(255)
+  supportEmail          String?        @db.VarChar(100)
+  supportPhone          String?        @db.VarChar(50)
+
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@map("tenant_settings")
 }

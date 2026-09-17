@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiResponse,
@@ -67,6 +68,29 @@ export class EmployeeController {
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
   findAll() {
     return this.employeeService.findAll();
+  }
+
+  @Get('search/autocomplete')
+  @RequirePermissions(
+    'employee:manage',
+    'employee:read',
+    'minuta:manage',
+    'minuta:create',
+    'minuta:read',
+  )
+  @ApiOperation({
+    summary: 'Search active employees with autocomplete by name or document',
+  })
+  autocomplete(
+    @Query('query') query: string,
+    @Query('limit') limit: string,
+    @Req() req: any,
+  ) {
+    return this.employeeService.autocomplete(
+      query,
+      req.user.tenantId,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Get('/active/:document')

@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
+  IsBooleanString,
 } from 'class-validator';
 import { RecordSource, VehicleCondition } from '@prisma/client';
 
@@ -55,6 +56,33 @@ export class CreateParkingControlDto {
   @IsString({ message: 'El apartamento o vivienda debe ser un texto válido.' })
   @IsOptional()
   apartment?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_unit_id' })
+  @IsString({ message: 'El identificador de la unidad debe ser válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_resident_id' })
+  @IsString({ message: 'El identificador del residente debe ser válido.' })
+  @IsOptional()
+  residentId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_client_id' })
+  @IsString({ message: 'El identificador del cliente debe ser válido.' })
+  @IsOptional()
+  clientId?: string;
+
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional({ example: 'cuid_employee_id' })
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
 
   @ApiProperty({ example: 'ABC-123' })
   @IsString({ message: 'La placa del vehículo debe ser un texto válido.' })
@@ -171,7 +199,91 @@ export class UpdateParkingControlDto {
   @IsOptional()
   condition?: VehicleCondition;
 
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador de la unidad debe ser válido.' })
+  @IsOptional()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador del residente debe ser válido.' })
+  @IsOptional()
+  residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean({
+    message: 'El indicador de registro interno debe ser un booleano.',
+  })
+  @IsOptional()
+  isInternal?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'El identificador del empleado debe ser válido.' })
+  @IsOptional()
+  employeeId?: string;
+
   @IsOptional()
   @ApiPropertyOptional({ type: Object })
   vehicleChecklist?: any;
+}
+
+export class RegisterParkingExitDto {
+  @ApiPropertyOptional({ example: '18:00:00' })
+  @IsString({ message: 'La hora de salida debe ser un texto válido.' })
+  @IsOptional()
+  exitTime?: string;
+
+  @ApiPropertyOptional({ example: '2024-02-19T18:00:00Z' })
+  @IsDateString(
+    {},
+    { message: 'La marca de tiempo de salida debe ser válida.' },
+  )
+  @IsOptional()
+  exitAt?: string;
+
+  @ApiPropertyOptional()
+  @IsString({ message: 'Las observaciones deben ser un texto válido.' })
+  @IsOptional()
+  observations?: string;
+}
+
+export class ParkingFilterQueryDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBooleanString()
+  isInternal?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  residentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
 }

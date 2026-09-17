@@ -21,6 +21,8 @@ import { ParkingControlService } from '../services/parking-control.service';
 import {
   CreateParkingControlDto,
   UpdateParkingControlDto,
+  RegisterParkingExitDto,
+  ParkingFilterQueryDto,
 } from '../dtos/parking-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
@@ -44,9 +46,9 @@ export class ParkingControlController {
 
   @Get()
   @RequirePermissions('minuta:manage', 'minuta:read')
-  @ApiOperation({ summary: 'List parking control entries' })
-  findAll(@Query('clientId') clientId?: string) {
-    return this.service.findAll(clientId);
+  @ApiOperation({ summary: 'List parking control entries with filters' })
+  findAll(@Query() query: ParkingFilterQueryDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
@@ -67,6 +69,18 @@ export class ParkingControlController {
     @Body() dto: UpdateParkingControlDto,
   ) {
     return this.service.update(id, dto, req.user.sub);
+  }
+
+  @Patch(':id/exit')
+  @RequirePermissions('minuta:manage', 'minuta:update')
+  @ApiOperation({ summary: 'Register parking vehicle exit timestamp' })
+  @ApiBody({ type: RegisterParkingExitDto, required: false })
+  registerExit(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto?: RegisterParkingExitDto,
+  ) {
+    return this.service.registerExit(id, dto, req.user.sub);
   }
 
   @Patch(':id/void')

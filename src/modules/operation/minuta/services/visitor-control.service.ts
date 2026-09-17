@@ -4,6 +4,7 @@ import {
   CreateVisitorEntryDto,
   UpdateVisitorEntryDto,
   RegisterVisitorExitDto,
+  VisitorFilterQueryDto,
 } from '../dtos/visitor-control.dto';
 import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { RecordStatus } from '@prisma/client';
@@ -21,6 +22,8 @@ export class VisitorControlService {
       clientId,
       unitId,
       residentId,
+      employeeId,
+      isInternal,
       ...others
     } = dto;
     const parseTime = (t: string) =>
@@ -30,6 +33,7 @@ export class VisitorControlService {
 
     const dataToCreate: any = {
       ...others,
+      isInternal: isInternal ?? false,
       date: new Date(date),
       time: parseTime(time),
       occurredAt: new Date(occurredAt),
@@ -48,17 +52,57 @@ export class VisitorControlService {
     if (residentId) {
       dataToCreate.resident = { connect: { id: residentId } };
     }
+    if (employeeId) {
+      dataToCreate.employee = { connect: { id: employeeId } };
+    }
 
     return this.repository.create(dataToCreate);
   }
 
-  async findAll(clientId?: string) {
+  async findAll(query?: VisitorFilterQueryDto | any) {
     const where: any = {
       status: { not: RecordStatus.VOIDED },
       deletedAt: null,
     };
-    if (clientId) {
-      where.clientId = clientId;
+    if (query?.isInternal === 'true') {
+      where.isInternal = true;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.isInternal === 'false') {
+      where.isInternal = false;
+      if (query?.clientId) {
+        where.clientId = query.clientId;
+      }
+    } else if (query?.clientId) {
+      where.clientId = query.clientId;
+    }
+    if (query?.employeeId) {
+      where.employeeId = query.employeeId;
+    }
+    if (query?.unitId) {
+      where.unitId = query.unitId;
+    }
+    if (query?.residentId) {
+      where.residentId = query.residentId;
+    }
+    if (query?.search) {
+      const search = query.search.trim();
+      where.OR = [
+        { visitorFullName: { contains: search, mode: 'insensitive' } },
+        { visitorIdNumber: { contains: search, mode: 'insensitive' } },
+        { ticketNumber: { contains: search, mode: 'insensitive' } },
+        { plate: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (query?.startDate || query?.endDate) {
+      where.date = {};
+      if (query.startDate) {
+        where.date.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.date.lte = new Date(query.endDate);
+      }
     }
     return this.repository.findMany(where);
   }
@@ -80,6 +124,8 @@ export class VisitorControlService {
       exitAt,
       unitId,
       residentId,
+      employeeId,
+      isInternal,
       ...others
     } = dto;
     const parseTime = (t: string) =>
@@ -94,9 +140,22 @@ export class VisitorControlService {
     if (entryTime) updateData.entryTime = parseTime(entryTime);
     if (exitTime) updateData.exitTime = parseTime(exitTime);
     if (exitAt) updateData.exitAt = new Date(exitAt);
-    if (unitId) (updateData as any).unit = { connect: { id: unitId } };
-    if (residentId)
-      (updateData as any).resident = { connect: { id: residentId } };
+    if (isInternal !== undefined) updateData.isInternal = isInternal;
+    if (unitId !== undefined) {
+      (updateData as any).unit = unitId
+        ? { connect: { id: unitId } }
+        : { disconnect: true };
+    }
+    if (residentId !== undefined) {
+      (updateData as any).resident = residentId
+        ? { connect: { id: residentId } }
+        : { disconnect: true };
+    }
+    if (employeeId !== undefined) {
+      (updateData as any).employee = employeeId
+        ? { connect: { id: employeeId } }
+        : { disconnect: true };
+    }
 
     return this.repository.update(
       { id },

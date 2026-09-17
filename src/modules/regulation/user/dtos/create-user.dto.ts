@@ -32,4 +32,14 @@ export class CreateUserDto {
   @IsString({ message: 'El cargo debe ser un texto válido.' })
   @IsOptional()
   position?: string;
+
+  @ApiPropertyOptional({ example: 'RESIDENCE_MANAGER', enum: ['EMPLOYEE', 'RESIDENCE_MANAGER'] })
+  @IsString({ message: 'El tipo de usuario debe ser válido.' })
+  @IsOptional()
+  userType?: 'EMPLOYEE' | 'RESIDENCE_MANAGER';
+
+  @ApiPropertyOptional({ example: 'cuid_client_id' })
+  @IsString({ message: 'El ID del cliente debe ser válido.' })
+  @IsOptional()
+  clientId?: string;
 }

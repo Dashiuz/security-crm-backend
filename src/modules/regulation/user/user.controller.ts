@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -65,6 +66,38 @@ export class UserController {
   @ApiForbiddenResponse({ description: 'Forbidden' })
   async findAll(@Req() req: any): Promise<UserResponseDto[]> {
     return this.userService.findAll(req.user.tenantId);
+  }
+
+  @RequirePermissions('client:manage', 'client:create', 'client:update')
+  @Get('coordinators')
+  @ApiOperation({ summary: 'List coordinators for client assignment' })
+  async getCoordinators(
+    @Req() req: any,
+    @Query('search') search: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.userService.findUsersForAssignment(
+      req.user.tenantId,
+      'COORDINADOR',
+      search,
+      limit ? parseInt(limit, 10) : 15,
+    );
+  }
+
+  @RequirePermissions('client:manage', 'client:create', 'client:update')
+  @Get('commercials')
+  @ApiOperation({ summary: 'List commercials for client assignment' })
+  async getCommercials(
+    @Req() req: any,
+    @Query('search') search: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.userService.findUsersForAssignment(
+      req.user.tenantId,
+      'COMERCIAL',
+      search,
+      limit ? parseInt(limit, 10) : 15,
+    );
   }
 
   @RequirePermissions('user:manage', 'user:passwordchange')

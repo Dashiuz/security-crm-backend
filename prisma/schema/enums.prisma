@@ -25,6 +25,8 @@ enum CorrespondenceType {
   BOX
   ENVELOPE
   DOCUMENT
+  LETTER
+  PACKAGE
   FOOD_DELIVERY
   OTHER
 }
@@ -71,6 +73,7 @@ enum ResidentialComplexType {
   BUILDING_CLUSTER
   HOUSE_CLUSTER
   MIXED
+  COMMERCIAL
   OTHER
 }
 
@@ -103,4 +106,28 @@ enum UnitType {
   OTHER
   TOWNHOUSE
   BODEGA
+}
+
+enum UserType {
+  EMPLOYEE
+  RESIDENCE_MANAGER
+}
+
+enum PlanTier {
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum PasswordPolicy {
+  LOW
+  MEDIUM
+  STRICT
 }
