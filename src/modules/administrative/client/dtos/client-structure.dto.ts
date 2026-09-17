@@ -26,6 +26,11 @@ export class FloorVariationDto {
 }
 
 export class TowerDefinitionDto {
+  @ApiProperty({ example: 'cuid...', required: false })
+  @IsString({ message: 'El id de la torre debe ser un texto válido.' })
+  @IsOptional()
+  id?: string;
+
   @ApiProperty({ example: 'Torre 1' })
   @IsString({ message: 'El nombre de la torre debe ser un texto válido.' })
   towerName: string;

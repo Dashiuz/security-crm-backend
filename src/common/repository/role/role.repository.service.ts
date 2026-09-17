@@ -12,6 +12,18 @@ export class RoleRepositoryService {
     });
   }
 
+  async create(data: { name: string; tenantId: string }): Promise<Role> {
+    return this.prisma.role.create({
+      data,
+    });
+  }
+
+  async findByName(name: string, tenantId: string): Promise<Role | null> {
+    return this.prisma.role.findFirst({
+      where: { name, tenantId },
+    });
+  }
+
   async listRoles(tenantId: string) {
     return this.prisma.role.findMany({
       where: { tenantId },

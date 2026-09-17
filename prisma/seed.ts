@@ -258,9 +258,19 @@ async function main() {
     },
     // Client permissions
     {
-      id: 'client_read_perm_id',
-      key: 'client:read',
-      desc: 'Read client accounts and sites',
+      id: 'client_read_all_perm_id',
+      key: 'client:read_all',
+      desc: 'Read all client accounts in the tenant',
+    },
+    {
+      id: 'client_read_assigned_perm_id',
+      key: 'client:read_assigned',
+      desc: 'Read only clients assigned to the user',
+    },
+    {
+      id: 'client_read_workplace_perm_id',
+      key: 'client:read_workplace',
+      desc: 'Read only the client associated to the users workplace',
     },
     {
       id: 'client_create_perm_id',

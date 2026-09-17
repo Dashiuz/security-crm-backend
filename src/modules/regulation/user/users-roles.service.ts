@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,12 @@ export class UsersRolesService {
     const user = await this.userRepository.findUserInTenant(userId);
 
     if (!user) throw new NotFoundException('User not found in this tenant');
+
+    if (user.userType === 'RESIDENCE_MANAGER') {
+      throw new ForbiddenException(
+        'No se pueden modificar los roles de un Administrador de Conjunto.',
+      );
+    }
 
     const add = (dto.addRoleIds ?? []).map((s) => s.trim()).filter(Boolean);
     const remove = (dto.removeRoleIds ?? [])

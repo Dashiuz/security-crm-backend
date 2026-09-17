@@ -107,3 +107,8 @@ enum UnitType {
   TOWNHOUSE
   BODEGA
 }
+
+enum UserType {
+  EMPLOYEE
+  RESIDENCE_MANAGER
+}

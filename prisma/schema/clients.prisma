@@ -27,10 +27,10 @@ model Client {
   sector ClientSector @default(RESIDENTIAL)
 
   coordinatorInChargeId String?
-  coordinatorInCharge   Employee? @relation("ClientCoordinator", fields: [coordinatorInChargeId], references: [id], onDelete: SetNull)
+  coordinatorInCharge   User? @relation("ClientCoordinator", fields: [coordinatorInChargeId], references: [id], onDelete: SetNull)
 
   commercialContactId String?
-  commercialContact   Employee? @relation("ClientCommercialContact", fields: [commercialContactId], references: [id], onDelete: SetNull)
+  commercialContact   User? @relation("ClientCommercialContact", fields: [commercialContactId], references: [id], onDelete: SetNull)
 
   installedTech      Boolean @default(false)
   securityStudy      String?

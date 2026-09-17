@@ -177,12 +177,38 @@ export class ClientService {
   }
 
   async findAll(user: UserContext): Promise<ClientResponseDto[]> {
+    const where: any = {
+      tenantId: user.tenantId,
+      clientStatus: { not: ClientStatus.PROSPECT },
+    };
+
+    if (
+      !user.permissions.includes('client:manage') &&
+      !user.permissions.includes('client:read_all')
+    ) {
+      if (user.permissions.includes('client:read_assigned')) {
+        where.OR = [
+          { coordinatorInChargeId: user.sub },
+          { commercialContactId: user.sub },
+        ];
+      } else if (user.permissions.includes('client:read_workplace')) {
+        const currentUser = await this.prisma.user.findUnique({
+          where: { id: user.sub },
+          select: { clientId: true },
+        });
+        if (currentUser?.clientId) {
+          where.id = currentUser.clientId;
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    }
+
     return this.clientRepository
       .findMany({
-        where: {
-          tenantId: user.tenantId,
-          clientStatus: { not: ClientStatus.PROSPECT },
-        },
+        where,
         include: {
           coordinatorInCharge: true,
           commercialContact: true,
@@ -227,12 +253,43 @@ export class ClientService {
       clientStatus: { not: ClientStatus.PROSPECT },
     };
 
+    if (
+      !user.permissions.includes('client:manage') &&
+      !user.permissions.includes('client:read_all')
+    ) {
+      if (user.permissions.includes('client:read_assigned')) {
+        where.OR = [
+          { coordinatorInChargeId: user.sub },
+          { commercialContactId: user.sub },
+        ];
+      } else if (user.permissions.includes('client:read_workplace')) {
+        const currentUser = await this.prisma.user.findUnique({
+          where: { id: user.sub },
+          select: { clientId: true },
+        });
+        if (currentUser?.clientId) {
+          where.id = currentUser.clientId;
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    }
+
     if (trimmed) {
-      where.OR = [
+      const searchOr = [
         { name: { contains: trimmed, mode: 'insensitive' } },
         { internalCode: { contains: trimmed, mode: 'insensitive' } },
         { nit: { contains: trimmed, mode: 'insensitive' } },
       ];
+      
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchOr }];
+        delete where.OR;
+      } else {
+        where.OR = searchOr;
+      }
     }
 
     return this.prisma.client.findMany({

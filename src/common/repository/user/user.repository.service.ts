@@ -154,6 +154,7 @@ export class UserRepositoryService {
         position: true,
         tenantId: true,
         clientId: true,
+        userType: true,
         isActive: true,
         roles: {
           select: {
@@ -334,6 +335,7 @@ export class UserRepositoryService {
             id: true,
             tenantId: true,
             clientId: true,
+            userType: true,
             isActive: true,
             tenant: { select: { isActive: true } },
           },
@@ -391,7 +393,7 @@ export class UserRepositoryService {
   async findUserInTenant(userId: string) {
     return this.prisma.user.findFirst({
       where: { id: userId },
-      select: { id: true },
+      select: { id: true, userType: true },
     });
   }
 

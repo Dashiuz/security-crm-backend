@@ -6,6 +6,8 @@ model User {
   clientId String?
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
+  userType UserType @default(EMPLOYEE)
+
   document     String @unique
   fullName     String
   department   String
@@ -25,6 +27,10 @@ model User {
 
   roles    UserRole[]
   sessions UserSession[]
+
+  // Client assignments
+  coordinatedClients Client[] @relation("ClientCoordinator")
+  commercialClients  Client[] @relation("ClientCommercialContact")
 
   // Minuta audit fields
   minutasCreated Minuta[] @relation("MinutaCreatedBy")

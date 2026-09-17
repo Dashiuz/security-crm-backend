@@ -3,4 +3,6 @@ export interface UserContext {
   tenantId: string;
   permissions: string[];
   roles: string[];
+  clientId?: string | null;
+  userType?: string;
 }

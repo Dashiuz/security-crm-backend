@@ -22,6 +22,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'VisitorEntryControl',
               'CorrespondenceReceivedControl',
               'ParkingResidentVehicleControl',
+              'Resident',
+              'Tower',
+              'Floor',
+              'Unit',
+              'ClientProperties',
             ];
             const multiTenantModels = [
               'User',
@@ -63,6 +68,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'VisitorEntryControl',
               'CorrespondenceReceivedControl',
               'ParkingResidentVehicleControl',
+              'Resident',
+              'Tower',
+              'Floor',
+              'Unit',
+              'ClientProperties',
             ];
             const isMultiClient = (multiClientModels as any[]).includes(model);
 
@@ -157,6 +167,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'CorrespondenceReceivedControl',
                 'ParkingResidentVehicleControl',
                 'Client',
+                'Resident',
               ];
               const isRelationAudit = relationAuditModels.includes(model);
 

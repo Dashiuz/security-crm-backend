@@ -37,6 +37,7 @@ export class AuthService {
       id: user.id,
       tenantId: user.tenantId,
       clientId: user.clientId || null,
+      userType: user.userType,
       username: user.fullName,
       document,
     };
@@ -44,7 +45,7 @@ export class AuthService {
 
   // Login issues access + refresh (rotating sessions)
   async login(
-    user: { id: string; tenantId: string; clientId?: string | null },
+    user: { id: string; tenantId: string; clientId?: string | null; userType?: string | null },
     meta: { ip?: string; userAgent?: string },
   ): Promise<LoginResult> {
     const [permissions, roles, features] = await Promise.all([
@@ -57,6 +58,7 @@ export class AuthService {
       sub: user.id,
       tenantId: user.tenantId,
       clientId: user.clientId || null,
+      userType: user.userType || undefined,
       permissions,
       roles,
       features,
@@ -133,6 +135,7 @@ export class AuthService {
       sub: session.userId,
       tenantId: targetTenantId,
       clientId: session.user.clientId || null,
+      userType: session.user.userType || undefined,
       permissions,
       roles,
       features,
@@ -196,9 +199,13 @@ export class AuthService {
       this.userRepository.getTenantFeatures(targetTenantId),
     ]);
 
+    const user = await this.userRepository.getMe(userId);
+
     const accessToken = await this.signAccessToken({
       sub: userId,
       tenantId: targetTenantId,
+      clientId: user.clientId || null,
+      userType: user.userType,
       permissions,
       roles,
       features,

@@ -58,7 +58,12 @@ export class ClientController {
   }
 
   @Get()
-  @RequirePermissions('client:manage', 'client:read')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
+  )
   @ApiOperation({ summary: 'List clients' })
   @ApiOkResponse({ type: [ClientResponseDto] })
   findAll(@Request() req) {
@@ -68,7 +73,9 @@ export class ClientController {
   @Get('search/autocomplete')
   @RequirePermissions(
     'client:manage',
-    'client:read',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
     'minuta:manage',
     'minuta:create',
     'minuta:read',
@@ -89,10 +96,14 @@ export class ClientController {
   @Get(':id/units/autocomplete')
   @RequirePermissions(
     'client:manage',
-    'client:read',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
     'minuta:manage',
     'minuta:create',
     'minuta:read',
+    'resident:manage',
+    'resident:read',
   )
   @ApiOperation({ summary: 'Search units with autocomplete for a client' })
   autocompleteUnits(
@@ -112,9 +123,13 @@ export class ClientController {
   @Get(':id')
   @RequirePermissions(
     'client:manage',
-    'client:read',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_workplace',
     'minuta:manage',
     'minuta:create',
+    'resident:manage',
+    'resident:read',
   )
   @ApiOperation({ summary: 'Get client by id' })
   @ApiOkResponse({ type: ClientResponseDto })
