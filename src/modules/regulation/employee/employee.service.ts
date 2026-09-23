@@ -138,9 +138,9 @@ export class EmployeeService {
     // 4) Create employee - tenantId is handled by Prisma Extension
     const employee = await this.employeeRepository.createEmployee({
       firstName: dto.firstName.trim(),
-      secondName: dto.secondName?.trim() ?? null,
+      secondName: dto.secondName?.trim() || null,
       lastName: dto.lastName.trim(),
-      maternalSurname: dto.maternalSurname?.trim() ?? null,
+      maternalSurname: dto.maternalSurname?.trim() || null,
       fullName,
       documentType: dto.documentType.trim(),
       document,
@@ -222,11 +222,11 @@ export class EmployeeService {
       const k = targetKey ?? (key as any);
       const val = dto[key];
       if (val === undefined) return;
-      if (val === null) {
+      if (val === null || val === '') {
         (patch as any)[k] = null;
         return;
       }
-      (patch as any)[k] = typeof val === 'string' ? val.trim() : val;
+      (patch as any)[k] = typeof val === 'string' ? val.trim() || null : val;
     };
 
     setString('firstName');
@@ -462,14 +462,9 @@ export class EmployeeService {
           if (matchedDept) {
             departmentId = matchedDept.id;
           } else {
-            // Auto-create Department
-            const newDept = await this.departmentRepository.create({
-              name: deptName,
-              isActive: true,
-              createdBy: user.sub !== 'system' ? user.sub : null,
-            } as any);
-            existingDepartments.push(newDept);
-            departmentId = newDept.id;
+            throw new Error(
+              `El departamento '${deptNameRaw}' no existe en el sistema. Debe crearlo antes de importar.`,
+            );
           }
         }
 
@@ -484,15 +479,9 @@ export class EmployeeService {
           if (matchedPos) {
             positionId = matchedPos.id;
           } else {
-            // Auto-create Position
-            const newPos = await this.positionRepository.create({
-              name: posName,
-              level: 1,
-              isActive: true,
-              createdBy: user.sub !== 'system' ? user.sub : null,
-            } as any);
-            existingPositions.push(newPos);
-            positionId = newPos.id;
+            throw new Error(
+              `El cargo '${posNameRaw}' no existe en el sistema. Debe crearlo antes de importar.`,
+            );
           }
         }
 
