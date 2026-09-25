@@ -35,6 +35,7 @@ model Tenant {
   units                          Unit[]
   mediaAttachments               MediaAttachment[]
   fileImportLogs                 FileImportLog[]
+  securityStudies                SecurityStudy[]
 
   @@map("tenant")
 }

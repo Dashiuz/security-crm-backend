@@ -26,10 +26,13 @@ import {
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../../regulation/access-control/permissions.decorator';
+import { FeatureGuard } from '../../../regulation/access-control/feature.guard';
+import { RequireFeature } from '../../../regulation/access-control/feature.decorator';
 
 @ApiTags('Residents')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('resident')
 @Controller('resident')
 export class ResidentController {
   constructor(private readonly residentService: ResidentService) {}

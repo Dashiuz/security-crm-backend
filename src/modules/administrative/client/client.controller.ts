@@ -30,10 +30,13 @@ import {
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
+import { FeatureGuard } from '../../regulation/access-control/feature.guard';
+import { RequireFeature } from '../../regulation/access-control/feature.decorator';
 
 @ApiTags('Clients')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('client')
 @Controller('client')
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}

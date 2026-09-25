@@ -116,9 +116,49 @@ export class S3Service {
       return `tenants/${tenantId}/inventories/${entityId}/${uniqueSuffix}`;
     }
 
-    // 5. Generic / Misc Documents
+    // 5. Security Studies (Mapbox Base & Vector Assets)
+    if (entityType === MediaTypeCategory.SECURITY_STUDY) {
+      if (clientId) {
+        return `tenants/${tenantId}/clients/${clientId}/studies/${uniqueSuffix}`;
+      }
+      return `tenants/${tenantId}/studies/${entityId}/${uniqueSuffix}`;
+    }
+
+    // 6. Generic / Misc Documents
     const docCategory = category || 'misc';
     return `tenants/${tenantId}/documents/${docCategory}/${uniqueSuffix}`;
+  }
+
+  /**
+   * Uploads a raw buffer directly to AWS S3
+   */
+  async uploadBuffer(
+    buffer: Buffer,
+    s3Key: string,
+    mimeType = 'image/jpeg',
+  ): Promise<{
+    url: string;
+    s3Key: string;
+    sizeBytes: number;
+    mimeType: string;
+  }> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: s3Key,
+      Body: buffer,
+      ContentType: mimeType,
+    });
+
+    await this.s3Client.send(command);
+
+    const directUrl = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${s3Key}`;
+
+    return {
+      url: directUrl,
+      s3Key,
+      sizeBytes: buffer.length,
+      mimeType,
+    };
   }
 
   /**
@@ -182,5 +222,26 @@ export class S3Service {
     });
 
     return getSignedUrl(this.s3Client, command, { expiresIn });
+  }
+
+  /**
+   * Retrieves an object stream directly from S3
+   */
+  async getObjectStream(s3Key: string): Promise<{
+    stream: any;
+    contentType?: string;
+    contentLength?: number;
+  }> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucketName,
+      Key: s3Key,
+    });
+
+    const response = await this.s3Client.send(command);
+    return {
+      stream: response.Body,
+      contentType: response.ContentType,
+      contentLength: response.ContentLength,
+    };
   }
 }

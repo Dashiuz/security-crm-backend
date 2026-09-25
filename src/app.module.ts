@@ -23,6 +23,7 @@ import {
   ResidentModule,
   ProspectModule,
   StorageModule,
+  SecurityStudiesModule,
 } from './modules/index';
 
 @Module({
@@ -48,6 +49,7 @@ import {
     UserModule,
     MinutaModule,
     StorageModule,
+    SecurityStudiesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -18,6 +18,8 @@ async function main() {
     { key: 'position', name: 'Posiciones', description: 'Gestión de cargos' },
     { key: 'role', name: 'Roles', description: 'Gestión de permisos y accesos' },
     { key: 'resident', name: 'Residentes', description: 'Gestión de censo y residentes de inmuebles' },
+    { key: 'sec_study', name: 'Estudios de Seguridad', description: 'Gestión documental de estudios de seguridad' },
+    { key: 'canva', name: 'Canva de Seguridad', description: 'Diseño interactivo y geofencing en canva' },
   ];
 
   for (const f of featuresData) {

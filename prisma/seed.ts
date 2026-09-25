@@ -334,6 +334,58 @@ async function main() {
       key: 'tenant:manage',
       desc: 'Manage own tenant profile and settings',
     },
+    // Security Study permissions
+    {
+      id: 'sec_study_read_perm_id',
+      key: 'sec_study:read',
+      desc: 'Read security studies and documents',
+    },
+    {
+      id: 'sec_study_create_perm_id',
+      key: 'sec_study:create',
+      desc: 'Create security studies and upload documents',
+    },
+    {
+      id: 'sec_study_update_perm_id',
+      key: 'sec_study:update',
+      desc: 'Update security studies and documents',
+    },
+    {
+      id: 'sec_study_delete_perm_id',
+      key: 'sec_study:delete',
+      desc: 'Delete or discontinue security studies',
+    },
+    {
+      id: 'sec_study_manage_perm_id',
+      key: 'sec_study:manage',
+      desc: 'Manage all security study operations',
+    },
+    // Canva permissions
+    {
+      id: 'canva_read_perm_id',
+      key: 'canva:read',
+      desc: 'Read and view canvas studies',
+    },
+    {
+      id: 'canva_create_perm_id',
+      key: 'canva:create',
+      desc: 'Create canvas base maps and initialize editor',
+    },
+    {
+      id: 'canva_update_perm_id',
+      key: 'canva:update',
+      desc: 'Update canvas vector state and drawings',
+    },
+    {
+      id: 'canva_delete_perm_id',
+      key: 'canva:delete',
+      desc: 'Delete or discontinue canvas designs',
+    },
+    {
+      id: 'canva_manage_perm_id',
+      key: 'canva:manage',
+      desc: 'Manage all canvas operations and approve perimeters',
+    },
   ];
 
   // 4. Role Permissions
