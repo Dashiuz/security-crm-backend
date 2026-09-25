@@ -69,6 +69,11 @@ model User {
   residentsUpdated Resident[] @relation("ResidentUpdatedBy")
   residentsDeleted Resident[] @relation("ResidentDeletedBy")
 
+  // Security studies audit fields
+  securityStudiesCreated SecurityStudy[] @relation("StudyCreatedBy")
+  securityStudiesUpdated SecurityStudy[] @relation("StudyUpdatedBy")
+  securityStudiesDeleted SecurityStudy[] @relation("StudyDeletedBy")
+
   @@index([tenantId])
   @@index([clientId])
   @@index([document])

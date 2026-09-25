@@ -28,10 +28,13 @@ import { VoidRecordDto } from '../dtos/minuta-general.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../../regulation/access-control/permissions.decorator';
+import { FeatureGuard } from '../../../regulation/access-control/feature.guard';
+import { RequireFeature } from '../../../regulation/access-control/feature.decorator';
 
 @ApiTags('Minuta: Correspondence Control')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('correspondence')
 @Controller('operation/minuta/correspondence')
 export class CorrespondenceControlController {
   constructor(private readonly service: CorrespondenceControlService) {}

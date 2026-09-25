@@ -25,10 +25,13 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
 import { RequirePermissions } from '../access-control/permissions.decorator';
+import { FeatureGuard } from '../access-control/feature.guard';
+import { RequireFeature } from '../access-control/feature.decorator';
 
 @ApiTags('Positions')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('position')
 @Controller('position')
 export class PositionController {
   constructor(private readonly positionService: PositionService) {}

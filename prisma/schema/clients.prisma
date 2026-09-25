@@ -79,6 +79,18 @@ model Client {
   towers           Tower[]
   floors           Floor[]
   units            Unit[]
+  securityStudies  SecurityStudy[]
+
+  mapboxBaseImageS3Key String?
+  geofence             Json?   @db.JsonB
+  mapboxCenterLat      Float?
+  mapboxCenterLng      Float?
+  mapboxZoom           Float?
+  mapboxBboxMinLat     Float?
+  mapboxBboxMinLng     Float?
+  mapboxBboxMaxLat     Float?
+  mapboxBboxMaxLng     Float?
+
 
   @@unique([tenantId, nit])
   @@unique([tenantId, internalCode])

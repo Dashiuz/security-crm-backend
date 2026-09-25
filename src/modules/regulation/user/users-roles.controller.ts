@@ -9,12 +9,15 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
 import { RequirePermissions } from '../access-control/permissions.decorator';
+import { FeatureGuard } from '../access-control/feature.guard';
+import { RequireFeature } from '../access-control/feature.decorator';
 import { UsersRolesService } from './users-roles.service';
 import { PatchUserRolesDto } from './dtos/patch-user-roles.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('user')
 @Controller('users')
 export class UsersRolesController {
   constructor(private readonly usersRolesService: UsersRolesService) {}

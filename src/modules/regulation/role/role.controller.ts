@@ -24,6 +24,8 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
+import { FeatureGuard } from '../../regulation/access-control/feature.guard';
+import { RequireFeature } from '../../regulation/access-control/feature.decorator';
 import { RoleService } from './role.service';
 import {
   CreateRoleDto,
@@ -34,7 +36,8 @@ import {
 
 @ApiTags('Roles')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('role')
 @Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}

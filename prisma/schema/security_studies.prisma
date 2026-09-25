@@ -1,0 +1,50 @@
+model SecurityStudy {
+  id              String   @id @default(cuid(2))
+  tenantId        String   
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  name            String?
+  description     String?
+
+  // Referencias a la Imagen Base (Generada por Mapbox API)
+  baseImageS3Key   String?   
+  mapboxCenterLat  Float?
+  mapboxCenterLng  Float?
+  mapboxZoom       Float?
+  
+  // Bounding Box para los cálculos Matemáticos del Canva (Vital)
+  mapboxBboxMinLat Float?
+  mapboxBboxMinLng Float?
+  mapboxBboxMaxLat Float?
+  mapboxBboxMaxLng Float?
+
+  // El motor vectorial Konva.js
+  canvasState      Json?     @db.JsonB 
+
+  
+  status          SecurityStudyStatus @default(CURRENT)
+  version         Int                 @default(1)
+
+  // Documentos adjuntos (estudio de seguridad sin canva)
+  files           Json?    @db.JsonB
+
+  // Trazabilidad Estándar
+  createdAt       DateTime @default(now())
+  createdById     String?
+  createdBy       User?    @relation("StudyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  updatedAt       DateTime @updatedAt
+  updatedById     String?
+  updatedBy       User?    @relation("StudyUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  deletedAt       DateTime?
+  deletedById     String?
+  deletedBy       User?    @relation("StudyDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@map("security_studies")
+}
