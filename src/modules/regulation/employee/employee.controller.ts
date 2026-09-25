@@ -27,6 +27,8 @@ import { EmployeeService } from './employee.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
 import { RequirePermissions } from '../access-control/permissions.decorator';
+import { FeatureGuard } from '../access-control/feature.guard';
+import { RequireFeature } from '../access-control/feature.decorator';
 import {
   CreateEmployeeDto,
   UpdateEmployeeDto,
@@ -36,7 +38,8 @@ import {
 
 @ApiTags('Employee')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
+@RequireFeature('employee')
 @Controller('employee')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}

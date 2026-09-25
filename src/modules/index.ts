@@ -4,6 +4,11 @@ export * from './regulation/auth/auth.service';
 
 // Access Control
 export * from './regulation/access-control/access-control.module';
+export * from './regulation/access-control/permissions.guard';
+export * from './regulation/access-control/permissions.decorator';
+export * from './regulation/access-control/feature.guard';
+export * from './regulation/access-control/feature.decorator';
+
 
 // Employee
 export * from './regulation/employee/employee.module';
@@ -53,3 +58,8 @@ export * from './storage/storage.module';
 export * from './storage/services/storage.service';
 export * from './storage/services/s3.service';
 export * from './storage/dtos/upload-media.dto';
+
+// Administrative: Security Studies & Canvas
+export * from './administrative/security-studies/security-studies.module';
+export * from './administrative/security-studies/services/security-studies.service';
+export * from './administrative/security-studies/controllers/security-studies.controller';

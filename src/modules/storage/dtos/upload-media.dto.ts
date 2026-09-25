@@ -10,6 +10,7 @@ export enum MediaTypeCategory {
   CLIENT = 'CLIENT',
   INVENTORY = 'INVENTORY',
   DOCUMENT = 'DOCUMENT',
+  SECURITY_STUDY = 'SECURITY_STUDY',
 }
 
 export class UploadMediaDto {

@@ -1,0 +1,7 @@
+nit,name,email,phone,address,city,sector,internalCode,contractNumber
+901234567-8,Centro Comercial Plaza Nueva,admin@plazanueva.com,3111234567,Calle 80 # 45-20,Bogotá,COMMERCIAL,CLI-4001,CONT-2026-201
+900876543-2,Urbanización Los Pinos,administracion@lospinos.com,3122345678,Carrera 15 # 112-40,Bogotá,RESIDENTIAL,CLI-4002,CONT-2026-202
+901998877-1,Clínica Salud Total,operaciones@saludtotal.com,3133456789,Avenida Caracas # 42-10,Bogotá,COMMERCIAL,CLI-4003,CONT-2026-203
+900554433-5,Parque Industrial Norte,logistica@pinorte.com,3144567890,Autopista Norte Km 15,Chía,INDUSTRIAL,CLI-4004,CONT-2026-204
+901112233-9,Conjunto Paseo del Bosque,admon@paseodelbosque.com,3155678901,Calle 170 # 8-30,Bogotá,RESIDENTIAL,CLI-4005,CONT-2026-205
+900667788-4,Edificio Empresarial Sigma,gerencia@edificiosigma.com,3166789012,Carrera 7 # 120-50,Bogotá,COMMERCIAL,CLI-4006,CONT-2026-206
