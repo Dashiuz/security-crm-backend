@@ -33,6 +33,7 @@ import { GenerateBaseMapDto } from '../dtos/generate-base-map.dto';
 import { CreateSecurityStudyDto } from '../dtos/create-security-study.dto';
 import { UpdateSecurityStudyDto } from '../dtos/update-security-study.dto';
 import { UpdateCanvasDto } from '../dtos/update-canvas.dto';
+import { UpdateFileCanvasDto } from '../dtos/update-file-canvas.dto';
 import { ApprovePerimeterDto } from '../dtos/approve-perimeter.dto';
 import { DiscontinueStudyDto } from '../dtos/discontinue-study.dto';
 
@@ -252,5 +253,19 @@ export class SecurityStudiesController {
     @Param('fileId') fileId: string,
   ) {
     return this.service.deleteAttachment(id, fileId);
+  }
+
+  @Patch(':id/files/:fileId/canvas')
+  @RequireFeature('sec_study')
+  @RequirePermissions('sec_study:manage', 'sec_study:update')
+  @ApiOperation({
+    summary: 'Guardar el estado vectorial de anotaciones de una fotografía adjunta',
+  })
+  updateFileCanvas(
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+    @Body() dto: UpdateFileCanvasDto,
+  ) {
+    return this.service.updateFileCanvas(id, fileId, dto);
   }
 }
