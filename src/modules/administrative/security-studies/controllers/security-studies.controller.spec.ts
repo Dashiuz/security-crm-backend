@@ -18,6 +18,8 @@ describe('SecurityStudiesController', () => {
       duplicate: jest.fn().mockResolvedValue({ id: 'study-copy' }),
       approvePerimeter: jest.fn().mockResolvedValue({ message: 'OK' }),
       uploadAttachment: jest.fn().mockResolvedValue({ file: {} }),
+      deleteAttachment: jest.fn().mockResolvedValue({ message: 'OK' }),
+      updateFileCanvas: jest.fn().mockResolvedValue({ message: 'OK', file: {} }),
       getImageUrl: jest.fn().mockResolvedValue({ url: 'https://img.jpg' }),
       getClientGeofence: jest.fn().mockResolvedValue({ hasGeofence: true }),
       saveClientGeofence: jest.fn().mockResolvedValue({ id: 'c1' }),
@@ -69,6 +71,17 @@ describe('SecurityStudiesController', () => {
     const dto = { canvasState: {} };
     await controller.updateCanvas('s1', dto);
     expect(service.updateCanvas).toHaveBeenCalledWith('s1', dto);
+  });
+
+  it('should call updateFileCanvas', async () => {
+    const dto = { canvasState: { strokes: [] } };
+    await controller.updateFileCanvas('s1', 'f1', dto);
+    expect(service.updateFileCanvas).toHaveBeenCalledWith('s1', 'f1', dto);
+  });
+
+  it('should call removeAttachment', async () => {
+    await controller.removeAttachment('s1', 'f1');
+    expect(service.deleteAttachment).toHaveBeenCalledWith('s1', 'f1');
   });
 
   it('should call discontinue', async () => {

@@ -13,6 +13,7 @@ import { GenerateBaseMapDto } from '../dtos/generate-base-map.dto';
 import { CreateSecurityStudyDto } from '../dtos/create-security-study.dto';
 import { UpdateSecurityStudyDto } from '../dtos/update-security-study.dto';
 import { UpdateCanvasDto } from '../dtos/update-canvas.dto';
+import { UpdateFileCanvasDto } from '../dtos/update-file-canvas.dto';
 import { ApprovePerimeterDto } from '../dtos/approve-perimeter.dto';
 import { DiscontinueStudyDto } from '../dtos/discontinue-study.dto';
 import { MapboxMathUtil } from '../utils/mapbox-math.util';
@@ -760,6 +761,56 @@ export class SecurityStudiesService {
         ...updated,
         files: await this.enrichFiles(updated.files),
       },
+    };
+  }
+
+  /**
+   * Updates the Konva canvas vector state for a specific attached image file.
+   */
+  async updateFileCanvas(id: string, fileId: string, dto: UpdateFileCanvasDto) {
+    const study = await this.prisma.securityStudy.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!study) {
+      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+    }
+
+    if (study.status === 'DISCONTINUED') {
+      throw new BadRequestException(
+        'No se pueden realizar modificaciones en un estudio de seguridad descontinuado.',
+      );
+    }
+
+    const currentFiles = Array.isArray(study.files) ? (study.files as any[]) : [];
+    const targetFileIndex = currentFiles.findIndex((f) => f.id === fileId);
+
+    if (targetFileIndex === -1) {
+      throw new NotFoundException(
+        `Archivo adjunto con ID ${fileId} no encontrado en el estudio.`,
+      );
+    }
+
+    const updatedFiles = [...currentFiles];
+    updatedFiles[targetFileIndex] = {
+      ...updatedFiles[targetFileIndex],
+      canvasState: dto.canvasState,
+      canvasUpdatedAt: new Date().toISOString(),
+    };
+
+    const updated = await this.prisma.securityStudy.update({
+      where: { id },
+      data: {
+        files: updatedFiles,
+      },
+    });
+
+    const enrichedFiles = await this.enrichFiles(updated.files);
+    const updatedTargetFile = enrichedFiles.find((f: any) => f.id === fileId);
+
+    return {
+      message: 'Estado de anotaciones guardado con éxito',
+      file: updatedTargetFile,
     };
   }
 

@@ -315,4 +315,64 @@ describe('SecurityStudiesService', () => {
       expect(res.geofence).toEqual(polygon);
     });
   });
+
+  describe('updateFileCanvas', () => {
+    it('should throw NotFoundException if study not found', async () => {
+      prisma.securityStudy.findFirst.mockResolvedValue(null);
+      await expect(
+        service.updateFileCanvas('s-invalid', 'f1', { canvasState: {} }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if study is DISCONTINUED', async () => {
+      prisma.securityStudy.findFirst.mockResolvedValue({
+        id: mockStudyId,
+        status: 'DISCONTINUED',
+      });
+      await expect(
+        service.updateFileCanvas(mockStudyId, 'f1', { canvasState: {} }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException if file is not found in study files', async () => {
+      prisma.securityStudy.findFirst.mockResolvedValue({
+        id: mockStudyId,
+        status: 'CURRENT',
+        files: [{ id: 'f-other' }],
+      });
+      await expect(
+        service.updateFileCanvas(mockStudyId, 'f1', { canvasState: {} }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should update canvasState for the matching file', async () => {
+      const existingFile = { id: 'f1', name: 'photo.jpg', s3Key: 'key1' };
+      prisma.securityStudy.findFirst.mockResolvedValue({
+        id: mockStudyId,
+        status: 'CURRENT',
+        files: [existingFile],
+      });
+
+      prisma.securityStudy.update.mockResolvedValue({
+        id: mockStudyId,
+        files: [
+          {
+            ...existingFile,
+            canvasState: { strokes: [] },
+          },
+        ],
+      });
+
+      s3Service.getPresignedUrl.mockResolvedValue('https://presigned.url/photo.jpg');
+
+      const res = await service.updateFileCanvas(mockStudyId, 'f1', {
+        canvasState: { strokes: [] },
+      });
+
+      expect(res.message).toBe('Estado de anotaciones guardado con éxito');
+      expect(res.file.id).toBe('f1');
+      expect(res.file.canvasState).toEqual({ strokes: [] });
+      expect(prisma.securityStudy.update).toHaveBeenCalled();
+    });
+  });
 });
