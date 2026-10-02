@@ -74,6 +74,16 @@ model User {
   securityStudiesUpdated SecurityStudy[] @relation("StudyUpdatedBy")
   securityStudiesDeleted SecurityStudy[] @relation("StudyDeletedBy")
 
+  // PQRS relations
+  ticketsAssigned     PqrsTicket[]  @relation("TicketAssignedTo")
+  ticketsCreated      PqrsTicket[]  @relation("TicketCreatedBy")
+  ticketsUpdated      PqrsTicket[]  @relation("TicketUpdatedBy")
+  pqrsMessagesCreated PqrsMessage[] @relation("MessageCreatedBy")
+  pqrsMessagesUpdated PqrsMessage[] @relation("MessageUpdatedBy")
+
+  // Notifications
+  notifications       Notification[]
+
   @@index([tenantId])
   @@index([clientId])
   @@index([document])

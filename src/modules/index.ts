@@ -63,3 +63,16 @@ export * from './storage/dtos/upload-media.dto';
 export * from './administrative/security-studies/security-studies.module';
 export * from './administrative/security-studies/services/security-studies.service';
 export * from './administrative/security-studies/controllers/security-studies.controller';
+
+// Administrative: PQRS
+export * from './administrative/pqrs/pqrs.module';
+export * from './administrative/pqrs/services/pqrs.service';
+export * from './administrative/pqrs/controllers/pqrs.controller';
+
+// Notifications & SSE
+export * from './notifications/notifications.module';
+export * from './notifications/services/notifications.service';
+export * from './notifications/controllers/notifications.controller';
+export * from './notifications/sse/sse.service';
+
+

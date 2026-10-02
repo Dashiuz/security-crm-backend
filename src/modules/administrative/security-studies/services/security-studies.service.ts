@@ -5,7 +5,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../../../prisma/prisma.service';
 import { S3Service } from '../../../storage/services/s3.service';
 import { RequestContextService } from '../../../../common/context/request-context.service';
 import { MediaTypeCategory } from '../../../storage/dtos/upload-media.dto';
@@ -17,6 +16,7 @@ import { UpdateFileCanvasDto } from '../dtos/update-file-canvas.dto';
 import { ApprovePerimeterDto } from '../dtos/approve-perimeter.dto';
 import { DiscontinueStudyDto } from '../dtos/discontinue-study.dto';
 import { MapboxMathUtil } from '../utils/mapbox-math.util';
+import { SecurityStudiesRepository } from '../repositories/security-studies.repository';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class SecurityStudiesService {
   private readonly logger = new Logger(SecurityStudiesService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: SecurityStudiesRepository,
     private readonly s3Service: S3Service,
     private readonly configService: ConfigService,
     private readonly contextService: RequestContextService,
@@ -41,9 +41,7 @@ export class SecurityStudiesService {
     }
 
     // Verify client exists
-    const client = await this.prisma.client.findFirst({
-      where: { id: dto.clientId, deletedAt: null },
-    });
+    const client = await this.repository.findClientById(dto.clientId);
     if (!client) {
       throw new NotFoundException(`Cliente con ID ${dto.clientId} no encontrado.`);
     }
@@ -58,65 +56,41 @@ export class SecurityStudiesService {
     }
 
     const mapboxW = Math.min(1280, dto.width || 1280);
-    const mapboxH = Math.min(720, dto.height || 720);
-    const style = dto.style || 'mapbox/satellite-streets-v12';
+    const mapboxH = Math.min(1280, dto.height || 720);
 
-    // 1. Calculate Bounding Box
+    const mapboxUrl = `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${dto.lng},${dto.lat},${dto.zoom},0/${mapboxW}x${mapboxH}@2x?access_token=${token}`;
+
+    const response = await fetch(mapboxUrl);
+    if (!response.ok) {
+      const errText = await response.text();
+      this.logger.error(`Mapbox API error: ${response.status} - ${errText}`);
+      throw new BadRequestException(
+        `Error al obtener la imagen satelital de Mapbox: ${response.statusText}`,
+      );
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const imageBuffer = Buffer.from(arrayBuffer);
+
+    // Compute exact Web Mercator Bounding Box
     const bbox = MapboxMathUtil.calculateWebMercatorBbox(
       dto.lat,
       dto.lng,
       dto.zoom,
-      mapboxW,
-      mapboxH,
+      1920,
+      1080,
     );
 
-    // 2. Fetch image from Mapbox Static Images API with @2x for Ultra-HD quality (2560x1440)
-    const mapboxUrl = `https://api.mapbox.com/styles/v1/${style}/static/${dto.lng},${dto.lat},${dto.zoom},0,0/${mapboxW}x${mapboxH}@2x?access_token=${token}`;
-
-    this.logger.log(`Requesting Mapbox Static Image for client [${dto.clientId}] at [${dto.lat}, ${dto.lng}] zoom [${dto.zoom}]`);
-
-    let imageBuffer: Buffer;
-    try {
-      const response = await fetch(mapboxUrl);
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error(`Mapbox API error [${response.status}]: ${errorText}`);
-        throw new BadRequestException(`Error al obtener imagen satelital de Mapbox: ${response.statusText}`);
-      }
-      const arrayBuffer = await response.arrayBuffer();
-      imageBuffer = Buffer.from(arrayBuffer);
-    } catch (err: any) {
-      if (err instanceof BadRequestException) throw err;
-      this.logger.error('Failed to download image from Mapbox', err);
-      throw new BadRequestException(`No se pudo conectar a la API de Mapbox: ${err.message}`);
-    }
-
-    // 3. Upload to S3
-    const uniqueSuffix = `mapbox_${Date.now()}_${crypto.randomUUID().slice(0, 8)}.jpg`;
+    // Generate S3 key and upload image buffer
     const s3Key = this.s3Service.generateS3Key({
-      tenantId,
+      tenantId: tenantId!,
       entityType: MediaTypeCategory.SECURITY_STUDY,
-      entityId: dto.clientId,
+      entityId: `base_map_${Date.now()}`,
       clientId: dto.clientId,
-      fileName: uniqueSuffix,
+      fileName: 'satellite_base_1920x1080.jpg',
     });
 
     await this.s3Service.uploadBuffer(imageBuffer, s3Key, 'image/jpeg');
-
-    // 4. Update mapboxBaseImageS3Key and coordinates on Client as SSOT
-    await this.prisma.client.update({
-      where: { id: dto.clientId },
-      data: {
-        mapboxBaseImageS3Key: s3Key,
-        mapboxCenterLat: dto.lat,
-        mapboxCenterLng: dto.lng,
-        mapboxZoom: dto.zoom,
-        mapboxBboxMinLat: bbox.minLat,
-        mapboxBboxMinLng: bbox.minLng,
-        mapboxBboxMaxLat: bbox.maxLat,
-        mapboxBboxMaxLng: bbox.maxLng,
-      },
-    });
 
     const presignedUrl = await this.s3Service.getPresignedUrl(s3Key);
 
@@ -134,18 +108,8 @@ export class SecurityStudiesService {
   /**
    * Retrieves image stream directly from S3 to serve with proper CORS headers
    */
-  /**
-   * Retrieves image stream directly from S3 to serve with proper CORS headers
-   */
   async getImageStream(id: string) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-      select: {
-        id: true,
-        baseImageS3Key: true,
-        client: { select: { mapboxBaseImageS3Key: true } },
-      },
-    });
+    const study = await this.repository.getStudyStreamKey(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -170,25 +134,17 @@ export class SecurityStudiesService {
       throw new BadRequestException('Tenant context is required');
     }
 
-    const client = await this.prisma.client.findFirst({
-      where: { id: dto.clientId, deletedAt: null },
-    });
+    const client = await this.repository.findClientById(dto.clientId);
     if (!client) {
       throw new NotFoundException(`Cliente con ID ${dto.clientId} no encontrado.`);
     }
 
     // Determine version number
-    const latestStudy = await this.prisma.securityStudy.findFirst({
-      where: { clientId: dto.clientId, deletedAt: null },
-      orderBy: { version: 'desc' },
-    });
+    const latestStudy = await this.repository.findLatestStudyVersion(dto.clientId);
     const nextVersion = (latestStudy?.version || 0) + 1;
 
     // Transition previous CURRENT studies to DISCONTINUED
-    await this.prisma.securityStudy.updateMany({
-      where: { clientId: dto.clientId, status: 'CURRENT' },
-      data: { status: 'DISCONTINUED' },
-    });
+    await this.repository.discontinueCurrentStudies(dto.clientId);
 
     // Base map fields inherited from Client if not explicitly provided
     const baseImageS3Key = dto.baseImageS3Key || client.mapboxBaseImageS3Key || null;
@@ -211,30 +167,23 @@ export class SecurityStudiesService {
       };
     }
 
-    const study = await this.prisma.securityStudy.create({
-      data: {
-        tenantId: tenantId!,
-        clientId: dto.clientId,
-        name: dto.name,
-        description: dto.description || null,
-        baseImageS3Key,
-        mapboxCenterLat,
-        mapboxCenterLng,
-        mapboxZoom,
-        mapboxBboxMinLat,
-        mapboxBboxMinLng,
-        mapboxBboxMaxLat,
-        mapboxBboxMaxLng,
-        canvasState,
-        files: dto.files || [],
-        status: 'CURRENT',
-        version: nextVersion,
-      },
-      include: {
-        createdBy: {
-          select: { id: true, fullName: true, document: true },
-        },
-      },
+    const study = await this.repository.createStudy({
+      tenantId: tenantId!,
+      clientId: dto.clientId,
+      name: dto.name,
+      description: dto.description || null,
+      baseImageS3Key,
+      mapboxCenterLat,
+      mapboxCenterLng,
+      mapboxZoom,
+      mapboxBboxMinLat,
+      mapboxBboxMinLng,
+      mapboxBboxMaxLat,
+      mapboxBboxMaxLng,
+      canvasState,
+      files: dto.files || [],
+      status: 'CURRENT',
+      version: nextVersion,
     });
 
     const presignedUrl = study.baseImageS3Key
@@ -251,38 +200,11 @@ export class SecurityStudiesService {
    * Retrieves all security studies for a client.
    */
   async findByClient(clientId: string) {
-    const [studies, client] = await Promise.all([
-      this.prisma.securityStudy.findMany({
-        where: { clientId, deletedAt: null },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          createdBy: {
-            select: { id: true, fullName: true, document: true },
-          },
-        },
-      }),
-      this.prisma.client.findFirst({
-        where: { id: clientId, deletedAt: null },
-        select: {
-          id: true,
-          name: true,
-          address: true,
-          geofence: true,
-          mapboxBaseImageS3Key: true,
-          mapboxCenterLat: true,
-          mapboxCenterLng: true,
-          mapboxZoom: true,
-          mapboxBboxMinLat: true,
-          mapboxBboxMinLng: true,
-          mapboxBboxMaxLat: true,
-          mapboxBboxMaxLng: true,
-        },
-      }),
-    ]);
+    const [studies, client] = await this.repository.findStudiesByClient(clientId);
 
     // Resolve presigned URLs for each study and its attached files
     const enriched = await Promise.all(
-      studies.map(async (study) => {
+      studies.map(async (study: any) => {
         let baseImageUrl = '';
         const imageKey = study.baseImageS3Key || client?.mapboxBaseImageS3Key;
         if (imageKey) {
@@ -332,30 +254,7 @@ export class SecurityStudiesService {
    * Retrieves a single study by ID with fresh presigned image URL.
    */
   async findOne(id: string) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        createdBy: {
-          select: { id: true, fullName: true, document: true },
-        },
-        client: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            geofence: true,
-            mapboxBaseImageS3Key: true,
-            mapboxCenterLat: true,
-            mapboxCenterLng: true,
-            mapboxZoom: true,
-            mapboxBboxMinLat: true,
-            mapboxBboxMinLng: true,
-            mapboxBboxMaxLat: true,
-            mapboxBboxMaxLng: true,
-          },
-        },
-      },
-    });
+    const study = await this.repository.findStudyById(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -383,9 +282,7 @@ export class SecurityStudiesService {
    * Updates basic metadata (name, description) of a security study.
    */
   async update(id: string, dto: UpdateSecurityStudyDto) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -402,15 +299,7 @@ export class SecurityStudiesService {
       dataToUpdate.description = dto.description ? dto.description.trim() : null;
     }
 
-    const updated = await this.prisma.securityStudy.update({
-      where: { id },
-      data: dataToUpdate,
-      include: {
-        createdBy: {
-          select: { id: true, fullName: true, document: true },
-        },
-      },
-    });
+    const updated = await this.repository.updateStudy(id, dataToUpdate);
 
     const presignedUrl = updated.baseImageS3Key
       ? await this.s3Service.getPresignedUrl(updated.baseImageS3Key)
@@ -426,9 +315,7 @@ export class SecurityStudiesService {
    * Updates the Konva canvas vector state (Debounce Autosaver).
    */
   async updateCanvas(id: string, dto: UpdateCanvasDto) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -440,12 +327,7 @@ export class SecurityStudiesService {
       );
     }
 
-    const updated = await this.prisma.securityStudy.update({
-      where: { id },
-      data: {
-        canvasState: dto.canvasState,
-      },
-    });
+    const updated = await this.repository.updateCanvasState(id, dto.canvasState);
 
     return updated;
   }
@@ -460,9 +342,7 @@ export class SecurityStudiesService {
       );
     }
 
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -472,12 +352,7 @@ export class SecurityStudiesService {
       return study;
     }
 
-    const discontinued = await this.prisma.securityStudy.update({
-      where: { id },
-      data: {
-        status: 'DISCONTINUED',
-      },
-    });
+    const discontinued = await this.repository.discontinueStudy(id);
 
     return discontinued;
   }
@@ -488,22 +363,14 @@ export class SecurityStudiesService {
    * until the active one is discontinued.
    */
   async duplicate(id: string) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
     }
 
     // Check if an active CURRENT study exists for this client
-    const currentStudy = await this.prisma.securityStudy.findFirst({
-      where: {
-        clientId: study.clientId,
-        status: 'CURRENT',
-        deletedAt: null,
-      },
-    });
+    const currentStudy = await this.repository.findActiveCurrentStudy(study.clientId);
 
     if (currentStudy) {
       throw new BadRequestException(
@@ -511,31 +378,26 @@ export class SecurityStudiesService {
       );
     }
 
-    const latestStudy = await this.prisma.securityStudy.findFirst({
-      where: { clientId: study.clientId, deletedAt: null },
-      orderBy: { version: 'desc' },
-    });
+    const latestStudy = await this.repository.findLatestStudyVersion(study.clientId);
     const nextVersion = (latestStudy?.version || 0) + 1;
 
-    const duplicated = await this.prisma.securityStudy.create({
-      data: {
-        tenantId: study.tenantId,
-        clientId: study.clientId,
-        name: `${study.name} (Copia v${nextVersion})`,
-        description: study.description,
-        baseImageS3Key: study.baseImageS3Key,
-        mapboxCenterLat: study.mapboxCenterLat,
-        mapboxCenterLng: study.mapboxCenterLng,
-        mapboxZoom: study.mapboxZoom,
-        mapboxBboxMinLat: study.mapboxBboxMinLat,
-        mapboxBboxMinLng: study.mapboxBboxMinLng,
-        mapboxBboxMaxLat: study.mapboxBboxMaxLat,
-        mapboxBboxMaxLng: study.mapboxBboxMaxLng,
-        canvasState: study.canvasState as any,
-        files: study.files as any,
-        status: 'CURRENT',
-        version: nextVersion,
-      },
+    const duplicated = await this.repository.createStudy({
+      tenantId: study.tenantId,
+      clientId: study.clientId,
+      name: `${study.name} (Copia v${nextVersion})`,
+      description: study.description,
+      baseImageS3Key: study.baseImageS3Key,
+      mapboxCenterLat: study.mapboxCenterLat,
+      mapboxCenterLng: study.mapboxCenterLng,
+      mapboxZoom: study.mapboxZoom,
+      mapboxBboxMinLat: study.mapboxBboxMinLat,
+      mapboxBboxMinLng: study.mapboxBboxMinLng,
+      mapboxBboxMaxLat: study.mapboxBboxMaxLat,
+      mapboxBboxMaxLng: study.mapboxBboxMaxLng,
+      canvasState: study.canvasState as any,
+      files: study.files as any,
+      status: 'CURRENT',
+      version: nextVersion,
     });
 
     const baseImageUrl = duplicated.baseImageS3Key
@@ -553,9 +415,7 @@ export class SecurityStudiesService {
    */
   async approvePerimeter(id: string, dto: ApprovePerimeterDto) {
     const tenantId = this.contextService.tenantId;
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -594,27 +454,8 @@ export class SecurityStudiesService {
       );
     }
 
-    // 1. Update Client SSOT geofence in Prisma
-    await this.prisma.client.update({
-      where: { id: study.clientId },
-      data: {
-        geofence: perimeterGeoJson,
-      },
-    });
-
-    // 2. Attempt to update PostGIS boundary column if available in the database
-    try {
-      const geoJsonStr = JSON.stringify(perimeterGeoJson);
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE client SET boundary = ST_SetSRID(ST_GeomFromGeoJSON($1), 4326) WHERE id = $2 AND "tenantId" = $3`,
-        geoJsonStr,
-        study.clientId,
-        tenantId,
-      );
-      this.logger.log(`PostGIS boundary synchronized for client [${study.clientId}]`);
-    } catch (err: any) {
-      this.logger.warn(`PostGIS boundary update skipped (PostGIS extension may be inactive): ${err.message}`);
-    }
+    // Update Client SSOT geofence via Repository
+    await this.repository.updateClientGeofence(study.clientId, perimeterGeoJson, tenantId);
 
     return {
       message: 'Perímetro perimetral aprobado y geofencing sincronizado exitosamente.',
@@ -632,9 +473,7 @@ export class SecurityStudiesService {
     fileType: 'document' | 'image' = 'document',
   ) {
     const tenantId = this.contextService.tenantId;
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -668,12 +507,10 @@ export class SecurityStudiesService {
       uploadedAt: new Date().toISOString(),
     };
 
-    const updated = await this.prisma.securityStudy.update({
-      where: { id },
-      data: {
-        files: [...currentFiles, newFileEntry],
-      },
-    });
+    const updated = await this.repository.updateStudyFiles(id, [
+      ...currentFiles,
+      newFileEntry,
+    ]);
 
     const presignedUrl = await this.s3Service.getPresignedUrl(uploadRes.s3Key);
 
@@ -690,14 +527,7 @@ export class SecurityStudiesService {
    * Returns a fresh presigned URL for the base image.
    */
   async getImageUrl(id: string) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-      select: {
-        id: true,
-        baseImageS3Key: true,
-        client: { select: { mapboxBaseImageS3Key: true } },
-      },
-    });
+    const study = await this.repository.getStudyStreamKey(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -721,9 +551,7 @@ export class SecurityStudiesService {
    * Deletes an attached document/photo from a security study.
    */
   async deleteAttachment(id: string, fileId: string) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -748,12 +576,7 @@ export class SecurityStudiesService {
 
     const updatedFiles = currentFiles.filter((f) => f.id !== fileId);
 
-    const updated = await this.prisma.securityStudy.update({
-      where: { id },
-      data: {
-        files: updatedFiles,
-      },
-    });
+    const updated = await this.repository.updateStudyFiles(id, updatedFiles);
 
     return {
       message: 'Archivo eliminado con éxito',
@@ -768,9 +591,7 @@ export class SecurityStudiesService {
    * Updates the Konva canvas vector state for a specific attached image file.
    */
   async updateFileCanvas(id: string, fileId: string, dto: UpdateFileCanvasDto) {
-    const study = await this.prisma.securityStudy.findFirst({
-      where: { id, deletedAt: null },
-    });
+    const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
       throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
@@ -798,12 +619,7 @@ export class SecurityStudiesService {
       canvasUpdatedAt: new Date().toISOString(),
     };
 
-    const updated = await this.prisma.securityStudy.update({
-      where: { id },
-      data: {
-        files: updatedFiles,
-      },
-    });
+    const updated = await this.repository.updateStudyFiles(id, updatedFiles);
 
     const enrichedFiles = await this.enrichFiles(updated.files);
     const updatedTargetFile = enrichedFiles.find((f: any) => f.id === fileId);
@@ -818,23 +634,7 @@ export class SecurityStudiesService {
    * Retrieves the SSOT geofence and map data directly from the Client entity.
    */
   async getClientGeofence(clientId: string) {
-    const client = await this.prisma.client.findFirst({
-      where: { id: clientId, deletedAt: null },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-        geofence: true,
-        mapboxBaseImageS3Key: true,
-        mapboxCenterLat: true,
-        mapboxCenterLng: true,
-        mapboxZoom: true,
-        mapboxBboxMinLat: true,
-        mapboxBboxMinLng: true,
-        mapboxBboxMaxLat: true,
-        mapboxBboxMaxLng: true,
-      },
-    });
+    const client = await this.repository.getClientGeofence(clientId);
 
     if (!client) {
       throw new NotFoundException(`Cliente con ID ${clientId} no encontrado.`);
@@ -878,9 +678,7 @@ export class SecurityStudiesService {
    * Saves or updates the SSOT Geofence polygon directly on the Client entity.
    */
   async saveClientGeofence(clientId: string, geofencePolygon: any) {
-    const client = await this.prisma.client.findFirst({
-      where: { id: clientId, deletedAt: null },
-    });
+    const client = await this.repository.findClientById(clientId);
     if (!client) {
       throw new NotFoundException(`Cliente con ID ${clientId} no encontrado.`);
     }
@@ -907,30 +705,7 @@ export class SecurityStudiesService {
       }
     }
 
-    const updated = await this.prisma.client.update({
-      where: { id: clientId },
-      data: {
-        geofence: polygon,
-      },
-      select: {
-        id: true,
-        name: true,
-        geofence: true,
-        mapboxBaseImageS3Key: true,
-      },
-    });
-
-    // Attempt to update PostGIS boundary column if available in the database
-    try {
-      const geoJsonStr = JSON.stringify(polygon);
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE client SET boundary = ST_SetSRID(ST_GeomFromGeoJSON($1), 4326) WHERE id = $2`,
-        geoJsonStr,
-        clientId,
-      );
-    } catch {
-      // PostGIS not enabled or column doesn't exist; jsonb geofence is the SSOT
-    }
+    const updated = await this.repository.updateClientGeofence(clientId, polygon);
 
     return updated;
   }
@@ -939,10 +714,7 @@ export class SecurityStudiesService {
    * Retrieves client's base image stream directly from S3 for CORS-safe canvas rendering.
    */
   async getClientImageStream(clientId: string) {
-    const client = await this.prisma.client.findFirst({
-      where: { id: clientId, deletedAt: null },
-      select: { id: true, mapboxBaseImageS3Key: true },
-    });
+    const client = await this.repository.getClientBaseImageKey(clientId);
 
     if (!client) {
       throw new NotFoundException(`Cliente con ID ${clientId} no encontrado.`);

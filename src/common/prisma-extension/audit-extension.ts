@@ -28,6 +28,8 @@ export const auditExtension = (contextService: RequestContextService) => {
               'Unit',
               'ClientProperties',
               'SecurityStudy',
+              'PqrsTicket',
+              'PqrsMessage',
             ];
             const multiTenantModels = [
               'User',
@@ -48,6 +50,8 @@ export const auditExtension = (contextService: RequestContextService) => {
               'MediaAttachment',
               'FileImportLog',
               'SecurityStudy',
+              'PqrsTicket',
+              'PqrsMessage',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -76,6 +80,8 @@ export const auditExtension = (contextService: RequestContextService) => {
               'Unit',
               'ClientProperties',
               'SecurityStudy',
+              'PqrsTicket',
+              'PqrsMessage',
             ];
             const isMultiClient = (multiClientModels as any[]).includes(model);
 
@@ -172,6 +178,8 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'Client',
                 'Resident',
                 'SecurityStudy',
+                'PqrsTicket',
+                'PqrsMessage',
               ];
               const isRelationAudit = relationAuditModels.includes(model);
 
@@ -183,7 +191,10 @@ export const auditExtension = (contextService: RequestContextService) => {
                     data.tenantId ||
                     data.createdById ||
                     data.clientId ||
-                    data.updatedById,
+                    data.updatedById ||
+                    Object.keys(data).some(
+                      (key) => key.endsWith('Id') && key !== 'id',
+                    ),
                   );
                   if (
                     !data.createdById &&
@@ -224,7 +235,10 @@ export const auditExtension = (contextService: RequestContextService) => {
                     data.tenantId ||
                     data.createdById ||
                     data.clientId ||
-                    data.updatedById,
+                    data.updatedById ||
+                    Object.keys(data).some(
+                      (key) => key.endsWith('Id') && key !== 'id',
+                    ),
                   );
                   if (
                     !data.updatedById &&
@@ -260,13 +274,19 @@ export const auditExtension = (contextService: RequestContextService) => {
                     createData.tenantId ||
                     createData.createdById ||
                     createData.clientId ||
-                    createData.updatedById,
+                    createData.updatedById ||
+                    Object.keys(createData).some(
+                      (key) => key.endsWith('Id') && key !== 'id',
+                    ),
                   );
                   const isUncheckedUpdate = Boolean(
                     updateData.tenantId ||
                     updateData.createdById ||
                     updateData.clientId ||
-                    updateData.updatedById,
+                    updateData.updatedById ||
+                    Object.keys(updateData).some(
+                      (key) => key.endsWith('Id') && key !== 'id',
+                    ),
                   );
 
                   if (

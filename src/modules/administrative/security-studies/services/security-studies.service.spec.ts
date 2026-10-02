@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SecurityStudiesService } from './security-studies.service';
-import { PrismaService } from '../../../../prisma/prisma.service';
+import { SecurityStudiesRepository } from '../repositories/security-studies.repository';
 import { S3Service } from '../../../storage/services/s3.service';
 import { ConfigService } from '@nestjs/config';
 import { RequestContextService } from '../../../../common/context/request-context.service';
@@ -8,7 +8,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('SecurityStudiesService', () => {
   let service: SecurityStudiesService;
-  let prisma: any;
+  let repository: any;
   let s3Service: any;
   let configService: any;
   let contextService: any;
@@ -18,19 +18,23 @@ describe('SecurityStudiesService', () => {
   const mockStudyId = 'study-789';
 
   beforeEach(async () => {
-    prisma = {
-      client: {
-        findFirst: jest.fn(),
-        update: jest.fn(),
-      },
-      securityStudy: {
-        create: jest.fn(),
-        findFirst: jest.fn(),
-        findMany: jest.fn(),
-        update: jest.fn(),
-        updateMany: jest.fn(),
-      },
-      $executeRawUnsafe: jest.fn(),
+    repository = {
+      findClientById: jest.fn(),
+      getStudyStreamKey: jest.fn(),
+      findLatestStudyVersion: jest.fn(),
+      discontinueCurrentStudies: jest.fn(),
+      createStudy: jest.fn(),
+      findStudiesByClient: jest.fn(),
+      findStudyById: jest.fn(),
+      findStudyBasic: jest.fn(),
+      updateStudy: jest.fn(),
+      updateCanvasState: jest.fn(),
+      discontinueStudy: jest.fn(),
+      findActiveCurrentStudy: jest.fn(),
+      updateClientGeofence: jest.fn(),
+      updateStudyFiles: jest.fn(),
+      getClientGeofence: jest.fn(),
+      getClientBaseImageKey: jest.fn(),
     };
 
     s3Service = {
@@ -55,7 +59,7 @@ describe('SecurityStudiesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SecurityStudiesService,
-        { provide: PrismaService, useValue: prisma },
+        { provide: SecurityStudiesRepository, useValue: repository },
         { provide: S3Service, useValue: s3Service },
         { provide: ConfigService, useValue: configService },
         { provide: RequestContextService, useValue: contextService },
@@ -67,10 +71,10 @@ describe('SecurityStudiesService', () => {
 
   describe('create', () => {
     it('should create a new study, archive previous CURRENT studies, and increment version', async () => {
-      prisma.client.findFirst.mockResolvedValue({ id: mockClientId, name: 'Conjunto Test' });
-      prisma.securityStudy.findFirst.mockResolvedValue({ id: 'old-study', version: 2 });
-      prisma.securityStudy.updateMany.mockResolvedValue({ count: 1 });
-      prisma.securityStudy.create.mockResolvedValue({
+      repository.findClientById.mockResolvedValue({ id: mockClientId, name: 'Conjunto Test' });
+      repository.findLatestStudyVersion.mockResolvedValue({ id: 'old-study', version: 2 });
+      repository.discontinueCurrentStudies.mockResolvedValue({ count: 1 });
+      repository.createStudy.mockResolvedValue({
         id: mockStudyId,
         clientId: mockClientId,
         status: 'CURRENT',
@@ -91,23 +95,18 @@ describe('SecurityStudiesService', () => {
         mapboxBboxMaxLng: -74.06,
       });
 
-      expect(prisma.securityStudy.updateMany).toHaveBeenCalledWith({
-        where: { clientId: mockClientId, status: 'CURRENT' },
-        data: { status: 'DISCONTINUED' },
-      });
-      expect(prisma.securityStudy.create).toHaveBeenCalledWith(
+      expect(repository.discontinueCurrentStudies).toHaveBeenCalledWith(mockClientId);
+      expect(repository.createStudy).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            version: 3,
-            status: 'CURRENT',
-          }),
+          version: 3,
+          status: 'CURRENT',
         }),
       );
       expect(res.baseImageUrl).toBe('https://s3.example.com/signed-url');
     });
 
     it('should throw NotFoundException if client does not exist', async () => {
-      prisma.client.findFirst.mockResolvedValue(null);
+      repository.findClientById.mockResolvedValue(null);
 
       await expect(
         service.create({
@@ -128,11 +127,11 @@ describe('SecurityStudiesService', () => {
 
   describe('updateCanvas', () => {
     it('should update canvasState for an active CURRENT study', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         status: 'CURRENT',
       });
-      prisma.securityStudy.update.mockResolvedValue({
+      repository.updateCanvasState.mockResolvedValue({
         id: mockStudyId,
         canvasState: { layers: [] },
       });
@@ -141,15 +140,15 @@ describe('SecurityStudiesService', () => {
         canvasState: { layers: [] },
       });
 
-      expect(prisma.securityStudy.update).toHaveBeenCalledWith({
-        where: { id: mockStudyId },
-        data: { canvasState: { layers: [] } },
-      });
+      expect(repository.updateCanvasState).toHaveBeenCalledWith(
+        mockStudyId,
+        { layers: [] },
+      );
       expect(res.canvasState).toEqual({ layers: [] });
     });
 
     it('should throw BadRequestException when updating a DISCONTINUED study', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         status: 'DISCONTINUED',
       });
@@ -162,13 +161,13 @@ describe('SecurityStudiesService', () => {
 
   describe('update', () => {
     it('should update name and description for an existing study', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         name: 'Old Name',
         description: 'Old Desc',
         baseImageS3Key: 'base.jpg',
       });
-      prisma.securityStudy.update.mockResolvedValue({
+      repository.updateStudy.mockResolvedValue({
         id: mockStudyId,
         name: 'New Name',
         description: 'New Desc',
@@ -181,17 +180,16 @@ describe('SecurityStudiesService', () => {
         description: 'New Desc',
       });
 
-      expect(prisma.securityStudy.update).toHaveBeenCalledWith({
-        where: { id: mockStudyId },
-        data: { name: 'New Name', description: 'New Desc' },
-        include: { createdBy: { select: { id: true, fullName: true, document: true } } },
-      });
+      expect(repository.updateStudy).toHaveBeenCalledWith(
+        mockStudyId,
+        { name: 'New Name', description: 'New Desc' },
+      );
       expect(res.name).toBe('New Name');
       expect(res.baseImageUrl).toBe('https://s3.example.com/base.jpg');
     });
 
     it('should throw BadRequestException if name is empty', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         name: 'Old Name',
       });
@@ -202,7 +200,7 @@ describe('SecurityStudiesService', () => {
     });
 
     it('should throw NotFoundException if study does not exist', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue(null);
+      repository.findStudyBasic.mockResolvedValue(null);
 
       await expect(
         service.update('non-existent', { name: 'New Name' }),
@@ -212,11 +210,11 @@ describe('SecurityStudiesService', () => {
 
   describe('discontinue', () => {
     it('should set study status to DISCONTINUED when confirmation is "acepto"', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         status: 'CURRENT',
       });
-      prisma.securityStudy.update.mockResolvedValue({
+      repository.discontinueStudy.mockResolvedValue({
         id: mockStudyId,
         status: 'DISCONTINUED',
       });
@@ -226,10 +224,7 @@ describe('SecurityStudiesService', () => {
       });
 
       expect(res.status).toBe('DISCONTINUED');
-      expect(prisma.securityStudy.update).toHaveBeenCalledWith({
-        where: { id: mockStudyId },
-        data: { status: 'DISCONTINUED' },
-      });
+      expect(repository.discontinueStudy).toHaveBeenCalledWith(mockStudyId);
     });
 
     it('should throw BadRequestException if confirmation is not "acepto"', async () => {
@@ -241,9 +236,15 @@ describe('SecurityStudiesService', () => {
 
   describe('duplicate', () => {
     it('should reject duplication if an active CURRENT study already exists', async () => {
-      prisma.securityStudy.findFirst
-        .mockResolvedValueOnce({ id: mockStudyId, clientId: mockClientId, status: 'DISCONTINUED' })
-        .mockResolvedValueOnce({ id: 'active-study', status: 'CURRENT' });
+      repository.findStudyBasic.mockResolvedValue({
+        id: mockStudyId,
+        clientId: mockClientId,
+        status: 'DISCONTINUED',
+      });
+      repository.findActiveCurrentStudy.mockResolvedValue({
+        id: 'active-study',
+        status: 'CURRENT',
+      });
 
       await expect(service.duplicate(mockStudyId)).rejects.toThrow(
         BadRequestException,
@@ -251,20 +252,19 @@ describe('SecurityStudiesService', () => {
     });
 
     it('should duplicate study when no CURRENT study exists', async () => {
-      prisma.securityStudy.findFirst
-        .mockResolvedValueOnce({
-          id: mockStudyId,
-          clientId: mockClientId,
-          name: 'Original',
-          baseImageS3Key: 'img.jpg',
-          version: 1,
-          canvasState: {},
-          tenantId: mockTenantId,
-        })
-        .mockResolvedValueOnce(null) // no current active study
-        .mockResolvedValueOnce({ version: 1 }); // latest version
+      repository.findStudyBasic.mockResolvedValue({
+        id: mockStudyId,
+        clientId: mockClientId,
+        name: 'Original',
+        baseImageS3Key: 'img.jpg',
+        version: 1,
+        canvasState: {},
+        tenantId: mockTenantId,
+      });
+      repository.findActiveCurrentStudy.mockResolvedValue(null); // no current active study
+      repository.findLatestStudyVersion.mockResolvedValue({ version: 1 }); // latest version
 
-      prisma.securityStudy.create.mockResolvedValue({
+      repository.createStudy.mockResolvedValue({
         id: 'new-copy-id',
         name: 'Original (Copia v2)',
         version: 2,
@@ -294,38 +294,37 @@ describe('SecurityStudiesService', () => {
         ],
       };
 
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         clientId: mockClientId,
         canvasState: { geofencePolygon: polygon },
       });
 
-      prisma.client.update.mockResolvedValue({ id: mockClientId });
-      prisma.$executeRawUnsafe.mockResolvedValue(1);
+      repository.updateClientGeofence.mockResolvedValue({ id: mockClientId });
 
       const res = await service.approvePerimeter(mockStudyId, {
         perimeterGeoJson: polygon,
       });
 
-      expect(prisma.client.update).toHaveBeenCalledWith({
-        where: { id: mockClientId },
-        data: { geofence: polygon },
-      });
-      expect(prisma.$executeRawUnsafe).toHaveBeenCalled();
+      expect(repository.updateClientGeofence).toHaveBeenCalledWith(
+        mockClientId,
+        polygon,
+        mockTenantId,
+      );
       expect(res.geofence).toEqual(polygon);
     });
   });
 
   describe('updateFileCanvas', () => {
     it('should throw NotFoundException if study not found', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue(null);
+      repository.findStudyBasic.mockResolvedValue(null);
       await expect(
         service.updateFileCanvas('s-invalid', 'f1', { canvasState: {} }),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if study is DISCONTINUED', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         status: 'DISCONTINUED',
       });
@@ -335,7 +334,7 @@ describe('SecurityStudiesService', () => {
     });
 
     it('should throw NotFoundException if file is not found in study files', async () => {
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         status: 'CURRENT',
         files: [{ id: 'f-other' }],
@@ -347,13 +346,13 @@ describe('SecurityStudiesService', () => {
 
     it('should update canvasState for the matching file', async () => {
       const existingFile = { id: 'f1', name: 'photo.jpg', s3Key: 'key1' };
-      prisma.securityStudy.findFirst.mockResolvedValue({
+      repository.findStudyBasic.mockResolvedValue({
         id: mockStudyId,
         status: 'CURRENT',
         files: [existingFile],
       });
 
-      prisma.securityStudy.update.mockResolvedValue({
+      repository.updateStudyFiles.mockResolvedValue({
         id: mockStudyId,
         files: [
           {
@@ -372,7 +371,7 @@ describe('SecurityStudiesService', () => {
       expect(res.message).toBe('Estado de anotaciones guardado con éxito');
       expect(res.file.id).toBe('f1');
       expect(res.file.canvasState).toEqual({ strokes: [] });
-      expect(prisma.securityStudy.update).toHaveBeenCalled();
+      expect(repository.updateStudyFiles).toHaveBeenCalled();
     });
   });
 });
