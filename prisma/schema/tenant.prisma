@@ -36,6 +36,9 @@ model Tenant {
   mediaAttachments               MediaAttachment[]
   fileImportLogs                 FileImportLog[]
   securityStudies                SecurityStudy[]
+  pqrsTickets                    PqrsTicket[]
+  pqrsMessages                   PqrsMessage[]
+  notifications                  Notification[]
 
   @@map("tenant")
 }

@@ -386,6 +386,37 @@ async function main() {
       key: 'canva:manage',
       desc: 'Manage all canvas operations and approve perimeters',
     },
+    // PQRS permissions
+    {
+      id: 'pqrs_read_perm_id',
+      key: 'pqrs:read',
+      desc: 'Read PQRS tickets and messages',
+    },
+    {
+      id: 'pqrs_create_perm_id',
+      key: 'pqrs:create',
+      desc: 'Create PQRS tickets and responses',
+    },
+    {
+      id: 'pqrs_update_perm_id',
+      key: 'pqrs:update',
+      desc: 'Update PQRS ticket status and add messages',
+    },
+    {
+      id: 'pqrs_delete_perm_id',
+      key: 'pqrs:delete',
+      desc: 'Delete PQRS tickets and messages',
+    },
+    {
+      id: 'pqrs_assign_perm_id',
+      key: 'pqrs:assign',
+      desc: 'Assign PQRS tickets to users/operators',
+    },
+    {
+      id: 'pqrs_manage_perm_id',
+      key: 'pqrs:manage',
+      desc: 'Full administrative management of PQRS tickets',
+    },
   ];
 
   // 4. Role Permissions
