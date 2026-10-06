@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { ForbiddenException } from '@nestjs/common';
 import { RequestContextService } from '../context/request-context.service';
 
 export const auditExtension = (contextService: RequestContextService) => {
@@ -69,6 +70,7 @@ export const auditExtension = (contextService: RequestContextService) => {
             }
 
             const clientId = contextService.clientId;
+            const allowedClientIds = contextService.allowedClientIds;
             const multiClientModels = [
               'Minuta',
               'VisitorEntryControl',
@@ -82,8 +84,44 @@ export const auditExtension = (contextService: RequestContextService) => {
               'SecurityStudy',
               'PqrsTicket',
               'PqrsMessage',
+              'Employee',
             ];
             const isMultiClient = (multiClientModels as any[]).includes(model);
+
+            // 1. Validate permissions/scope for single-record targeted operations (update, delete, findUnique)
+            if (
+              ['update', 'delete', 'findUnique'].includes(operation) &&
+              Array.isArray(allowedClientIds) &&
+              !bypassTenant &&
+              tenantId
+            ) {
+              const isTargetModel = model === 'Client' || isMultiClient;
+              if (isTargetModel && anyArgs?.where) {
+                const recordId = anyArgs.where.id;
+                if (recordId) {
+                  const scopeWhere: any = { id: recordId, tenantId };
+                  if (model === 'Client') {
+                    scopeWhere.id = { in: allowedClientIds };
+                  } else {
+                    scopeWhere.clientId = { in: allowedClientIds };
+                  }
+
+                  const existing = await (client as any)[model].findFirst({
+                    where: scopeWhere,
+                    select: { id: true },
+                  });
+
+                  if (!existing) {
+                    if (operation === 'findUnique') {
+                      return null;
+                    }
+                    throw new ForbiddenException(
+                      `No tiene permisos para acceder o modificar este registro (${model}) fuera de sus clientes asignados.`,
+                    );
+                  }
+                }
+              }
+            }
 
             if (tenantId && isMultiTenant) {
               if (
@@ -112,10 +150,47 @@ export const auditExtension = (contextService: RequestContextService) => {
                   ) {
                     anyArgs.where.clientId = clientId;
                   }
+
+                  // Multi-client scope filter injection using AND
+                  if (
+                    Array.isArray(allowedClientIds) &&
+                    [
+                      'findMany',
+                      'findFirst',
+                      'count',
+                      'aggregate',
+                      'groupBy',
+                      'updateMany',
+                      'deleteMany',
+                    ].includes(operation)
+                  ) {
+                    const scopeCondition =
+                      model === 'Client'
+                        ? { id: { in: allowedClientIds } }
+                        : isMultiClient
+                        ? { clientId: { in: allowedClientIds } }
+                        : null;
+
+                    if (scopeCondition) {
+                      if (!anyArgs.where) anyArgs.where = {};
+
+                      if (anyArgs.where.AND) {
+                        if (Array.isArray(anyArgs.where.AND)) {
+                          anyArgs.where.AND.push(scopeCondition);
+                        } else {
+                          anyArgs.where.AND = [
+                            anyArgs.where.AND,
+                            scopeCondition,
+                          ];
+                        }
+                      } else {
+                        anyArgs.where.AND = [scopeCondition];
+                      }
+                    }
+                  }
                 }
               } else if (operation === 'create') {
                 // For creation, we ALWAYS need a tenantId for multitenant models.
-                // We inject it from context if it's not present in data.
                 if (!anyArgs.data?.tenantId && !anyArgs.data?.tenant) {
                   anyArgs.data = { ...(anyArgs.data || {}), tenantId };
                 }
@@ -128,15 +203,55 @@ export const auditExtension = (contextService: RequestContextService) => {
                 ) {
                   anyArgs.data.client = { connect: { id: clientId } };
                 }
+
+                // Scope validation / auto-injection for create
+                if (Array.isArray(allowedClientIds) && isMultiClient && !bypassTenant) {
+                  const targetClientId =
+                    anyArgs.data?.clientId ||
+                    anyArgs.data?.client?.connect?.id;
+                  if (targetClientId) {
+                    if (!allowedClientIds.includes(targetClientId)) {
+                      throw new ForbiddenException(
+                        `No tiene permisos para crear o asociar registros al cliente especificado.`,
+                      );
+                    }
+                  } else if (allowedClientIds.length === 1) {
+                    anyArgs.data = anyArgs.data || {};
+                    anyArgs.data.clientId = allowedClientIds[0];
+                  } else if (allowedClientIds.length === 0) {
+                    throw new ForbiddenException(
+                      'No tiene ningún cliente asignado para realizar esta creación.',
+                    );
+                  }
+                }
               } else if (operation === 'createMany') {
                 if (Array.isArray(anyArgs.data)) {
-                  anyArgs.data = anyArgs.data.map((item: any) => ({
-                    tenantId: item.tenantId || tenantId,
-                    ...(clientId && isMultiClient && item.isInternal !== true
-                      ? { clientId: item.clientId || clientId }
-                      : {}),
-                    ...item,
-                  }));
+                  anyArgs.data = anyArgs.data.map((item: any) => {
+                    if (
+                      Array.isArray(allowedClientIds) &&
+                      isMultiClient &&
+                      !bypassTenant
+                    ) {
+                      if (
+                        item.clientId &&
+                        !allowedClientIds.includes(item.clientId)
+                      ) {
+                        throw new ForbiddenException(
+                          `No tiene permisos para crear registros para el cliente ${item.clientId}.`,
+                        );
+                      } else if (!item.clientId && allowedClientIds.length === 1) {
+                        item.clientId = allowedClientIds[0];
+                      }
+                    }
+
+                    return {
+                      tenantId: item.tenantId || tenantId,
+                      ...(clientId && isMultiClient && item.isInternal !== true
+                        ? { clientId: item.clientId || clientId }
+                        : {}),
+                      ...item,
+                    };
+                  });
                 }
               } else if (operation === 'upsert') {
                 if (!anyArgs.create?.tenantId && !anyArgs.create?.tenant) {

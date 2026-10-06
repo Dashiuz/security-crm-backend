@@ -5,6 +5,7 @@ export interface RequestContext {
   userId?: string;
   tenantId?: string;
   clientId?: string | null;
+  allowedClientIds?: string[] | 'ALL';
   isGodlike?: boolean;
   features: string[];
 }
@@ -27,6 +28,10 @@ export class RequestContextService {
 
   get clientId(): string | null | undefined {
     return RequestContextService.als.getStore()?.clientId;
+  }
+
+  get allowedClientIds(): string[] | 'ALL' | undefined {
+    return RequestContextService.als.getStore()?.allowedClientIds;
   }
 
   get isGodlike(): boolean {
