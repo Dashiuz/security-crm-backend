@@ -1,0 +1,89 @@
+enum PqrsType {
+  PETICION
+  QUEJA
+  RECLAMO
+  SUGERENCIA
+  FELICITACION
+}
+
+enum PqrsStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+}
+
+enum PqrsPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model PqrsTicket {
+  id          String       @id @default(cuid(2))
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  code        String
+  subject     String
+  description String       @db.Text
+  status      PqrsStatus   @default(OPEN)
+  priority    PqrsPriority @default(MEDIUM)
+  type        PqrsType
+
+  assignedToId String?
+  assignedTo   User?       @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  messages    PqrsMessage[]
+  attachments MediaAttachment[]
+
+  createdById String?
+  createdBy   User?       @relation("TicketCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy   User?       @relation("TicketUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([assignedToId])
+  @@map("pqrs_tickets")
+}
+
+model PqrsMessage {
+  id           String          @id @default(cuid(2))
+  tenantId     String
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId     String
+  client       Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  ticketId     String
+  ticket       PqrsTicket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  content      String          @db.Text
+  isFromClient Boolean         @default(false)
+
+  attachments  MediaAttachment[]
+
+  createdById  String?
+  createdBy    User?           @relation("MessageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById  String?
+  updatedBy    User?           @relation("MessageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([ticketId])
+  @@map("pqrs_messages")
+}

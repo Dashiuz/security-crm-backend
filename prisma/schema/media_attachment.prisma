@@ -26,6 +26,10 @@ model MediaAttachment {
   visitorEntry       VisitorEntryControl?           @relation(fields: [visitorEntryId], references: [id], onDelete: Cascade)
   employeeId         String?
   employee           Employee?                      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  pqrsTicketId       String?
+  pqrsTicket         PqrsTicket?                    @relation(fields: [pqrsTicketId], references: [id], onDelete: Cascade)
+  pqrsMessageId      String?
+  pqrsMessage        PqrsMessage?                   @relation(fields: [pqrsMessageId], references: [id], onDelete: Cascade)
 
   uploadedById String
   createdAt    DateTime @default(now())
@@ -36,6 +40,8 @@ model MediaAttachment {
   @@index([residentId])
   @@index([minutaId])
   @@index([employeeId])
+  @@index([pqrsTicketId])
+  @@index([pqrsMessageId])
   @@index([s3Key])
   @@map("media_attachments")
 }

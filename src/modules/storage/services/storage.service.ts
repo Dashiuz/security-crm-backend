@@ -73,6 +73,12 @@ export class StorageService {
       data.employee = { connect: { id: dto.entityId } };
     } else if (dto.entityType === MediaTypeCategory.CLIENT) {
       data.client = { connect: { id: dto.entityId } };
+    } else if (dto.entityType === MediaTypeCategory.PQRS) {
+      if (dto.subType === 'message') {
+        data.pqrsMessage = { connect: { id: dto.entityId } };
+      } else {
+        data.pqrsTicket = { connect: { id: dto.entityId } };
+      }
     }
 
     // 4. Save to Database
@@ -139,6 +145,8 @@ export class StorageService {
     else if (entityType === MediaTypeCategory.EMPLOYEE)
       where.employeeId = entityId;
     else if (entityType === MediaTypeCategory.CLIENT) where.clientId = entityId;
+    else if (entityType === MediaTypeCategory.PQRS)
+      where.pqrsTicketId = entityId;
 
     const items = await (this.prisma as any).mediaAttachment.findMany({
       where,

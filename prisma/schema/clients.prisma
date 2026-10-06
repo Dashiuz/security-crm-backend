@@ -80,6 +80,8 @@ model Client {
   floors           Floor[]
   units            Unit[]
   securityStudies  SecurityStudy[]
+  pqrsTickets      PqrsTicket[]
+  pqrsMessages     PqrsMessage[]
 
   mapboxBaseImageS3Key String?
   geofence             Json?   @db.JsonB

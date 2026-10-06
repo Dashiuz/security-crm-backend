@@ -124,7 +124,15 @@ export class S3Service {
       return `tenants/${tenantId}/studies/${entityId}/${uniqueSuffix}`;
     }
 
-    // 6. Generic / Misc Documents
+    // 6. PQRS (Tickets & Messages)
+    if (entityType === MediaTypeCategory.PQRS) {
+      if (clientId) {
+        return `tenants/${tenantId}/clients/${clientId}/pqrs/${entityId}/${uniqueSuffix}`;
+      }
+      return `tenants/${tenantId}/pqrs/${entityId}/${uniqueSuffix}`;
+    }
+
+    // 7. Generic / Misc Documents
     const docCategory = category || 'misc';
     return `tenants/${tenantId}/documents/${docCategory}/${uniqueSuffix}`;
   }

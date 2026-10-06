@@ -20,6 +20,7 @@ async function main() {
     { key: 'resident', name: 'Residentes', description: 'Gestión de censo y residentes de inmuebles' },
     { key: 'sec_study', name: 'Estudios de Seguridad', description: 'Gestión documental de estudios de seguridad' },
     { key: 'canva', name: 'Canva de Seguridad', description: 'Diseño interactivo y geofencing en canva' },
+    { key: 'pqrs', name: 'Módulo PQRS', description: 'Gestión B2B de Peticiones, Quejas, Reclamos, Sugerencias y Felicitaciones' },
   ];
 
   for (const f of featuresData) {
