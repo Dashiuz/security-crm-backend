@@ -13,6 +13,7 @@ import {
   CorrespondenceType,
   CorrespondenceStatus,
 } from '@prisma/client';
+import { CursorPaginationDto } from '../../../../common/dto/cursor-pagination.dto';
 
 export class CreateCorrespondenceDto {
   @ApiProperty({ example: '2024-02-19' })
@@ -234,7 +235,7 @@ export class DeliverCorrespondenceDto {
   deliveryNotes?: string;
 }
 
-export class CorrespondenceFilterQueryDto {
+export class CorrespondenceFilterQueryDto extends CursorPaginationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

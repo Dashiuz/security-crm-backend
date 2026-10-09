@@ -50,7 +50,10 @@ export class SecurityStudiesController {
   @ApiOperation({
     summary: 'Generar imagen satelital base vía Mapbox API y almacenar en S3',
   })
-  @ApiResponse({ status: 201, description: 'Imagen satelital generada y bbox calculado' })
+  @ApiResponse({
+    status: 201,
+    description: 'Imagen satelital generada y bbox calculado',
+  })
   generateBaseMap(@Body() dto: GenerateBaseMapDto) {
     return this.service.generateBaseMap(dto);
   }
@@ -73,7 +76,9 @@ export class SecurityStudiesController {
     'client:read_assigned',
     'client:read_workplace',
   )
-  @ApiOperation({ summary: 'Listar estudios de seguridad asociados a un cliente' })
+  @ApiOperation({
+    summary: 'Listar estudios de seguridad asociados a un cliente',
+  })
   findByClient(@Param('clientId') clientId: string) {
     return this.service.findByClient(clientId);
   }
@@ -87,7 +92,9 @@ export class SecurityStudiesController {
     'client:read_assigned',
     'client:read_workplace',
   )
-  @ApiOperation({ summary: 'Obtener geocerca e imagen satelital base del cliente (SSOT)' })
+  @ApiOperation({
+    summary: 'Obtener geocerca e imagen satelital base del cliente (SSOT)',
+  })
   getClientGeofence(@Param('clientId') clientId: string) {
     return this.service.getClientGeofence(clientId);
   }
@@ -95,7 +102,10 @@ export class SecurityStudiesController {
   @Patch('client/:clientId/geofence')
   @RequireFeature('canva')
   @RequirePermissions('canva:manage', 'canva:update')
-  @ApiOperation({ summary: 'Guardar o actualizar geocerca perimetral directamente en el Cliente' })
+  @ApiOperation({
+    summary:
+      'Guardar o actualizar geocerca perimetral directamente en el Cliente',
+  })
   saveClientGeofence(
     @Param('clientId') clientId: string,
     @Body() dto: { geofence: any },
@@ -112,8 +122,13 @@ export class SecurityStudiesController {
     'client:read_assigned',
     'client:read_workplace',
   )
-  @ApiOperation({ summary: 'Obtener imagen satelital base del cliente transmitida con CORS' })
-  async getClientImageFile(@Param('clientId') clientId: string, @Res() res: Response) {
+  @ApiOperation({
+    summary: 'Obtener imagen satelital base del cliente transmitida con CORS',
+  })
+  async getClientImageFile(
+    @Param('clientId') clientId: string,
+    @Res() res: Response,
+  ) {
     const { stream, contentType, contentLength } =
       await this.service.getClientImageStream(clientId);
     res.setHeader('Content-Type', contentType || 'image/jpeg');
@@ -124,11 +139,12 @@ export class SecurityStudiesController {
     stream.pipe(res);
   }
 
-
   @Get(':id')
   @RequireFeature('sec_study')
   @RequirePermissions('sec_study:read', 'canva:read')
-  @ApiOperation({ summary: 'Obtener detalle de un estudio de seguridad por ID' })
+  @ApiOperation({
+    summary: 'Obtener detalle de un estudio de seguridad por ID',
+  })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
@@ -136,8 +152,13 @@ export class SecurityStudiesController {
   @Patch(':id')
   @RequireFeature('sec_study')
   @RequirePermissions('sec_study:manage', 'sec_study:update')
-  @ApiOperation({ summary: 'Actualizar nombre y descripción de un estudio de seguridad' })
-  @ApiResponse({ status: 200, description: 'Estudio de seguridad actualizado exitosamente' })
+  @ApiOperation({
+    summary: 'Actualizar nombre y descripción de un estudio de seguridad',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estudio de seguridad actualizado exitosamente',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateSecurityStudyDto) {
     return this.service.update(id, dto);
   }
@@ -156,7 +177,8 @@ export class SecurityStudiesController {
   @RequireFeature('sec_study')
   @RequirePermissions('sec_study:manage', 'sec_study:delete', 'canva:delete')
   @ApiOperation({
-    summary: 'Descontinuar un estudio de seguridad (requiere confirmación "acepto")',
+    summary:
+      'Descontinuar un estudio de seguridad (requiere confirmación "acepto")',
   })
   discontinue(@Param('id') id: string, @Body() dto: DiscontinueStudyDto) {
     return this.service.discontinue(id, dto);
@@ -180,10 +202,7 @@ export class SecurityStudiesController {
     summary:
       'Aprobar perímetro del estudio y sincronizarlo al Cliente como SSOT geofence',
   })
-  approvePerimeter(
-    @Param('id') id: string,
-    @Body() dto: ApprovePerimeterDto,
-  ) {
+  approvePerimeter(@Param('id') id: string, @Body() dto: ApprovePerimeterDto) {
     return this.service.approvePerimeter(id, dto);
   }
 
@@ -233,9 +252,12 @@ export class SecurityStudiesController {
   @Get(':id/image-file')
   @RequireFeature('sec_study', 'canva')
   @RequirePermissions('canva:read', 'sec_study:read')
-  @ApiOperation({ summary: 'Obtener archivo de imagen base transmitido directamente' })
+  @ApiOperation({
+    summary: 'Obtener archivo de imagen base transmitido directamente',
+  })
   async getImageFile(@Param('id') id: string, @Res() res: Response) {
-    const { stream, contentType, contentLength } = await this.service.getImageStream(id);
+    const { stream, contentType, contentLength } =
+      await this.service.getImageStream(id);
     res.setHeader('Content-Type', contentType || 'image/jpeg');
     if (contentLength) {
       res.setHeader('Content-Length', contentLength.toString());
@@ -247,11 +269,10 @@ export class SecurityStudiesController {
   @Delete(':id/attachments/:fileId')
   @RequireFeature('sec_study')
   @RequirePermissions('sec_study:manage', 'sec_study:update')
-  @ApiOperation({ summary: 'Eliminar un archivo adjunto del estudio de seguridad' })
-  removeAttachment(
-    @Param('id') id: string,
-    @Param('fileId') fileId: string,
-  ) {
+  @ApiOperation({
+    summary: 'Eliminar un archivo adjunto del estudio de seguridad',
+  })
+  removeAttachment(@Param('id') id: string, @Param('fileId') fileId: string) {
     return this.service.deleteAttachment(id, fileId);
   }
 
@@ -259,7 +280,8 @@ export class SecurityStudiesController {
   @RequireFeature('sec_study')
   @RequirePermissions('sec_study:manage', 'sec_study:update')
   @ApiOperation({
-    summary: 'Guardar el estado vectorial de anotaciones de una fotografía adjunta',
+    summary:
+      'Guardar el estado vectorial de anotaciones de una fotografía adjunta',
   })
   updateFileCanvas(
     @Param('id') id: string,

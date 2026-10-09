@@ -12,10 +12,12 @@ describe('AuditInterceptor', () => {
     contextService = new RequestContextService();
     prismaMock = {
       client: {
-        findMany: jest.fn().mockResolvedValue([{ id: 'cli-1' }, { id: 'cli-2' }]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'cli-1' }, { id: 'cli-2' }]),
       },
     };
-    interceptor = new AuditInterceptor(contextService, prismaMock as any);
+    interceptor = new AuditInterceptor(contextService, prismaMock);
   });
 
   it('should set allowedClientIds = "ALL" for user with client:read_all', (done) => {

@@ -85,7 +85,9 @@ export class TenantController {
 
   @Patch('me/settings')
   @RequirePermissions('tenant:manage')
-  @ApiOperation({ summary: 'Update own tenant operational settings and branding' })
+  @ApiOperation({
+    summary: 'Update own tenant operational settings and branding',
+  })
   @ApiOkResponse({ type: TenantSettingsResponseDto })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   updateMySettings(@Request() req: any, @Body() dto: UpdateTenantSettingsDto) {

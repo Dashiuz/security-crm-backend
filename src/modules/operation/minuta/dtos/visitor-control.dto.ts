@@ -11,6 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { RecordSource, VisitorMode } from '@prisma/client';
+import { CursorPaginationDto } from '../../../../common/dto/cursor-pagination.dto';
 
 export class CreateVisitorEntryDto {
   @ApiProperty({ example: '2024-02-19' })
@@ -227,7 +228,7 @@ export class RegisterVisitorExitDto {
   observations?: string;
 }
 
-export class VisitorFilterQueryDto {
+export class VisitorFilterQueryDto extends CursorPaginationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

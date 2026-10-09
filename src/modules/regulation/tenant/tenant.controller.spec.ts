@@ -47,7 +47,10 @@ describe('TenantController', () => {
   describe('getMyTenant', () => {
     it('should retrieve the tenant for req.user.tenantId', async () => {
       const mockReq = { user: { tenantId: 'my-tenant-id' } };
-      service.findOne.mockResolvedValue({ id: 'my-tenant-id', name: 'My Tenant' });
+      service.findOne.mockResolvedValue({
+        id: 'my-tenant-id',
+        name: 'My Tenant',
+      });
 
       const result = await controller.getMyTenant(mockReq);
 
@@ -60,7 +63,10 @@ describe('TenantController', () => {
     it('should update the profile using req.user.tenantId', async () => {
       const mockReq = { user: { tenantId: 'my-tenant-id' } };
       const dto = { legalName: 'New Legal Name' };
-      service.updateProfile.mockResolvedValue({ id: 'p1', legalName: 'New Legal Name' });
+      service.updateProfile.mockResolvedValue({
+        id: 'p1',
+        legalName: 'New Legal Name',
+      });
 
       const result = await controller.updateMyProfile(mockReq, dto);
 
@@ -73,7 +79,10 @@ describe('TenantController', () => {
     it('should update the settings using req.user.tenantId', async () => {
       const mockReq = { user: { tenantId: 'my-tenant-id' } };
       const dto = { timezone: 'America/New_York' };
-      service.updateSettings.mockResolvedValue({ id: 'cfg1', timezone: 'America/New_York' });
+      service.updateSettings.mockResolvedValue({
+        id: 'cfg1',
+        timezone: 'America/New_York',
+      });
 
       const result = await controller.updateMySettings(mockReq, dto);
 

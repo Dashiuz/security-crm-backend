@@ -58,7 +58,10 @@ describe('PqrsController', () => {
 
   it('debe llamar a service.assign con ticketId y dto', async () => {
     const dto = { assignedToId: 'user-1' };
-    service.assign.mockResolvedValue({ id: 'ticket-1', status: PqrsStatus.ASSIGNED });
+    service.assign.mockResolvedValue({
+      id: 'ticket-1',
+      status: PqrsStatus.ASSIGNED,
+    });
 
     const result = await controller.assign('ticket-1', dto);
     expect(service.assign).toHaveBeenCalledWith('ticket-1', dto);
@@ -68,20 +71,30 @@ describe('PqrsController', () => {
   it('debe llamar a service.updateStatus con ticketId, dto y permisos', async () => {
     const req = { user: { permissions: ['pqrs:update'] } };
     const dto = { status: PqrsStatus.IN_PROGRESS };
-    service.updateStatus.mockResolvedValue({ id: 'ticket-1', status: PqrsStatus.IN_PROGRESS });
+    service.updateStatus.mockResolvedValue({
+      id: 'ticket-1',
+      status: PqrsStatus.IN_PROGRESS,
+    });
 
     const result = await controller.updateStatus(req, 'ticket-1', dto);
-    expect(service.updateStatus).toHaveBeenCalledWith('ticket-1', dto, ['pqrs:update']);
+    expect(service.updateStatus).toHaveBeenCalledWith('ticket-1', dto, [
+      'pqrs:update',
+    ]);
     expect(result.status).toBe(PqrsStatus.IN_PROGRESS);
   });
 
   it('debe llamar a service.addMessage con ticketId, dto y permisos', async () => {
     const req = { user: { permissions: ['pqrs:update'] } };
     const dto = { content: 'Novedad atendida' };
-    service.addMessage.mockResolvedValue({ id: 'msg-1', content: 'Novedad atendida' });
+    service.addMessage.mockResolvedValue({
+      id: 'msg-1',
+      content: 'Novedad atendida',
+    });
 
     const result = await controller.addMessage(req, 'ticket-1', dto);
-    expect(service.addMessage).toHaveBeenCalledWith('ticket-1', dto, ['pqrs:update']);
+    expect(service.addMessage).toHaveBeenCalledWith('ticket-1', dto, [
+      'pqrs:update',
+    ]);
     expect(result.id).toBe('msg-1');
   });
 });

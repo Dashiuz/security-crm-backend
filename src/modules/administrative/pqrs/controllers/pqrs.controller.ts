@@ -39,7 +39,10 @@ export class PqrsController {
   @Post()
   @RequirePermissions('pqrs:create', 'pqrs:manage')
   @ApiOperation({ summary: 'Radicar una nueva solicitud PQRS' })
-  @ApiResponse({ status: 201, description: 'Solicitud PQRS radicada exitosamente' })
+  @ApiResponse({
+    status: 201,
+    description: 'Solicitud PQRS radicada exitosamente',
+  })
   create(@Body() dto: CreatePqrsTicketDto) {
     return this.service.create(dto);
   }
@@ -82,7 +85,10 @@ export class PqrsController {
   @ApiOperation({
     summary: 'Asignar una solicitud PQRS a un funcionario o usuario del tenant',
   })
-  @ApiResponse({ status: 200, description: 'Solicitud PQRS asignada exitosamente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Solicitud PQRS asignada exitosamente',
+  })
   assign(@Param('id') id: string, @Body() dto: AssignPqrsTicketDto) {
     return this.service.assign(id, dto);
   }
@@ -93,7 +99,10 @@ export class PqrsController {
     summary:
       'Actualizar el estado de una solicitud PQRS (Máquina Secuencial de Estados)',
   })
-  @ApiResponse({ status: 200, description: 'Estado de la solicitud actualizado' })
+  @ApiResponse({
+    status: 200,
+    description: 'Estado de la solicitud actualizado',
+  })
   updateStatus(
     @Req() req: any,
     @Param('id') id: string,
@@ -106,9 +115,13 @@ export class PqrsController {
   @Patch(':id/priority')
   @RequirePermissions('pqrs:update', 'pqrs:manage')
   @ApiOperation({
-    summary: 'Actualizar la prioridad de una solicitud PQRS por parte del operador',
+    summary:
+      'Actualizar la prioridad de una solicitud PQRS por parte del operador',
   })
-  @ApiResponse({ status: 200, description: 'Prioridad de la solicitud actualizada exitosamente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prioridad de la solicitud actualizada exitosamente',
+  })
   updatePriority(
     @Req() req: any,
     @Param('id') id: string,
@@ -123,7 +136,10 @@ export class PqrsController {
   @ApiOperation({
     summary: 'Agregar una respuesta o mensaje al hilo de la solicitud PQRS',
   })
-  @ApiResponse({ status: 201, description: 'Mensaje agregado al hilo exitosamente' })
+  @ApiResponse({
+    status: 201,
+    description: 'Mensaje agregado al hilo exitosamente',
+  })
   addMessage(
     @Req() req: any,
     @Param('id') id: string,

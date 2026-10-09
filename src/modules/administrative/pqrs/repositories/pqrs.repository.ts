@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { Prisma, PqrsStatus, PqrsPriority, PqrsTicket, PqrsMessage } from '@prisma/client';
+import {
+  Prisma,
+  PqrsStatus,
+  PqrsPriority,
+  PqrsTicket,
+  PqrsMessage,
+} from '@prisma/client';
 
 @Injectable()
 export class PqrsRepository {
@@ -58,17 +64,25 @@ export class PqrsRepository {
    */
   async findTicketsWithPagination(params: {
     where: Prisma.PqrsTicketWhereInput;
-    skip: number;
+    skip?: number;
     take: number;
+    cursor?: Prisma.PqrsTicketWhereUniqueInput;
     orderBy?: Prisma.PqrsTicketOrderByWithRelationInput;
   }): Promise<[number, any[]]> {
-    const { where, skip, take, orderBy = { createdAt: 'desc' } } = params;
+    const {
+      where,
+      skip,
+      take,
+      cursor,
+      orderBy = { createdAt: 'desc' },
+    } = params;
 
     return Promise.all([
       this.prisma.pqrsTicket.count({ where }),
       this.prisma.pqrsTicket.findMany({
         where,
         orderBy,
+        cursor,
         skip,
         take,
         include: {
@@ -272,4 +286,3 @@ export class PqrsRepository {
     return { total, pending, inProgress, resolved };
   }
 }
-

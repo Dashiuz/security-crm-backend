@@ -8,18 +8,24 @@ describe('SecurityStudiesController', () => {
 
   beforeEach(async () => {
     service = {
-      generateBaseMap: jest.fn().mockResolvedValue({ baseImageS3Key: 'base.jpg' }),
+      generateBaseMap: jest
+        .fn()
+        .mockResolvedValue({ baseImageS3Key: 'base.jpg' }),
       create: jest.fn().mockResolvedValue({ id: 'study-1' }),
       findByClient: jest.fn().mockResolvedValue({ studies: [] }),
       findOne: jest.fn().mockResolvedValue({ id: 'study-1' }),
       update: jest.fn().mockResolvedValue({ id: 'study-1', name: 'Updated' }),
       updateCanvas: jest.fn().mockResolvedValue({ id: 'study-1' }),
-      discontinue: jest.fn().mockResolvedValue({ id: 'study-1', status: 'DISCONTINUED' }),
+      discontinue: jest
+        .fn()
+        .mockResolvedValue({ id: 'study-1', status: 'DISCONTINUED' }),
       duplicate: jest.fn().mockResolvedValue({ id: 'study-copy' }),
       approvePerimeter: jest.fn().mockResolvedValue({ message: 'OK' }),
       uploadAttachment: jest.fn().mockResolvedValue({ file: {} }),
       deleteAttachment: jest.fn().mockResolvedValue({ message: 'OK' }),
-      updateFileCanvas: jest.fn().mockResolvedValue({ message: 'OK', file: {} }),
+      updateFileCanvas: jest
+        .fn()
+        .mockResolvedValue({ message: 'OK', file: {} }),
       getImageUrl: jest.fn().mockResolvedValue({ url: 'https://img.jpg' }),
       getClientGeofence: jest.fn().mockResolvedValue({ hasGeofence: true }),
       saveClientGeofence: jest.fn().mockResolvedValue({ id: 'c1' }),
@@ -30,7 +36,9 @@ describe('SecurityStudiesController', () => {
       providers: [{ provide: SecurityStudiesService, useValue: service }],
     }).compile();
 
-    controller = module.get<SecurityStudiesController>(SecurityStudiesController);
+    controller = module.get<SecurityStudiesController>(
+      SecurityStudiesController,
+    );
   });
 
   it('should call generateBaseMap', async () => {
@@ -101,4 +109,3 @@ describe('SecurityStudiesController', () => {
     expect(service.approvePerimeter).toHaveBeenCalledWith('s1', dto);
   });
 });
-
