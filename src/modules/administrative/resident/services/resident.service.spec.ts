@@ -23,7 +23,9 @@ describe('ResidentService - SPEC-ADM-005 Structure Consistency', () => {
     };
     mockPrisma = {
       client: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'client-1', tenantId: 'tenant-123' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'client-1', tenantId: 'tenant-123' }),
       },
       unit: {
         findMany: jest.fn(),
@@ -74,12 +76,19 @@ describe('ResidentService - SPEC-ADM-005 Structure Consistency', () => {
       },
     ];
 
-    const result = await service.importResidentsFromCsv('client-1', csvData, 'test.csv', mockUser);
+    const result = await service.importResidentsFromCsv(
+      'client-1',
+      csvData,
+      'test.csv',
+      mockUser,
+    );
 
     expect(result.status).toBe('FAILED');
     expect(result.errorRows).toBe(1);
     expect(result.successRows).toBe(0);
-    expect(result.errors[0].reason).toContain('no encontrada en la estructura del conjunto residencial');
+    expect(result.errors[0].reason).toContain(
+      'no encontrada en la estructura del conjunto residencial',
+    );
     // Ensure unit was NOT auto-created
     expect(mockPrisma.unit.create).not.toHaveBeenCalled();
   });
@@ -105,7 +114,12 @@ describe('ResidentService - SPEC-ADM-005 Structure Consistency', () => {
       },
     ];
 
-    const result = await service.importResidentsFromCsv('client-1', csvData, 'test.csv', mockUser);
+    const result = await service.importResidentsFromCsv(
+      'client-1',
+      csvData,
+      'test.csv',
+      mockUser,
+    );
 
     expect(result.status).toBe('SUCCESS');
     expect(result.successRows).toBe(1);

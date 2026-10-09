@@ -43,7 +43,9 @@ export class SecurityStudiesService {
     // Verify client exists
     const client = await this.repository.findClientById(dto.clientId);
     if (!client) {
-      throw new NotFoundException(`Cliente con ID ${dto.clientId} no encontrado.`);
+      throw new NotFoundException(
+        `Cliente con ID ${dto.clientId} no encontrado.`,
+      );
     }
 
     const token =
@@ -83,7 +85,7 @@ export class SecurityStudiesService {
 
     // Generate S3 key and upload image buffer
     const s3Key = this.s3Service.generateS3Key({
-      tenantId: tenantId!,
+      tenantId: tenantId,
       entityType: MediaTypeCategory.SECURITY_STUDY,
       entityId: `base_map_${Date.now()}`,
       clientId: dto.clientId,
@@ -112,7 +114,9 @@ export class SecurityStudiesService {
     const study = await this.repository.getStudyStreamKey(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     const key = study.baseImageS3Key || study.client?.mapboxBaseImageS3Key;
@@ -136,25 +140,36 @@ export class SecurityStudiesService {
 
     const client = await this.repository.findClientById(dto.clientId);
     if (!client) {
-      throw new NotFoundException(`Cliente con ID ${dto.clientId} no encontrado.`);
+      throw new NotFoundException(
+        `Cliente con ID ${dto.clientId} no encontrado.`,
+      );
     }
 
     // Determine version number
-    const latestStudy = await this.repository.findLatestStudyVersion(dto.clientId);
+    const latestStudy = await this.repository.findLatestStudyVersion(
+      dto.clientId,
+    );
     const nextVersion = (latestStudy?.version || 0) + 1;
 
     // Transition previous CURRENT studies to DISCONTINUED
     await this.repository.discontinueCurrentStudies(dto.clientId);
 
     // Base map fields inherited from Client if not explicitly provided
-    const baseImageS3Key = dto.baseImageS3Key || client.mapboxBaseImageS3Key || null;
-    const mapboxCenterLat = dto.mapboxCenterLat ?? client.mapboxCenterLat ?? null;
-    const mapboxCenterLng = dto.mapboxCenterLng ?? client.mapboxCenterLng ?? null;
+    const baseImageS3Key =
+      dto.baseImageS3Key || client.mapboxBaseImageS3Key || null;
+    const mapboxCenterLat =
+      dto.mapboxCenterLat ?? client.mapboxCenterLat ?? null;
+    const mapboxCenterLng =
+      dto.mapboxCenterLng ?? client.mapboxCenterLng ?? null;
     const mapboxZoom = dto.mapboxZoom ?? client.mapboxZoom ?? null;
-    const mapboxBboxMinLat = dto.mapboxBboxMinLat ?? client.mapboxBboxMinLat ?? null;
-    const mapboxBboxMinLng = dto.mapboxBboxMinLng ?? client.mapboxBboxMinLng ?? null;
-    const mapboxBboxMaxLat = dto.mapboxBboxMaxLat ?? client.mapboxBboxMaxLat ?? null;
-    const mapboxBboxMaxLng = dto.mapboxBboxMaxLng ?? client.mapboxBboxMaxLng ?? null;
+    const mapboxBboxMinLat =
+      dto.mapboxBboxMinLat ?? client.mapboxBboxMinLat ?? null;
+    const mapboxBboxMinLng =
+      dto.mapboxBboxMinLng ?? client.mapboxBboxMinLng ?? null;
+    const mapboxBboxMaxLat =
+      dto.mapboxBboxMaxLat ?? client.mapboxBboxMaxLat ?? null;
+    const mapboxBboxMaxLng =
+      dto.mapboxBboxMaxLng ?? client.mapboxBboxMaxLng ?? null;
 
     // Default canvas state: embed client geofence if present
     let canvasState = dto.canvasState || null;
@@ -168,7 +183,7 @@ export class SecurityStudiesService {
     }
 
     const study = await this.repository.createStudy({
-      tenantId: tenantId!,
+      tenantId: tenantId,
       clientId: dto.clientId,
       name: dto.name,
       description: dto.description || null,
@@ -200,7 +215,8 @@ export class SecurityStudiesService {
    * Retrieves all security studies for a client.
    */
   async findByClient(clientId: string) {
-    const [studies, client] = await this.repository.findStudiesByClient(clientId);
+    const [studies, client] =
+      await this.repository.findStudiesByClient(clientId);
 
     // Resolve presigned URLs for each study and its attached files
     const enriched = await Promise.all(
@@ -211,7 +227,9 @@ export class SecurityStudiesService {
           try {
             baseImageUrl = await this.s3Service.getPresignedUrl(imageKey);
           } catch (e) {
-            this.logger.warn(`Could not sign URL for study image [${imageKey}]: ${e}`);
+            this.logger.warn(
+              `Could not sign URL for study image [${imageKey}]: ${e}`,
+            );
           }
         }
         const files = await this.enrichFiles(study.files);
@@ -241,7 +259,9 @@ export class SecurityStudiesService {
             const url = await this.s3Service.getPresignedUrl(file.s3Key);
             return { ...file, url };
           } catch (err) {
-            this.logger.warn(`Could not sign URL for attached file [${file.s3Key}]: ${err}`);
+            this.logger.warn(
+              `Could not sign URL for attached file [${file.s3Key}]: ${err}`,
+            );
             return file;
           }
         }
@@ -257,7 +277,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyById(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     const imageKey = study.baseImageS3Key || study.client?.mapboxBaseImageS3Key;
@@ -266,7 +288,9 @@ export class SecurityStudiesService {
       try {
         baseImageUrl = await this.s3Service.getPresignedUrl(imageKey);
       } catch (e) {
-        this.logger.warn(`Could not sign URL for study image [${imageKey}]: ${e}`);
+        this.logger.warn(
+          `Could not sign URL for study image [${imageKey}]: ${e}`,
+        );
       }
     }
     const files = await this.enrichFiles(study.files);
@@ -285,18 +309,24 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     const dataToUpdate: any = {};
     if (dto.name !== undefined) {
       if (!dto.name.trim()) {
-        throw new BadRequestException('El nombre del estudio no puede estar vacío.');
+        throw new BadRequestException(
+          'El nombre del estudio no puede estar vacío.',
+        );
       }
       dataToUpdate.name = dto.name.trim();
     }
     if (dto.description !== undefined) {
-      dataToUpdate.description = dto.description ? dto.description.trim() : null;
+      dataToUpdate.description = dto.description
+        ? dto.description.trim()
+        : null;
     }
 
     const updated = await this.repository.updateStudy(id, dataToUpdate);
@@ -318,7 +348,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     if (study.status === 'DISCONTINUED') {
@@ -327,7 +359,10 @@ export class SecurityStudiesService {
       );
     }
 
-    const updated = await this.repository.updateCanvasState(id, dto.canvasState);
+    const updated = await this.repository.updateCanvasState(
+      id,
+      dto.canvasState,
+    );
 
     return updated;
   }
@@ -345,7 +380,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     if (study.status === 'DISCONTINUED') {
@@ -366,11 +403,15 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     // Check if an active CURRENT study exists for this client
-    const currentStudy = await this.repository.findActiveCurrentStudy(study.clientId);
+    const currentStudy = await this.repository.findActiveCurrentStudy(
+      study.clientId,
+    );
 
     if (currentStudy) {
       throw new BadRequestException(
@@ -378,7 +419,9 @@ export class SecurityStudiesService {
       );
     }
 
-    const latestStudy = await this.repository.findLatestStudyVersion(study.clientId);
+    const latestStudy = await this.repository.findLatestStudyVersion(
+      study.clientId,
+    );
     const nextVersion = (latestStudy?.version || 0) + 1;
 
     const duplicated = await this.repository.createStudy({
@@ -418,7 +461,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     // Determine perimeter GeoJSON
@@ -428,7 +473,10 @@ export class SecurityStudiesService {
       const canvas = study.canvasState as any;
       if (canvas?.geofencePolygon) {
         perimeterGeoJson = canvas.geofencePolygon;
-      } else if (canvas?.layers?.geofence && Array.isArray(canvas.layers.geofence)) {
+      } else if (
+        canvas?.layers?.geofence &&
+        Array.isArray(canvas.layers.geofence)
+      ) {
         // Build GeoJSON from points
         const points = canvas.layers.geofence;
         if (points.length >= 3) {
@@ -455,10 +503,15 @@ export class SecurityStudiesService {
     }
 
     // Update Client SSOT geofence via Repository
-    await this.repository.updateClientGeofence(study.clientId, perimeterGeoJson, tenantId);
+    await this.repository.updateClientGeofence(
+      study.clientId,
+      perimeterGeoJson,
+      tenantId,
+    );
 
     return {
-      message: 'Perímetro perimetral aprobado y geofencing sincronizado exitosamente.',
+      message:
+        'Perímetro perimetral aprobado y geofencing sincronizado exitosamente.',
       clientId: study.clientId,
       geofence: perimeterGeoJson,
     };
@@ -476,7 +529,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     if (study.status === 'DISCONTINUED') {
@@ -496,7 +551,9 @@ export class SecurityStudiesService {
 
     const uploadRes = await this.s3Service.uploadFile(file, s3Key);
 
-    const currentFiles = Array.isArray(study.files) ? (study.files as any[]) : [];
+    const currentFiles = Array.isArray(study.files)
+      ? (study.files as any[])
+      : [];
     const newFileEntry = {
       id: crypto.randomUUID(),
       name: file.originalname,
@@ -530,7 +587,9 @@ export class SecurityStudiesService {
     const study = await this.repository.getStudyStreamKey(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     const key = study.baseImageS3Key || study.client?.mapboxBaseImageS3Key;
@@ -554,7 +613,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     if (study.status === 'DISCONTINUED') {
@@ -563,14 +624,18 @@ export class SecurityStudiesService {
       );
     }
 
-    const currentFiles = Array.isArray(study.files) ? (study.files as any[]) : [];
+    const currentFiles = Array.isArray(study.files)
+      ? (study.files as any[])
+      : [];
     const targetFile = currentFiles.find((f) => f.id === fileId);
 
     if (targetFile?.s3Key) {
       try {
         await this.s3Service.deleteFile(targetFile.s3Key);
       } catch (err) {
-        this.logger.warn(`Could not delete S3 object [${targetFile.s3Key}]: ${err}`);
+        this.logger.warn(
+          `Could not delete S3 object [${targetFile.s3Key}]: ${err}`,
+        );
       }
     }
 
@@ -594,7 +659,9 @@ export class SecurityStudiesService {
     const study = await this.repository.findStudyBasic(id);
 
     if (!study) {
-      throw new NotFoundException(`Estudio de seguridad con ID ${id} no encontrado.`);
+      throw new NotFoundException(
+        `Estudio de seguridad con ID ${id} no encontrado.`,
+      );
     }
 
     if (study.status === 'DISCONTINUED') {
@@ -603,7 +670,9 @@ export class SecurityStudiesService {
       );
     }
 
-    const currentFiles = Array.isArray(study.files) ? (study.files as any[]) : [];
+    const currentFiles = Array.isArray(study.files)
+      ? (study.files as any[])
+      : [];
     const targetFileIndex = currentFiles.findIndex((f) => f.id === fileId);
 
     if (targetFileIndex === -1) {
@@ -643,7 +712,9 @@ export class SecurityStudiesService {
     let baseImageUrl: string | null = null;
     if (client.mapboxBaseImageS3Key) {
       try {
-        baseImageUrl = await this.s3Service.getPresignedUrl(client.mapboxBaseImageS3Key);
+        baseImageUrl = await this.s3Service.getPresignedUrl(
+          client.mapboxBaseImageS3Key,
+        );
       } catch (e) {
         this.logger.warn(`Could not sign URL for client base image: ${e}`);
       }
@@ -705,7 +776,10 @@ export class SecurityStudiesService {
       }
     }
 
-    const updated = await this.repository.updateClientGeofence(clientId, polygon);
+    const updated = await this.repository.updateClientGeofence(
+      clientId,
+      polygon,
+    );
 
     return updated;
   }
@@ -721,7 +795,9 @@ export class SecurityStudiesService {
     }
 
     if (!client.mapboxBaseImageS3Key) {
-      throw new NotFoundException('El cliente no tiene una imagen base configurada.');
+      throw new NotFoundException(
+        'El cliente no tiene una imagen base configurada.',
+      );
     }
 
     return this.s3Service.getObjectStream(client.mapboxBaseImageS3Key);

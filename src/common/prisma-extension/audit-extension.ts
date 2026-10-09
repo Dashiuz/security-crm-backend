@@ -168,8 +168,8 @@ export const auditExtension = (contextService: RequestContextService) => {
                       model === 'Client'
                         ? { id: { in: allowedClientIds } }
                         : isMultiClient
-                        ? { clientId: { in: allowedClientIds } }
-                        : null;
+                          ? { clientId: { in: allowedClientIds } }
+                          : null;
 
                     if (scopeCondition) {
                       if (!anyArgs.where) anyArgs.where = {};
@@ -205,10 +205,13 @@ export const auditExtension = (contextService: RequestContextService) => {
                 }
 
                 // Scope validation / auto-injection for create
-                if (Array.isArray(allowedClientIds) && isMultiClient && !bypassTenant) {
+                if (
+                  Array.isArray(allowedClientIds) &&
+                  isMultiClient &&
+                  !bypassTenant
+                ) {
                   const targetClientId =
-                    anyArgs.data?.clientId ||
-                    anyArgs.data?.client?.connect?.id;
+                    anyArgs.data?.clientId || anyArgs.data?.client?.connect?.id;
                   if (targetClientId) {
                     if (!allowedClientIds.includes(targetClientId)) {
                       throw new ForbiddenException(
@@ -239,7 +242,10 @@ export const auditExtension = (contextService: RequestContextService) => {
                         throw new ForbiddenException(
                           `No tiene permisos para crear registros para el cliente ${item.clientId}.`,
                         );
-                      } else if (!item.clientId && allowedClientIds.length === 1) {
+                      } else if (
+                        !item.clientId &&
+                        allowedClientIds.length === 1
+                      ) {
                         item.clientId = allowedClientIds[0];
                       }
                     }

@@ -14,8 +14,9 @@ export class CorrespondenceRepositoryService {
 
   async findMany(
     where?: Prisma.CorrespondenceReceivedControlWhereInput,
+    pagination?: { cursor?: string; take?: number; skip?: number },
   ): Promise<any[]> {
-    const rows = await this.prisma.correspondenceReceivedControl.findMany({
+    const args: Prisma.CorrespondenceReceivedControlFindManyArgs = {
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
@@ -32,7 +33,18 @@ export class CorrespondenceRepositoryService {
         },
       },
       orderBy: { createdAt: 'desc' },
-    });
+    };
+
+    if (pagination?.cursor) {
+      args.cursor = { id: pagination.cursor };
+      args.skip = pagination.skip ?? 1;
+    }
+
+    if (pagination?.take) {
+      args.take = pagination.take;
+    }
+
+    const rows = await this.prisma.correspondenceReceivedControl.findMany(args);
     return rows.map((r: any) => ({
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',

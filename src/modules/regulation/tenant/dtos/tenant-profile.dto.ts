@@ -11,7 +11,9 @@ export class CreateTenantProfileDto {
   @ApiProperty({ example: 'Seguridad Andina S.A.S.' })
   @IsString({ message: 'La razón social debe ser un texto válido.' })
   @IsNotEmpty({ message: 'La razón social es obligatoria.' })
-  @MaxLength(150, { message: 'La razón social no puede superar 150 caracteres.' })
+  @MaxLength(150, {
+    message: 'La razón social no puede superar 150 caracteres.',
+  })
   legalName!: string;
 
   @ApiProperty({ example: '900123456-7' })
@@ -23,7 +25,9 @@ export class CreateTenantProfileDto {
   @ApiProperty({ example: 'contacto@seguridadandina.com' })
   @IsEmail({}, { message: 'El correo de contacto debe ser un email válido.' })
   @IsNotEmpty({ message: 'El correo de contacto es obligatorio.' })
-  @MaxLength(100, { message: 'El correo de contacto no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El correo de contacto no puede superar 100 caracteres.',
+  })
   contactEmail!: string;
 
   @ApiPropertyOptional({ example: '+57 300 123 4567' })
@@ -53,11 +57,15 @@ export class CreateTenantProfileDto {
   @ApiPropertyOptional({ example: 'Juan Pérez Gómez' })
   @IsOptional()
   @IsString({ message: 'El representante legal debe ser un texto válido.' })
-  @MaxLength(150, { message: 'El representante legal no puede superar 150 caracteres.' })
+  @MaxLength(150, {
+    message: 'El representante legal no puede superar 150 caracteres.',
+  })
   legalRepresentative?: string;
 }
 
-export class UpdateTenantProfileDto extends PartialType(CreateTenantProfileDto) {}
+export class UpdateTenantProfileDto extends PartialType(
+  CreateTenantProfileDto,
+) {}
 
 export class TenantProfileResponseDto {
   @ApiProperty()

@@ -9,7 +9,6 @@ export * from './regulation/access-control/permissions.decorator';
 export * from './regulation/access-control/feature.guard';
 export * from './regulation/access-control/feature.decorator';
 
-
 // Employee
 export * from './regulation/employee/employee.module';
 export * from './regulation/employee/employee.service';
@@ -74,5 +73,3 @@ export * from './notifications/notifications.module';
 export * from './notifications/services/notifications.service';
 export * from './notifications/controllers/notifications.controller';
 export * from './notifications/sse/sse.service';
-
-

@@ -9,9 +9,14 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import {
   CreateClientDto,
   UpdateClientDto,
+  UpdateClientGeneralDto,
+  UpdateClientLegalDto,
   ClientResponseDto,
 } from './dtos/client.dto';
-import { CreateClientWithStructureDto } from './dtos/client-structure.dto';
+import {
+  CreateClientWithStructureDto,
+  UpdateClientOperationsDto,
+} from './dtos/client-structure.dto';
 import { ClientStructureGeneratorService } from './services/client-structure-generator.service';
 import { UserContext } from '../../../common/interfaces/user-context.interface';
 import { toDateOnlyIso } from '../../../common/utils/convertDate';
@@ -20,6 +25,7 @@ import {
   ClientSector,
   ResidentialComplexType,
 } from '@prisma/client';
+import { CursorPaginationDto } from '../../../common/dto/cursor-pagination.dto';
 
 @Injectable()
 export class ClientService {
@@ -176,7 +182,13 @@ export class ClientService {
     return this.findOne(res.id, user);
   }
 
-  async findAll(user: UserContext): Promise<ClientResponseDto[]> {
+  async findAll(
+    user: UserContext,
+    pagination?: CursorPaginationDto,
+  ): Promise<
+    | { data: ClientResponseDto[]; meta: { nextCursor: string | null } }
+    | ClientResponseDto[]
+  > {
     const where: any = {
       tenantId: user.tenantId,
       clientStatus: { not: ClientStatus.PROSPECT },
@@ -199,24 +211,53 @@ export class ClientService {
         if (currentUser?.clientId) {
           where.id = currentUser.clientId;
         } else {
-          return [];
+          return pagination?.cursor || pagination?.take
+            ? { data: [], meta: { nextCursor: null } }
+            : [];
         }
       } else {
-        return [];
+        return pagination?.cursor || pagination?.take
+          ? { data: [], meta: { nextCursor: null } }
+          : [];
       }
     }
 
-    return this.clientRepository
-      .findMany({
-        where,
-        include: {
-          coordinatorInCharge: true,
-          commercialContact: true,
-          createdBy: true,
-          clientProperties: true,
+    const args: any = {
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        coordinatorInCharge: true,
+        commercialContact: true,
+        createdBy: true,
+        clientProperties: true,
+      },
+    };
+
+    if (pagination?.cursor) {
+      args.cursor = { id: pagination.cursor };
+      args.skip = 1;
+    }
+
+    if (pagination?.take) {
+      args.take = Number(pagination.take);
+    }
+
+    const rows = await this.clientRepository.findMany(args);
+    const data = rows.map((r) => this.mapClientToResponse(r));
+
+    if (pagination && (pagination.cursor || pagination.take)) {
+      const takeCount = Number(pagination.take) || 20;
+      const nextCursor =
+        data.length === takeCount ? data[data.length - 1].id : null;
+      return {
+        data,
+        meta: {
+          nextCursor,
         },
-      })
-      .then((rows) => rows.map((r) => this.mapClientToResponse(r))) as any;
+      };
+    }
+
+    return data;
   }
 
   async findOne(id: string, user: UserContext): Promise<ClientResponseDto> {
@@ -241,7 +282,56 @@ export class ClientService {
     if (!client || client.tenantId !== user.tenantId) {
       throw new NotFoundException('Cliente no encontrado');
     }
-    return this.mapClientToResponse(client);
+
+    const res = this.mapClientToResponse(client);
+
+    const isGodlike =
+      (user.tenantId === 'system' ||
+        (user as any).originalTenantId === 'system') &&
+      (user.roles || []).includes('GODLIKE');
+    const hasManage = (user.permissions || []).includes('client:manage');
+    const hasReadLegal =
+      isGodlike ||
+      hasManage ||
+      (user.permissions || []).includes('client:read_legal');
+    const hasReadOperations =
+      isGodlike ||
+      hasManage ||
+      (user.permissions || []).includes('client:read_operations');
+
+    if (!hasReadLegal) {
+      (res as any).contractNumber = null;
+      (res as any).contractDate = null;
+      (res as any).lastContractDate = null;
+      (res as any).contractEndDate = null;
+      (res as any).renewedContract = null;
+      (res as any).contractMediaFiles = null;
+      (res as any).administrationType = null;
+      (res as any).administrationCompanyData = null;
+      (res as any).councilData = null;
+      (res as any).administrator = null;
+      (res as any).administratorPhone = null;
+      (res as any).administratorEmail = null;
+    }
+
+    if (!hasReadOperations) {
+      (res as any).clientProperties = null;
+      (res as any).towers = [];
+      (res as any).floors = [];
+      (res as any).units = [];
+      (res as any).geofence = null;
+      (res as any).mapboxBaseImageS3Key = null;
+      (res as any).mapboxCenterLat = null;
+      (res as any).mapboxCenterLng = null;
+      (res as any).mapboxZoom = null;
+      (res as any).mapboxBboxMinLat = null;
+      (res as any).mapboxBboxMinLng = null;
+      (res as any).mapboxBboxMaxLat = null;
+      (res as any).mapboxBboxMaxLng = null;
+      (res as any).securityStudy = null;
+    }
+
+    return res;
   }
 
   async autocomplete(query: string, user: UserContext, limit = 20) {
@@ -283,7 +373,7 @@ export class ClientService {
         { internalCode: { contains: trimmed, mode: 'insensitive' } },
         { nit: { contains: trimmed, mode: 'insensitive' } },
       ];
-      
+
       if (where.OR) {
         where.AND = [{ OR: where.OR }, { OR: searchOr }];
         delete where.OR;
@@ -431,6 +521,209 @@ export class ClientService {
         structureConfig,
         user.sub,
       );
+    }
+
+    return this.findOne(id, user);
+  }
+
+  async updateGeneral(
+    id: string,
+    dto: UpdateClientGeneralDto,
+    user: UserContext,
+  ): Promise<ClientResponseDto> {
+    await this.findOne(id, user);
+
+    const data: any = { ...dto };
+
+    delete data.coordinatorInChargeId;
+    delete data.commercialContactId;
+
+    if (
+      dto.coordinatorInChargeId &&
+      String(dto.coordinatorInChargeId).trim() !== ''
+    ) {
+      data.coordinatorInCharge = {
+        connect: { id: dto.coordinatorInChargeId },
+      };
+    } else if (
+      dto.coordinatorInChargeId === null ||
+      dto.coordinatorInChargeId === ''
+    ) {
+      data.coordinatorInCharge = { disconnect: true };
+    }
+
+    if (
+      dto.commercialContactId &&
+      String(dto.commercialContactId).trim() !== ''
+    ) {
+      data.commercialContact = {
+        connect: { id: dto.commercialContactId },
+      };
+    } else if (
+      dto.commercialContactId === null ||
+      dto.commercialContactId === ''
+    ) {
+      data.commercialContact = { disconnect: true };
+    }
+
+    if (user.sub && user.sub !== 'system') {
+      data.updatedBy = { connect: { id: user.sub } };
+    }
+
+    try {
+      await this.clientRepository.update(id, data);
+    } catch (err: any) {
+      this.handlePrismaError(err);
+    }
+
+    return this.findOne(id, user);
+  }
+
+  async updateOperations(
+    id: string,
+    dto: UpdateClientOperationsDto,
+    user: UserContext,
+  ): Promise<ClientResponseDto> {
+    await this.findOne(id, user);
+
+    const {
+      structureConfig,
+      confirmationCode,
+      confirmRegenerate,
+      geofence,
+      mapboxBaseImageS3Key,
+      mapboxCenterLat,
+      mapboxCenterLng,
+      mapboxZoom,
+      mapboxBboxMinLat,
+      mapboxBboxMinLng,
+      mapboxBboxMaxLat,
+      mapboxBboxMaxLng,
+      ...amenitiesFields
+    } = dto;
+
+    if (structureConfig) {
+      const residentCount = await this.prisma.resident.count({
+        where: {
+          clientId: id,
+          tenantId: user.tenantId,
+          deletedAt: null,
+        },
+      });
+
+      if (
+        residentCount > 0 &&
+        confirmationCode !== 'REGENERAR' &&
+        confirmRegenerate !== true
+      ) {
+        throw new BadRequestException(
+          'La regeneración de la estructura física eliminará los residentes existentes de este cliente. Para confirmar esta acción destructiva, debe enviar confirmationCode="REGENERAR".',
+        );
+      }
+
+      await this.structureGenerator.generateStructure(
+        id,
+        user.tenantId,
+        structureConfig,
+        user.sub,
+      );
+    }
+
+    const clientData: any = {};
+    if (geofence !== undefined) clientData.geofence = geofence;
+    if (mapboxBaseImageS3Key !== undefined)
+      clientData.mapboxBaseImageS3Key = mapboxBaseImageS3Key;
+    if (mapboxCenterLat !== undefined) clientData.mapboxCenterLat = mapboxCenterLat;
+    if (mapboxCenterLng !== undefined) clientData.mapboxCenterLng = mapboxCenterLng;
+    if (mapboxZoom !== undefined) clientData.mapboxZoom = mapboxZoom;
+    if (mapboxBboxMinLat !== undefined)
+      clientData.mapboxBboxMinLat = mapboxBboxMinLat;
+    if (mapboxBboxMinLng !== undefined)
+      clientData.mapboxBboxMinLng = mapboxBboxMinLng;
+    if (mapboxBboxMaxLat !== undefined)
+      clientData.mapboxBboxMaxLat = mapboxBboxMaxLat;
+    if (mapboxBboxMaxLng !== undefined)
+      clientData.mapboxBboxMaxLng = mapboxBboxMaxLng;
+
+    if (Object.keys(clientData).length > 0) {
+      if (user.sub && user.sub !== 'system') {
+        clientData.updatedBy = { connect: { id: user.sub } };
+      }
+      try {
+        await this.clientRepository.update(id, clientData);
+      } catch (err: any) {
+        this.handlePrismaError(err);
+      }
+    }
+
+    const cleanAmenities: any = {};
+    for (const [key, val] of Object.entries(amenitiesFields)) {
+      if (val !== undefined) {
+        cleanAmenities[key] = val;
+      }
+    }
+
+    if (Object.keys(cleanAmenities).length > 0) {
+      if (user.sub && user.sub !== 'system') {
+        cleanAmenities.updatedBy = user.sub;
+      }
+      await this.prisma.clientProperties.upsert({
+        where: { clientId: id },
+        update: cleanAmenities,
+        create: {
+          tenantId: user.tenantId,
+          clientId: id,
+          ...cleanAmenities,
+          createdBy: user.sub !== 'system' ? user.sub : undefined,
+        },
+      });
+    }
+
+    return this.findOne(id, user);
+  }
+
+  async updateLegal(
+    id: string,
+    dto: UpdateClientLegalDto,
+    user: UserContext,
+  ): Promise<ClientResponseDto> {
+    await this.findOne(id, user);
+
+    const parseOptionalDate = (val: any) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') return null;
+      const d = new Date(val);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+
+    const data: any = { ...dto };
+
+    delete data.contractDate;
+    delete data.lastContractDate;
+    delete data.contractEndDate;
+
+    if (dto.contractDate !== undefined) {
+      data.contractDate = parseOptionalDate(dto.contractDate);
+    }
+
+    if (
+      dto.lastContractDate !== undefined ||
+      dto.contractEndDate !== undefined
+    ) {
+      const parsedEnd = parseOptionalDate(
+        dto.lastContractDate || dto.contractEndDate,
+      );
+      data.lastContractDate = parsedEnd;
+      data.contractEndDate = parsedEnd;
+    }
+
+    if (user.sub && user.sub !== 'system') {
+      data.updatedBy = { connect: { id: user.sub } };
+    }
+
+    try {
+      await this.clientRepository.update(id, data);
+    } catch (err: any) {
+      this.handlePrismaError(err);
     }
 
     return this.findOne(id, user);

@@ -69,19 +69,25 @@ export class SseService {
 
         return false;
       }),
-      map((event) => ({
-        data: event,
-      } as MessageEvent)),
+      map(
+        (event) =>
+          ({
+            data: event,
+          }) as MessageEvent,
+      ),
     );
 
     // Heartbeat cada 30 segundos para evitar timeouts de proxy o navegadores
     const heartbeat$ = interval(30000).pipe(
-      map(() => ({
-        data: {
-          type: 'HEARTBEAT',
-          timestamp: new Date().toISOString(),
-        },
-      } as MessageEvent)),
+      map(
+        () =>
+          ({
+            data: {
+              type: 'HEARTBEAT',
+              timestamp: new Date().toISOString(),
+            },
+          }) as MessageEvent,
+      ),
     );
 
     return merge(userEvents$, heartbeat$);

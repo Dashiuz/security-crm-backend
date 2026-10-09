@@ -11,7 +11,8 @@ export class MailService {
 
   constructor(private readonly configService: ConfigService) {
     const apiKey =
-      this.configService.get<string>('MAIL_API_KEY') || process.env.MAIL_API_KEY;
+      this.configService.get<string>('MAIL_API_KEY') ||
+      process.env.MAIL_API_KEY;
     const fromEmail =
       this.configService.get<string>('MAIL_FROM_ADDRESS') ||
       process.env.MAIL_FROM_ADDRESS ||

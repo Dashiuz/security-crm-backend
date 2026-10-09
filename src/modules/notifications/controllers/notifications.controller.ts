@@ -46,7 +46,10 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Consultar notificaciones no leídas del usuario en sesión',
   })
-  @ApiResponse({ status: 200, description: 'Listado de notificaciones no leídas' })
+  @ApiResponse({
+    status: 200,
+    description: 'Listado de notificaciones no leídas',
+  })
   getUnread() {
     return this.service.getUnread();
   }
@@ -64,7 +67,10 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Marcar todas las notificaciones pendientes como leídas',
   })
-  @ApiResponse({ status: 200, description: 'Todas las notificaciones marcadas como leídas' })
+  @ApiResponse({
+    status: 200,
+    description: 'Todas las notificaciones marcadas como leídas',
+  })
   markAllAsRead() {
     return this.service.markAllAsRead();
   }

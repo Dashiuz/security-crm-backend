@@ -10,11 +10,21 @@ describe('ClientStructureGeneratorService - SPEC-ADM-005 Tower ID Injection', ()
     createdClientPropertiesData = null;
 
     const mockTx = {
-      unit: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }), createMany: jest.fn().mockResolvedValue({ count: 0 }) },
-      floor: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }), create: jest.fn().mockResolvedValue({ id: 'floor-1' }) },
+      unit: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      floor: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        create: jest.fn().mockResolvedValue({ id: 'floor-1' }),
+      },
       tower: {
         deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-        create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: `tower-id-${data.towerName}`, ...data })),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: `tower-id-${data.towerName}`, ...data }),
+          ),
       },
       clientProperties: {
         deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
@@ -26,7 +36,9 @@ describe('ClientStructureGeneratorService - SPEC-ADM-005 Tower ID Injection', ()
     };
 
     mockPrisma = {
-      $transaction: jest.fn().mockImplementation(async (callback) => callback(mockTx)),
+      $transaction: jest
+        .fn()
+        .mockImplementation(async (callback) => callback(mockTx)),
     };
 
     service = new ClientStructureGeneratorService(mockPrisma);

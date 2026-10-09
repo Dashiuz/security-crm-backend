@@ -38,10 +38,16 @@ describe('SecurityStudiesService', () => {
     };
 
     s3Service = {
-      generateS3Key: jest.fn().mockReturnValue('tenants/tenant-123/clients/client-456/studies/test.jpg'),
+      generateS3Key: jest
+        .fn()
+        .mockReturnValue(
+          'tenants/tenant-123/clients/client-456/studies/test.jpg',
+        ),
       uploadBuffer: jest.fn().mockResolvedValue({ s3Key: 'test.jpg' }),
       uploadFile: jest.fn().mockResolvedValue({ s3Key: 'doc.pdf' }),
-      getPresignedUrl: jest.fn().mockResolvedValue('https://s3.example.com/signed-url'),
+      getPresignedUrl: jest
+        .fn()
+        .mockResolvedValue('https://s3.example.com/signed-url'),
     };
 
     configService = {
@@ -71,8 +77,14 @@ describe('SecurityStudiesService', () => {
 
   describe('create', () => {
     it('should create a new study, archive previous CURRENT studies, and increment version', async () => {
-      repository.findClientById.mockResolvedValue({ id: mockClientId, name: 'Conjunto Test' });
-      repository.findLatestStudyVersion.mockResolvedValue({ id: 'old-study', version: 2 });
+      repository.findClientById.mockResolvedValue({
+        id: mockClientId,
+        name: 'Conjunto Test',
+      });
+      repository.findLatestStudyVersion.mockResolvedValue({
+        id: 'old-study',
+        version: 2,
+      });
       repository.discontinueCurrentStudies.mockResolvedValue({ count: 1 });
       repository.createStudy.mockResolvedValue({
         id: mockStudyId,
@@ -89,13 +101,15 @@ describe('SecurityStudiesService', () => {
         mapboxCenterLat: 4.71,
         mapboxCenterLng: -74.07,
         mapboxZoom: 17,
-        mapboxBboxMinLat: 4.70,
+        mapboxBboxMinLat: 4.7,
         mapboxBboxMinLng: -74.08,
         mapboxBboxMaxLat: 4.72,
         mapboxBboxMaxLng: -74.06,
       });
 
-      expect(repository.discontinueCurrentStudies).toHaveBeenCalledWith(mockClientId);
+      expect(repository.discontinueCurrentStudies).toHaveBeenCalledWith(
+        mockClientId,
+      );
       expect(repository.createStudy).toHaveBeenCalledWith(
         expect.objectContaining({
           version: 3,
@@ -140,10 +154,9 @@ describe('SecurityStudiesService', () => {
         canvasState: { layers: [] },
       });
 
-      expect(repository.updateCanvasState).toHaveBeenCalledWith(
-        mockStudyId,
-        { layers: [] },
-      );
+      expect(repository.updateCanvasState).toHaveBeenCalledWith(mockStudyId, {
+        layers: [],
+      });
       expect(res.canvasState).toEqual({ layers: [] });
     });
 
@@ -173,17 +186,19 @@ describe('SecurityStudiesService', () => {
         description: 'New Desc',
         baseImageS3Key: 'base.jpg',
       });
-      s3Service.getPresignedUrl.mockResolvedValue('https://s3.example.com/base.jpg');
+      s3Service.getPresignedUrl.mockResolvedValue(
+        'https://s3.example.com/base.jpg',
+      );
 
       const res = await service.update(mockStudyId, {
         name: 'New Name',
         description: 'New Desc',
       });
 
-      expect(repository.updateStudy).toHaveBeenCalledWith(
-        mockStudyId,
-        { name: 'New Name', description: 'New Desc' },
-      );
+      expect(repository.updateStudy).toHaveBeenCalledWith(mockStudyId, {
+        name: 'New Name',
+        description: 'New Desc',
+      });
       expect(res.name).toBe('New Name');
       expect(res.baseImageUrl).toBe('https://s3.example.com/base.jpg');
     });
@@ -362,7 +377,9 @@ describe('SecurityStudiesService', () => {
         ],
       });
 
-      s3Service.getPresignedUrl.mockResolvedValue('https://presigned.url/photo.jpg');
+      s3Service.getPresignedUrl.mockResolvedValue(
+        'https://presigned.url/photo.jpg',
+      );
 
       const res = await service.updateFileCanvas(mockStudyId, 'f1', {
         canvasState: { strokes: [] },

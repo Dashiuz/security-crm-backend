@@ -57,7 +57,9 @@ export class PqrsService {
   async create(dto: CreatePqrsTicketDto) {
     const tenantId = this.contextService.tenantId;
     if (!tenantId) {
-      throw new BadRequestException('Contexto de empresa (tenant) no identificado');
+      throw new BadRequestException(
+        'Contexto de empresa (tenant) no identificado',
+      );
     }
 
     const contextClientId = this.contextService.clientId;
@@ -70,7 +72,10 @@ export class PqrsService {
     }
 
     // Validar que el cliente exista y pertenezca al tenant
-    const client = await this.repository.findClientForTicket(targetClientId, tenantId);
+    const client = await this.repository.findClientForTicket(
+      targetClientId,
+      tenantId,
+    );
 
     if (!client) {
       throw new NotFoundException(
@@ -158,24 +163,43 @@ export class PqrsService {
       ];
     }
 
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.max(1, Math.min(100, Number(query.limit) || 10));
-    const skip = (page - 1) * limit;
+    const limit = Math.max(
+      1,
+      Math.min(100, Number(query.take || query.limit) || 10),
+    );
+
+    let skip: number | undefined;
+    let cursorObj: { id: string } | undefined;
+
+    if (query.cursor) {
+      cursorObj = { id: query.cursor };
+      skip = 1;
+    } else {
+      const page = Math.max(1, Number(query.page) || 1);
+      skip = (page - 1) * limit;
+    }
 
     const [total, data] = await this.repository.findTicketsWithPagination({
       where,
       skip,
       take: limit,
+      cursor: cursorObj,
       orderBy: { createdAt: 'desc' },
     });
+
+    const nextCursor = data.length === limit ? data[data.length - 1].id : null;
+    const currentPage = query.cursor
+      ? undefined
+      : Math.max(1, Number(query.page) || 1);
 
     return {
       data,
       meta: {
         total,
-        page,
+        page: currentPage,
         limit,
         totalPages: Math.ceil(total / limit),
+        nextCursor,
       },
     };
   }
@@ -196,7 +220,9 @@ export class PqrsService {
 
     // Validación de acceso estricto
     if (contextClientId && ticket.clientId !== contextClientId) {
-      throw new ForbiddenException('No tiene permisos para consultar este ticket');
+      throw new ForbiddenException(
+        'No tiene permisos para consultar este ticket',
+      );
     }
 
     const hasManage =
@@ -246,7 +272,9 @@ export class PqrsService {
   async assign(id: string, dto: AssignPqrsTicketDto) {
     const tenantId = this.contextService.tenantId;
     if (!tenantId) {
-      throw new BadRequestException('Contexto de empresa (tenant) no identificado');
+      throw new BadRequestException(
+        'Contexto de empresa (tenant) no identificado',
+      );
     }
 
     const ticket = await this.repository.findTicketById(id, tenantId);
@@ -256,14 +284,20 @@ export class PqrsService {
     }
 
     // Bloquear reasignación en tickets cerrados o rechazados
-    if (ticket.status === PqrsStatus.CLOSED || ticket.status === PqrsStatus.REJECTED) {
+    if (
+      ticket.status === PqrsStatus.CLOSED ||
+      ticket.status === PqrsStatus.REJECTED
+    ) {
       throw new BadRequestException(
         `No es posible reasignar un ticket en estado terminal (${ticket.status})`,
       );
     }
 
     // Validar usuario a asignar
-    const targetUser = await this.repository.findAssigneeUser(dto.assignedToId, tenantId);
+    const targetUser = await this.repository.findAssigneeUser(
+      dto.assignedToId,
+      tenantId,
+    );
 
     if (!targetUser) {
       throw new BadRequestException(
@@ -446,7 +480,10 @@ export class PqrsService {
       );
     }
 
-    if (ticket.status === PqrsStatus.CLOSED || ticket.status === PqrsStatus.REJECTED) {
+    if (
+      ticket.status === PqrsStatus.CLOSED ||
+      ticket.status === PqrsStatus.REJECTED
+    ) {
       throw new BadRequestException(
         `No es posible modificar la prioridad de un ticket en estado [${ticket.status}]`,
       );
@@ -456,7 +493,10 @@ export class PqrsService {
       return ticket;
     }
 
-    const updated = await this.repository.updateTicketPriority(id, dto.priority);
+    const updated = await this.repository.updateTicketPriority(
+      id,
+      dto.priority,
+    );
 
     // Emitir evento de cambio de prioridad para sincronización en tiempo real vía SSE
     this.eventEmitter.emit('pqrs.ticket.priority_changed', {
@@ -476,7 +516,11 @@ export class PqrsService {
   /**
    * Agrega un mensaje o respuesta al hilo de un ticket existente
    */
-  async addMessage(id: string, dto: CreatePqrsMessageDto, userPermissions: string[]) {
+  async addMessage(
+    id: string,
+    dto: CreatePqrsMessageDto,
+    userPermissions: string[],
+  ) {
     const tenantId = this.contextService.tenantId;
     const contextClientId = this.contextService.clientId;
     const userId = this.contextService.userId;
@@ -505,7 +549,10 @@ export class PqrsService {
       );
     }
 
-    if (ticket.status === PqrsStatus.CLOSED || ticket.status === PqrsStatus.REJECTED) {
+    if (
+      ticket.status === PqrsStatus.CLOSED ||
+      ticket.status === PqrsStatus.REJECTED
+    ) {
       throw new BadRequestException(
         `No es posible agregar mensajes a un ticket en estado [${ticket.status}]`,
       );

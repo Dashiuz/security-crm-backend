@@ -124,7 +124,9 @@ describe('FeatureGuard', () => {
 
   it('should fallback to contextService.features if user.features is undefined', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue('sec_study');
-    jest.spyOn(contextService, 'features', 'get').mockReturnValue(['sec_study']);
+    jest
+      .spyOn(contextService, 'features', 'get')
+      .mockReturnValue(['sec_study']);
 
     const mockCtx = createMockContext({
       tenantId: 'tenant-1',

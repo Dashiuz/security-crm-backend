@@ -28,7 +28,8 @@ export class CreatePqrsTicketDto {
 
   @ApiProperty({
     enum: PqrsType,
-    description: 'Tipo de solicitud (PETICION, QUEJA, RECLAMO, SUGERENCIA, FELICITACION)',
+    description:
+      'Tipo de solicitud (PETICION, QUEJA, RECLAMO, SUGERENCIA, FELICITACION)',
     example: PqrsType.QUEJA,
   })
   @IsEnum(PqrsType, { message: 'Tipo de PQRS no válido' })

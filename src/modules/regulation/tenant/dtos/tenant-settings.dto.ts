@@ -28,7 +28,9 @@ export class CreateTenantSettingsDto {
   @ApiPropertyOptional({ example: 'DD/MM/YYYY', default: 'DD/MM/YYYY' })
   @IsOptional()
   @IsString({ message: 'El formato de fecha debe ser un texto válido.' })
-  @MaxLength(20, { message: 'El formato de fecha no puede superar 20 caracteres.' })
+  @MaxLength(20, {
+    message: 'El formato de fecha no puede superar 20 caracteres.',
+  })
   dateFormat?: string;
 
   @ApiPropertyOptional({ example: false, default: false })
@@ -40,12 +42,16 @@ export class CreateTenantSettingsDto {
   @IsOptional()
   @IsInt({ message: 'sessionTimeoutMinutes debe ser un número entero.' })
   @Min(5, { message: 'sessionTimeoutMinutes debe ser al menos 5 minutos.' })
-  @Max(1440, { message: 'sessionTimeoutMinutes no puede exceder 1440 minutos (24 horas).' })
+  @Max(1440, {
+    message: 'sessionTimeoutMinutes no puede exceder 1440 minutos (24 horas).',
+  })
   sessionTimeoutMinutes?: number;
 
   @ApiPropertyOptional({ enum: PasswordPolicy, default: PasswordPolicy.MEDIUM })
   @IsOptional()
-  @IsEnum(PasswordPolicy, { message: 'La política de contraseñas debe ser LOW, MEDIUM o STRICT.' })
+  @IsEnum(PasswordPolicy, {
+    message: 'La política de contraseñas debe ser LOW, MEDIUM o STRICT.',
+  })
   passwordPolicy?: PasswordPolicy;
 
   @ApiPropertyOptional({ example: 'https://example.com/favicon.ico' })
@@ -57,23 +63,31 @@ export class CreateTenantSettingsDto {
   @ApiPropertyOptional({ example: 'https://example.com/bg.jpg' })
   @IsOptional()
   @IsString({ message: 'El loginBackgroundUrl debe ser un texto válido.' })
-  @MaxLength(255, { message: 'El loginBackgroundUrl no puede superar 255 caracteres.' })
+  @MaxLength(255, {
+    message: 'El loginBackgroundUrl no puede superar 255 caracteres.',
+  })
   loginBackgroundUrl?: string;
 
   @ApiPropertyOptional({ example: 'soporte@empresa.com' })
   @IsOptional()
   @IsEmail({}, { message: 'El correo de soporte debe ser un email válido.' })
-  @MaxLength(100, { message: 'El correo de soporte no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El correo de soporte no puede superar 100 caracteres.',
+  })
   supportEmail?: string;
 
   @ApiPropertyOptional({ example: '+57 300 000 0000' })
   @IsOptional()
   @IsString({ message: 'El teléfono de soporte debe ser un texto válido.' })
-  @MaxLength(50, { message: 'El teléfono de soporte no puede superar 50 caracteres.' })
+  @MaxLength(50, {
+    message: 'El teléfono de soporte no puede superar 50 caracteres.',
+  })
   supportPhone?: string;
 }
 
-export class UpdateTenantSettingsDto extends PartialType(CreateTenantSettingsDto) {}
+export class UpdateTenantSettingsDto extends PartialType(
+  CreateTenantSettingsDto,
+) {}
 
 export class TenantSettingsResponseDto {
   @ApiProperty()

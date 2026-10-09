@@ -293,3 +293,216 @@ export class CreateClientWithStructureDto extends CreateClientDto {
 export class UpdateClientWithStructureDto extends PartialType(
   CreateClientWithStructureDto,
 ) {}
+
+export class UpdateClientOperationsDto {
+  @ApiProperty({ type: StructureConfigDto, required: false })
+  @ValidateNested()
+  @Type(() => StructureConfigDto)
+  @IsOptional()
+  structureConfig?: StructureConfigDto;
+
+  @ApiProperty({
+    example: 'REGENERAR',
+    required: false,
+    description:
+      'Código de confirmación para regenerar estructura si hay residentes existentes',
+  })
+  @IsString()
+  @IsOptional()
+  confirmationCode?: string;
+
+  @ApiProperty({ example: true, required: false })
+  @IsBoolean()
+  @IsOptional()
+  confirmRegenerate?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  geofence?: Record<string, any>;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  mapboxBaseImageS3Key?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxCenterLat?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxCenterLng?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxZoom?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxBboxMinLat?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxBboxMinLng?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxBboxMaxLat?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  mapboxBboxMaxLng?: number;
+
+  @ApiProperty({ enum: ResidentialComplexType, required: false })
+  @IsEnum(ResidentialComplexType)
+  @IsOptional()
+  structureType?: ResidentialComplexType;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasSocialRoom?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  socialRoomAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasGym?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  gymAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasPool?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  poolAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasTennisCourt?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  tennisCourtAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasBasketballCourt?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  basketballCourtAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasFootballCourt?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  footballCourtAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasVolleyballCourt?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  volleyballCourtAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasSquashCourt?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  squashCourtAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasPlayground?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  playgroundAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasParking?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  parkingAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasGuestParking?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  guestParkingAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasBicycleRack?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  bicycleRackAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasCommercialStores?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  commercialStoresAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  hasStorageRoom?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  storageRoomAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  entriesDescription?: Record<string, any>;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  entriesMediaFiles?: Record<string, any>;
+}

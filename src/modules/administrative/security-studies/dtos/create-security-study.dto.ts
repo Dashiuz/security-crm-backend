@@ -1,10 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateSecurityStudyDto {
@@ -69,7 +64,6 @@ export class CreateSecurityStudyDto {
   @Type(() => Number)
   @IsNumber()
   mapboxBboxMaxLng?: number;
-
 
   @ApiPropertyOptional({
     description: 'Estado vectorial completo del Canva Konva.js',

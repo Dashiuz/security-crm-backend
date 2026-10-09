@@ -70,7 +70,10 @@ export class NotificationListener {
         event.ticket.clientId,
       );
     } catch (err) {
-      this.logger.error('Error procesando evento pqrs.ticket.status_changed', err);
+      this.logger.error(
+        'Error procesando evento pqrs.ticket.status_changed',
+        err,
+      );
     }
   }
 
@@ -145,8 +148,10 @@ export class NotificationListener {
         event.ticket.clientId,
       );
     } catch (err) {
-      this.logger.error('Error procesando evento pqrs.ticket.priority_changed', err);
+      this.logger.error(
+        'Error procesando evento pqrs.ticket.priority_changed',
+        err,
+      );
     }
   }
 }
-
