@@ -111,7 +111,8 @@ export class TenantService {
     if (dto.slug !== undefined) updateData.slug = dto.slug;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.logoUrl !== undefined) updateData.logoUrl = dto.logoUrl;
-    if (dto.primaryColor !== undefined) updateData.primaryColor = dto.primaryColor;
+    if (dto.primaryColor !== undefined)
+      updateData.primaryColor = dto.primaryColor;
     if (dto.secondaryColor !== undefined)
       updateData.secondaryColor = dto.secondaryColor;
     if (dto.sidebarColor !== undefined)

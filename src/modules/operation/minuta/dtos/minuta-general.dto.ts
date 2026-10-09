@@ -12,6 +12,7 @@ import {
   Max,
 } from 'class-validator';
 import { RecordSource } from '@prisma/client';
+import { CursorPaginationDto } from '../../../../common/dto/cursor-pagination.dto';
 
 export class CreateMinutaDto {
   @ApiProperty({ example: '2024-02-19' })
@@ -205,7 +206,7 @@ export class UpdateMinutaDto {
   isInternal?: boolean;
 }
 
-export class MinutaFilterQueryDto {
+export class MinutaFilterQueryDto extends CursorPaginationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

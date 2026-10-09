@@ -16,9 +16,15 @@ export class CreateTenantSubscriptionDto {
   @IsEnum(PlanTier, { message: 'El plan debe ser BASIC, PRO o ENTERPRISE.' })
   planTier?: PlanTier;
 
-  @ApiPropertyOptional({ enum: SubscriptionStatus, default: SubscriptionStatus.TRIAL })
+  @ApiPropertyOptional({
+    enum: SubscriptionStatus,
+    default: SubscriptionStatus.TRIAL,
+  })
   @IsOptional()
-  @IsEnum(SubscriptionStatus, { message: 'El estado de suscripción debe ser TRIAL, ACTIVE, PAST_DUE o CANCELED.' })
+  @IsEnum(SubscriptionStatus, {
+    message:
+      'El estado de suscripción debe ser TRIAL, ACTIVE, PAST_DUE o CANCELED.',
+  })
   status?: SubscriptionStatus;
 
   @ApiPropertyOptional({ example: 5, default: 5 })
@@ -41,17 +47,24 @@ export class CreateTenantSubscriptionDto {
 
   @ApiPropertyOptional({ example: '2027-12-31T23:59:59.000Z' })
   @IsOptional()
-  @IsDateString({}, { message: 'subscriptionEndsAt debe ser una fecha ISO válida.' })
+  @IsDateString(
+    {},
+    { message: 'subscriptionEndsAt debe ser una fecha ISO válida.' },
+  )
   subscriptionEndsAt?: string;
 
   @ApiPropertyOptional({ example: 'cus_123456789' })
   @IsOptional()
   @IsString({ message: 'El ID de pasarela debe ser un texto válido.' })
-  @MaxLength(100, { message: 'El ID de pasarela no puede superar 100 caracteres.' })
+  @MaxLength(100, {
+    message: 'El ID de pasarela no puede superar 100 caracteres.',
+  })
   paymentGatewayId?: string;
 }
 
-export class UpdateTenantSubscriptionDto extends PartialType(CreateTenantSubscriptionDto) {}
+export class UpdateTenantSubscriptionDto extends PartialType(
+  CreateTenantSubscriptionDto,
+) {}
 
 export class TenantSubscriptionResponseDto {
   @ApiProperty()

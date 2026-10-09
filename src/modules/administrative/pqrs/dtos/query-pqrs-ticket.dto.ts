@@ -61,4 +61,21 @@ export class QueryPqrsTicketDto {
   @Min(1)
   @IsOptional()
   limit?: number = 10;
+
+  @ApiPropertyOptional({
+    description: 'ID del último elemento cargado para paginación por cursor',
+  })
+  @IsString()
+  @IsOptional()
+  cursor?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cantidad de registros por página (Cursor-based)',
+    default: 10,
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  take?: number;
 }

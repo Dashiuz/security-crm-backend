@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { RequestContextService } from '../../../common/context/request-context.service';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { SseService } from '../sse/sse.service';
@@ -51,7 +56,9 @@ export class NotificationsService {
     const tenantId = this.contextService.tenantId;
 
     if (!userId || !tenantId) {
-      throw new BadRequestException('Contexto de usuario o empresa no disponible');
+      throw new BadRequestException(
+        'Contexto de usuario o empresa no disponible',
+      );
     }
 
     const [data, unreadCount] = await Promise.all([
@@ -73,7 +80,9 @@ export class NotificationsService {
     const tenantId = this.contextService.tenantId;
 
     if (!userId || !tenantId) {
-      throw new BadRequestException('Contexto de usuario o empresa no disponible');
+      throw new BadRequestException(
+        'Contexto de usuario o empresa no disponible',
+      );
     }
 
     const p = Math.max(1, page);
@@ -108,7 +117,9 @@ export class NotificationsService {
     const tenantId = this.contextService.tenantId;
 
     if (!userId || !tenantId) {
-      throw new BadRequestException('Contexto de usuario o empresa no disponible');
+      throw new BadRequestException(
+        'Contexto de usuario o empresa no disponible',
+      );
     }
 
     try {
@@ -126,7 +137,9 @@ export class NotificationsService {
     const tenantId = this.contextService.tenantId;
 
     if (!userId || !tenantId) {
-      throw new BadRequestException('Contexto de usuario o empresa no disponible');
+      throw new BadRequestException(
+        'Contexto de usuario o empresa no disponible',
+      );
     }
 
     const result = await this.repository.markAllAsRead(userId, tenantId);

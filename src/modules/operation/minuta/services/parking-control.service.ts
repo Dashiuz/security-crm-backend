@@ -103,7 +103,28 @@ export class ParkingControlService {
         where.date.lte = new Date(query.endDate);
       }
     }
-    return this.repository.findMany(where);
+    const take = query?.take
+      ? Number(query.take)
+      : query?.cursor
+        ? 20
+        : undefined;
+
+    const pagination = {
+      cursor: query?.cursor,
+      take,
+      skip: query?.cursor ? 1 : undefined,
+    };
+
+    const data = await this.repository.findMany(where, pagination);
+    const nextCursor =
+      take && data.length === take ? data[data.length - 1].id : null;
+
+    return {
+      data,
+      meta: {
+        nextCursor,
+      },
+    };
   }
 
   async findOne(id: string) {

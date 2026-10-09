@@ -70,7 +70,10 @@ export class ResidentService {
     }
 
     if (user.userType === 'RESIDENCE_MANAGER') {
-      if (!user.clientId) throw new BadRequestException('Usuario administrador no tiene cliente asignado.');
+      if (!user.clientId)
+        throw new BadRequestException(
+          'Usuario administrador no tiene cliente asignado.',
+        );
       dto.clientId = user.clientId;
     }
 
@@ -208,7 +211,10 @@ export class ResidentService {
       throw new NotFoundException('Residente no encontrado');
     }
 
-    if (user.userType === 'RESIDENCE_MANAGER' && resident.clientId !== user.clientId) {
+    if (
+      user.userType === 'RESIDENCE_MANAGER' &&
+      resident.clientId !== user.clientId
+    ) {
       throw new NotFoundException('Residente no encontrado (fuera de scope)');
     }
 
@@ -295,7 +301,9 @@ export class ResidentService {
   ) {
     if (user.userType === 'RESIDENCE_MANAGER') {
       if (clientId !== user.clientId) {
-        throw new BadRequestException('No tienes permisos para importar en este conjunto.');
+        throw new BadRequestException(
+          'No tienes permisos para importar en este conjunto.',
+        );
       }
     }
 

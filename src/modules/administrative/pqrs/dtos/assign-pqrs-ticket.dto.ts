@@ -13,11 +13,11 @@ export class AssignPqrsTicketDto {
 
   @ApiPropertyOptional({
     enum: PqrsPriority,
-    description: 'Prioridad asignada o ajustada al momento de asignar el ticket',
+    description:
+      'Prioridad asignada o ajustada al momento de asignar el ticket',
     example: PqrsPriority.HIGH,
   })
   @IsEnum(PqrsPriority, { message: 'Prioridad no válida' })
   @IsOptional()
   priority?: PqrsPriority;
 }
-

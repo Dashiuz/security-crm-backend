@@ -67,7 +67,7 @@ export class UserService {
     let department = dto.department?.trim() || 'system';
     let position = dto.position?.trim() || 'system manager';
     let clientId: string | null = dto.clientId || null;
-    let userType = dto.userType || 'EMPLOYEE';
+    const userType = dto.userType || 'EMPLOYEE';
 
     if (isSystemTenant) {
       if (!fullName) {
@@ -170,13 +170,16 @@ export class UserService {
 
     if (isResidenceManager) {
       // Find or create 'residence-manager' role
-      let role = await this.roleRepository.findByName('residence-manager', this.contextService.tenantId!);
+      let role = await this.roleRepository.findByName(
+        'residence-manager',
+        this.contextService.tenantId!,
+      );
       if (!role) {
         role = await this.roleRepository.create({
           name: 'residence-manager',
           tenantId: this.contextService.tenantId!,
         });
-        // We can assign permissions here if needed using createRolePermissions, 
+        // We can assign permissions here if needed using createRolePermissions,
         // but typically a residence manager would get assigned default permissions in the UI later or handled centrally.
       }
       await this.userRepository.addUserRoles(user.id, [role.id]);
@@ -269,7 +272,7 @@ export class UserService {
       isActive: true,
     };
 
-    // Filtramos suavemente para dar prioridad, pero en la práctica 
+    // Filtramos suavemente para dar prioridad, pero en la práctica
     // cualquier usuario podría ser asignado dependiendo de la empresa.
     if (type === 'COORDINADOR') {
       // where.position = { contains: 'coordinador', mode: 'insensitive' }

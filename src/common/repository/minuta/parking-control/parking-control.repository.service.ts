@@ -14,8 +14,9 @@ export class ParkingControlRepositoryService {
 
   async findMany(
     where?: Prisma.ParkingResidentVehicleControlWhereInput,
+    pagination?: { cursor?: string; take?: number; skip?: number },
   ): Promise<any[]> {
-    const rows = await this.prisma.parkingResidentVehicleControl.findMany({
+    const args: Prisma.ParkingResidentVehicleControlFindManyArgs = {
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
@@ -32,7 +33,18 @@ export class ParkingControlRepositoryService {
         },
       },
       orderBy: { createdAt: 'desc' },
-    });
+    };
+
+    if (pagination?.cursor) {
+      args.cursor = { id: pagination.cursor };
+      args.skip = pagination.skip ?? 1;
+    }
+
+    if (pagination?.take) {
+      args.take = pagination.take;
+    }
+
+    const rows = await this.prisma.parkingResidentVehicleControl.findMany(args);
     return rows.map((r: any) => ({
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',

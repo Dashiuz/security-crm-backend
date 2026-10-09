@@ -33,7 +33,10 @@ export class CreateUserDto {
   @IsOptional()
   position?: string;
 
-  @ApiPropertyOptional({ example: 'RESIDENCE_MANAGER', enum: ['EMPLOYEE', 'RESIDENCE_MANAGER'] })
+  @ApiPropertyOptional({
+    example: 'RESIDENCE_MANAGER',
+    enum: ['EMPLOYEE', 'RESIDENCE_MANAGER'],
+  })
   @IsString({ message: 'El tipo de usuario debe ser válido.' })
   @IsOptional()
   userType?: 'EMPLOYEE' | 'RESIDENCE_MANAGER';

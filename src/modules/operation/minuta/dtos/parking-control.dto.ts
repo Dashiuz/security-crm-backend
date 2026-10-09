@@ -9,6 +9,7 @@ import {
   IsBooleanString,
 } from 'class-validator';
 import { RecordSource, VehicleCondition } from '@prisma/client';
+import { CursorPaginationDto } from '../../../../common/dto/cursor-pagination.dto';
 
 export class CreateParkingControlDto {
   @ApiProperty({ example: '2024-02-19' })
@@ -246,7 +247,7 @@ export class RegisterParkingExitDto {
   observations?: string;
 }
 
-export class ParkingFilterQueryDto {
+export class ParkingFilterQueryDto extends CursorPaginationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

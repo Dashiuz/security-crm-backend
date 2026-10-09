@@ -41,7 +41,8 @@ export class MapboxMathUtil {
     // Clamp sinLat to avoid infinities near the poles
     const clampedSinLat = Math.max(-0.9999, Math.min(0.9999, sinLat));
     const centerY =
-      (0.5 - Math.log((1 + clampedSinLat) / (1 - clampedSinLat)) / (4 * Math.PI)) *
+      (0.5 -
+        Math.log((1 + clampedSinLat) / (1 - clampedSinLat)) / (4 * Math.PI)) *
       scale;
 
     // Half dimensions

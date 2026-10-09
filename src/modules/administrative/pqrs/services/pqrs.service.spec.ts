@@ -197,6 +197,41 @@ describe('PqrsService', () => {
         }),
       );
     });
+
+    it('debe aplicar paginación por cursor y retornar nextCursor cuando hay más elementos', async () => {
+      repository.findTicketsWithPagination.mockResolvedValue([
+        10,
+        [{ id: 'ticket-1' }, { id: 'ticket-2' }],
+      ]);
+
+      const result = await service.findAll({ cursor: 'ticket-prev', take: 2 }, [
+        'pqrs:read',
+        'pqrs:manage',
+      ]);
+
+      expect(repository.findTicketsWithPagination).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cursor: { id: 'ticket-prev' },
+          skip: 1,
+          take: 2,
+        }),
+      );
+      expect(result.meta.nextCursor).toBe('ticket-2');
+    });
+
+    it('debe retornar nextCursor como null si hay menos elementos que take', async () => {
+      repository.findTicketsWithPagination.mockResolvedValue([
+        1,
+        [{ id: 'ticket-1' }],
+      ]);
+
+      const result = await service.findAll({ cursor: 'ticket-prev', take: 5 }, [
+        'pqrs:read',
+        'pqrs:manage',
+      ]);
+
+      expect(result.meta.nextCursor).toBeNull();
+    });
   });
 
   describe('assign', () => {
@@ -287,11 +322,9 @@ describe('PqrsService', () => {
       });
 
       await expect(
-        service.updateStatus(
-          'ticket-1',
-          { status: PqrsStatus.RESOLVED },
-          ['pqrs:update'],
-        ),
+        service.updateStatus('ticket-1', { status: PqrsStatus.RESOLVED }, [
+          'pqrs:update',
+        ]),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -304,11 +337,9 @@ describe('PqrsService', () => {
       });
 
       await expect(
-        service.updateStatus(
-          'ticket-1',
-          { status: PqrsStatus.ASSIGNED },
-          ['pqrs:update'],
-        ),
+        service.updateStatus('ticket-1', { status: PqrsStatus.ASSIGNED }, [
+          'pqrs:update',
+        ]),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -352,11 +383,9 @@ describe('PqrsService', () => {
       });
 
       await expect(
-        service.addMessage(
-          'ticket-1',
-          { content: 'Intento en cerrado' },
-          ['pqrs:update'],
-        ),
+        service.addMessage('ticket-1', { content: 'Intento en cerrado' }, [
+          'pqrs:update',
+        ]),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -438,11 +467,9 @@ describe('PqrsService', () => {
       contextService.clientId = mockClientId;
 
       await expect(
-        service.updatePriority(
-          'ticket-1',
-          { priority: PqrsPriority.HIGH },
-          ['pqrs:update'],
-        ),
+        service.updatePriority('ticket-1', { priority: PqrsPriority.HIGH }, [
+          'pqrs:update',
+        ]),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -457,11 +484,9 @@ describe('PqrsService', () => {
       });
 
       await expect(
-        service.updatePriority(
-          'ticket-1',
-          { priority: PqrsPriority.HIGH },
-          ['pqrs:update'],
-        ),
+        service.updatePriority('ticket-1', { priority: PqrsPriority.HIGH }, [
+          'pqrs:update',
+        ]),
       ).rejects.toThrow(BadRequestException);
     });
   });

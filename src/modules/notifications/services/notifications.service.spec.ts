@@ -78,7 +78,11 @@ describe('NotificationsService', () => {
 
     expect(res.unreadCount).toBe(1);
     expect(res.data).toHaveLength(1);
-    expect(repository.findUnread).toHaveBeenCalledWith('user-123', 'tenant-456', 15);
+    expect(repository.findUnread).toHaveBeenCalledWith(
+      'user-123',
+      'tenant-456',
+      15,
+    );
   });
 
   it('debe marcar una notificación como leída', async () => {
@@ -86,7 +90,11 @@ describe('NotificationsService', () => {
 
     const res = await service.markAsRead('notif-1');
     expect(res.isRead).toBe(true);
-    expect(repository.markAsRead).toHaveBeenCalledWith('notif-1', 'user-123', 'tenant-456');
+    expect(repository.markAsRead).toHaveBeenCalledWith(
+      'notif-1',
+      'user-123',
+      'tenant-456',
+    );
   });
 
   it('debe marcar todas las notificaciones como leídas', async () => {
@@ -95,6 +103,9 @@ describe('NotificationsService', () => {
     const res = await service.markAllAsRead();
     expect(res.success).toBe(true);
     expect(res.count).toBe(5);
-    expect(repository.markAllAsRead).toHaveBeenCalledWith('user-123', 'tenant-456');
+    expect(repository.markAllAsRead).toHaveBeenCalledWith(
+      'user-123',
+      'tenant-456',
+    );
   });
 });

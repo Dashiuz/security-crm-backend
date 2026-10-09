@@ -45,7 +45,12 @@ export class AuthService {
 
   // Login issues access + refresh (rotating sessions)
   async login(
-    user: { id: string; tenantId: string; clientId?: string | null; userType?: string | null },
+    user: {
+      id: string;
+      tenantId: string;
+      clientId?: string | null;
+      userType?: string | null;
+    },
     meta: { ip?: string; userAgent?: string },
   ): Promise<LoginResult> {
     const [permissions, roles, features] = await Promise.all([

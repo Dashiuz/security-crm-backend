@@ -12,8 +12,11 @@ export class VisitorControlRepositoryService {
     return this.prisma.visitorEntryControl.create({ data });
   }
 
-  async findMany(where?: Prisma.VisitorEntryControlWhereInput): Promise<any[]> {
-    const rows = await this.prisma.visitorEntryControl.findMany({
+  async findMany(
+    where?: Prisma.VisitorEntryControlWhereInput,
+    pagination?: { cursor?: string; take?: number; skip?: number },
+  ): Promise<any[]> {
+    const args: Prisma.VisitorEntryControlFindManyArgs = {
       where,
       include: {
         createdBy: { select: { id: true, fullName: true } },
@@ -30,7 +33,18 @@ export class VisitorControlRepositoryService {
         },
       },
       orderBy: { createdAt: 'desc' },
-    });
+    };
+
+    if (pagination?.cursor) {
+      args.cursor = { id: pagination.cursor };
+      args.skip = pagination.skip ?? 1;
+    }
+
+    if (pagination?.take) {
+      args.take = pagination.take;
+    }
+
+    const rows = await this.prisma.visitorEntryControl.findMany(args);
     return rows.map((r: any) => ({
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',

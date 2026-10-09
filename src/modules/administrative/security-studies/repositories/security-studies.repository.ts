@@ -188,7 +188,11 @@ export class SecurityStudiesRepository {
   /**
    * Actualiza la geocerca SSOT en el cliente y opcionalmente sincroniza PostGIS
    */
-  async updateClientGeofence(clientId: string, geofence: any, tenantId?: string) {
+  async updateClientGeofence(
+    clientId: string,
+    geofence: any,
+    tenantId?: string,
+  ) {
     const updated = await this.prisma.client.update({
       where: { id: clientId },
       data: { geofence },

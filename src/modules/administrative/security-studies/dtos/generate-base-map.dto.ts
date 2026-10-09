@@ -32,7 +32,10 @@ export class GenerateBaseMapDto {
   @Max(22)
   zoom: number;
 
-  @ApiPropertyOptional({ description: 'Ancho en píxeles de la imagen', default: 1280 })
+  @ApiPropertyOptional({
+    description: 'Ancho en píxeles de la imagen',
+    default: 1280,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -40,7 +43,10 @@ export class GenerateBaseMapDto {
   @Max(2560)
   width?: number = 1280;
 
-  @ApiPropertyOptional({ description: 'Alto en píxeles de la imagen', default: 720 })
+  @ApiPropertyOptional({
+    description: 'Alto en píxeles de la imagen',
+    default: 720,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

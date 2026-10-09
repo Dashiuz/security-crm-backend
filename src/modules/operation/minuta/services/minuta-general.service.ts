@@ -4,6 +4,7 @@ import {
   CreateMinutaDto,
   UpdateMinutaDto,
   VoidRecordDto,
+  MinutaFilterQueryDto,
 } from '../dtos/minuta-general.dto';
 import { RecordStatus } from '@prisma/client';
 
@@ -50,7 +51,7 @@ export class MinutaGeneralService {
     return this.repository.create(dataToCreate);
   }
 
-  async findAll(query?: any) {
+  async findAll(query?: MinutaFilterQueryDto) {
     const where: any = {
       status: { not: RecordStatus.VOIDED },
       deletedAt: null,
@@ -86,7 +87,29 @@ export class MinutaGeneralService {
         where.date.lte = new Date(query.endDate);
       }
     }
-    return this.repository.findMany(where);
+
+    const take = query?.take
+      ? Number(query.take)
+      : query?.cursor
+        ? 20
+        : undefined;
+
+    const pagination = {
+      cursor: query?.cursor,
+      take,
+      skip: query?.cursor ? 1 : undefined,
+    };
+
+    const data = await this.repository.findMany(where, pagination);
+    const nextCursor =
+      take && data.length === take ? data[data.length - 1].id : null;
+
+    return {
+      data,
+      meta: {
+        nextCursor,
+      },
+    };
   }
 
   async findOne(id: string) {
@@ -148,7 +171,9 @@ export class MinutaGeneralService {
   async remove(id: string, userId: string) {
     const existing = await this.repository.findUnique({ id });
     if (!existing || existing.deletedAt) {
-      throw new NotFoundException('Registro de minuta no encontrado o ya eliminado.');
+      throw new NotFoundException(
+        'Registro de minuta no encontrado o ya eliminado.',
+      );
     }
     return this.repository.update({ id }, {
       deletedAt: new Date(),

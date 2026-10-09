@@ -297,6 +297,41 @@ async function main() {
       key: 'client:manage',
       desc: 'Manage all client operations',
     },
+    {
+      id: 'client_read_general_perm_id',
+      key: 'client:read_general',
+      desc: 'Read client overview and basic data',
+    },
+    {
+      id: 'client_update_general_perm_id',
+      key: 'client:update_general',
+      desc: 'Update client basic general data',
+    },
+    {
+      id: 'client_read_operations_perm_id',
+      key: 'client:read_operations',
+      desc: 'Read client operational and physical structure data',
+    },
+    {
+      id: 'client_update_operations_perm_id',
+      key: 'client:update_operations',
+      desc: 'Update client operational and physical structure data',
+    },
+    {
+      id: 'client_read_legal_perm_id',
+      key: 'client:read_legal',
+      desc: 'Read client legal, contractual and council data',
+    },
+    {
+      id: 'client_update_legal_perm_id',
+      key: 'client:update_legal',
+      desc: 'Update client legal, contractual and council data',
+    },
+    {
+      id: 'client_read_residents_perm_id',
+      key: 'client:read_residents',
+      desc: 'Read client residents list and details',
+    },
     // Resident permissions
     {
       id: 'resident_read_perm_id',
@@ -417,26 +452,6 @@ async function main() {
       key: 'pqrs:manage',
       desc: 'Full administrative management of PQRS tickets',
     },
-  ];
-
-  // 4. Role Permissions
-  const rolePermissions = [
-    // GODLIKE gets all permissions including godlike:manage
-    ...permissions.map((p) => ({
-      roleId: 'b11j3fi8f29bix96dx8azfzo', // GODLIKE role
-      permissionId: p.id,
-      assignedAt: new Date(),
-      assignedBy: 'system',
-    })),
-    // ADMIN gets manage & crud permissions
-    ...permissions
-      .filter((p) => p.key !== 'godlike:manage')
-      .map((p) => ({
-        roleId: 'xv1937hvbe2zhh7a0slp2ug0', // ADMIN role
-        permissionId: p.id,
-        assignedAt: new Date(),
-        assignedBy: 'system',
-      })),
   ];
 
   // 5. Departments
@@ -637,22 +652,6 @@ async function main() {
     },
   ];
 
-  // 9. User Roles
-  const userRoles = [
-    {
-      userId: 'seed_id_01',
-      roleId: 'b11j3fi8f29bix96dx8azfzo', // GODLIKE role in system tenant
-      assignedAt: new Date(),
-      assignedBy: 'system',
-    },
-    {
-      userId: 'dk8j3u93xr56b1nf7m2qoqji',
-      roleId: 'xv1937hvbe2zhh7a0slp2ug0', // ADMIN role in p1vk4imb6ugp1z0flglw86pk tenant
-      assignedAt: new Date(),
-      assignedBy: 'system',
-    },
-  ];
-
   // Execute Seeding Sequence
   console.log('Seeding Tenants...');
   for (const item of tenants) {
@@ -766,24 +765,53 @@ async function main() {
   console.log('✅ Tenant profiles, subscriptions and settings seeded');
 
   console.log('Seeding Roles...');
+  const seededRolesMap: Record<string, string> = {};
   for (const item of roles) {
-    await prisma.role.upsert({
+    const r = await prisma.role.upsert({
       where: { tenantId_name: { tenantId: item.tenantId, name: item.name } },
       update: { name: item.name },
       create: item,
     });
+    seededRolesMap[`${item.tenantId}:${item.name}`] = r.id;
   }
   console.log('✅ Roles seeded');
 
   console.log('Seeding Permissions...');
+  const seededPermissionsMap: Record<string, string> = {};
   for (const item of permissions) {
-    await prisma.permission.upsert({
+    const p = await prisma.permission.upsert({
       where: { key: item.key },
       update: { desc: item.desc },
       create: item,
     });
+    seededPermissionsMap[item.key] = p.id;
   }
   console.log('✅ Permissions seeded');
+
+  const godlikeRoleId =
+    seededRolesMap['system:GODLIKE'] || 'b11j3fi8f29bix96dx8azfzo';
+  const adminRoleId =
+    seededRolesMap['p1vk4imb6ugp1z0flglw86pk:ADMIN'] ||
+    'xv1937hvbe2zhh7a0slp2ug0';
+
+  const rolePermissions = [
+    // GODLIKE gets all permissions including godlike:manage
+    ...Object.values(seededPermissionsMap).map((permId) => ({
+      roleId: godlikeRoleId,
+      permissionId: permId,
+      assignedAt: new Date(),
+      assignedBy: 'system',
+    })),
+    // ADMIN gets manage & crud permissions
+    ...Object.entries(seededPermissionsMap)
+      .filter(([key]) => key !== 'godlike:manage')
+      .map(([, permId]) => ({
+        roleId: adminRoleId,
+        permissionId: permId,
+        assignedAt: new Date(),
+        assignedBy: 'system',
+      })),
+  ];
 
   console.log('Seeding Role Permissions...');
   for (const item of rolePermissions) {
@@ -876,6 +904,21 @@ async function main() {
   console.log('✅ Users seeded');
 
   console.log('Seeding User Roles...');
+  const userRoles = [
+    {
+      userId: 'seed_id_01',
+      roleId: godlikeRoleId,
+      assignedAt: new Date(),
+      assignedBy: 'system',
+    },
+    {
+      userId: 'dk8j3u93xr56b1nf7m2qoqji',
+      roleId: adminRoleId,
+      assignedAt: new Date(),
+      assignedBy: 'system',
+    },
+  ];
+
   for (const item of userRoles) {
     await prisma.userRole.upsert({
       where: {
