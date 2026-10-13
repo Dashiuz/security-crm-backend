@@ -43,7 +43,10 @@ describe('UserService', () => {
       providers: [
         UserService,
         { provide: UserRepositoryService, useValue: mockUserRepository },
-        { provide: EmployeeRepositoryService, useValue: mockEmployeeRepository },
+        {
+          provide: EmployeeRepositoryService,
+          useValue: mockEmployeeRepository,
+        },
         { provide: RoleRepositoryService, useValue: mockRoleRepository },
         { provide: RequestContextService, useValue: mockContextService },
       ],

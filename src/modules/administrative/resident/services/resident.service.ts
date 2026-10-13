@@ -435,7 +435,7 @@ export class ResidentService {
           const rawIdType = row.idType
             .trim()
             .toUpperCase()
-            .replace(/[\.\-\s]/g, '');
+            .replace(/[.\-\s]/g, '');
           if (
             rawIdType === 'CC' ||
             rawIdType === 'CI' ||
