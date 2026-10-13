@@ -53,6 +53,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'SecurityStudy',
               'PqrsTicket',
               'PqrsMessage',
+              'Notification',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);

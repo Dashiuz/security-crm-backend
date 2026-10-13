@@ -4,11 +4,21 @@ import { UserService } from './user.service';
 
 describe('UserController', () => {
   let controller: UserController;
+  let mockUserService: any;
 
   beforeEach(async () => {
+    mockUserService = {
+      create: jest.fn(),
+      list: jest.fn(),
+      get: jest.fn(),
+      updatePassword: jest.fn(),
+      adminResetPassword: jest.fn(),
+      delete: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [UserService],
+      providers: [{ provide: UserService, useValue: mockUserService }],
     }).compile();
 
     controller = module.get<UserController>(UserController);

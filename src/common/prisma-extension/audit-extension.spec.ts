@@ -128,4 +128,28 @@ describe('auditExtension - Multi Client Scope', () => {
       expect(args.data.clientId).toBe('cli-100');
     });
   });
+
+  it('should automatically inject tenantId for Notification queries without creating audit logs', async () => {
+    const ctx = {
+      userId: 'user-1',
+      tenantId: 'tenant-123',
+      features: [],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+      const args: any = { where: { isRead: false } };
+
+      await allOps({
+        model: 'Notification',
+        operation: 'findMany',
+        args,
+        query: mockQuery,
+      });
+
+      expect(args.where.tenantId).toBe('tenant-123');
+      expect(args.where.isRead).toBe(false);
+      expect(mockQuery).toHaveBeenCalledWith(args);
+    });
+  });
 });

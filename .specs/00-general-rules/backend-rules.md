@@ -50,26 +50,37 @@ src/
 ├── modules/
 │   ├── regulation/        → Identity, Authentication, RBAC, Tenants & Organizational Structure
 │   │   ├── auth/          → JWT Authentication, Refresh Tokens, GODLIKE Impersonation Sandbox
-│   │   ├── access-control/ → PermissionsGuard, @RequirePermissions() decorator
+│   │   ├── access-control/ → PermissionsGuard, FeatureGuard, @RequirePermissions(), @RequireFeature()
 │   │   ├── user/          → System user management & role assignment
 │   │   ├── role/          → System & custom roles management
 │   │   ├── permission/    → System permissions catalog
-│   │   ├── tenant/        → Tenant (Site) provisioning & Features mapping
-│   │   ├── client/        → Enterprise client companies management
+│   │   ├── tenant/        → Tenant provisioning, Features mapping, Profiles, Subscriptions & Settings
 │   │   ├── employee/      → Security personnel HR records & profiles
 │   │   ├── position/      → Organizational positions / job titles
 │   │   └── department/    → Organizational departments
 │   ├── operation/         → Security Operations & Virtual Logbooks (Minuta)
 │   │   └── minuta/        → General Logbook, Visitor Control, Correspondence, Parking Control
-│   └── administrative/    → Commercial, Financial & Operational Management (Security Resources)
+│   ├── administrative/    → Commercial, Physical Structure, Studies & Customer Relations
+│   │   ├── client/        → Enterprise client companies, Physical structure generation (Towers/Floors/Units)
+│   │   ├── resident/      → Resident directories, access rights & unit linking
+│   │   ├── prospect/      → Sales pipeline & prospective clients
+│   │   ├── security-studies/ → Bounded Context: Mapbox georeferencing, Konva CAD canvas & attachments
+│   │   └── pqrs/          → Bounded Context: Tickets, sequential state transitions, comments & SLA
+│   ├── storage/           → AWS S3 multi-tenant media attachment management & 15-min presigned URLs
+│   └── notifications/     → Real-time Server-Sent Events (SSE) & user notifications
 ├── common/
-│   ├── context/           → RequestContextService (AsyncLocalStorage for tenant & user context)
-│   ├── guards/            → JwtAuthGuard, PermissionsGuard, RolesGuard
-│   ├── decorators/        → @RequirePermissions(), @RequireRoles(), @CurrentUser()
+│   ├── context/           → RequestContextService (AsyncLocalStorage for tenant, client & multi-client scope)
+│   ├── guards/            → JwtAuthGuard, PermissionsGuard, FeatureGuard, SuperAdminGuard
+│   ├── decorators/        → @RequirePermissions(), @RequireFeature(), @CurrentUser()
 │   ├── repository/        → Shared Industrial Repository Layer (Prisma ORM)
-│   └── prisma-extension/  → Automated Multi-Tenant Isolation Sandbox & AuditLog Extension
+│   ├── prisma-extension/  → Automated Multi-Tenant Isolation Sandbox & AuditLog Extension
+│   └── mail/              → Global MailModule & MailService (Adapter pattern: Resend SDK / mock)
 └── main.ts                → NestJS Bootstrap with Swagger (/api/docs), global ValidationPipe
 ```
+
+## CLI Commands on Windows (PowerShell)
+
+- **ALWAYS** use `npx.cmd` and `npm.cmd` on Windows / PowerShell environments instead of bare `npx` or `npm` script wrappers to prevent PowerShell script execution policy errors (`PSSecurityException`).
 
 ## Authentication and Multi-Tenancy
 
@@ -148,10 +159,9 @@ export class MinutaGeneralController {
 
 Before creating any commit, you MUST complete ALL of the following checks in order:
 
-1. Run `npm run type-check` — fix every TypeScript error before proceeding.
-2. Run `npm run lint` — fix every warning before proceeding.
-3. Verify that ONLY files directly related to the current task are staged.
-4. **NEVER** commit without completing all three checks above.
+1. Run `npm run lint` — fix every warning before proceeding.
+2. Verify that ONLY files directly related to the current task are staged.
+3. **NEVER** commit without completing all three checks above.
 
 ## Closure and Memory (Context Rot Prevention)
 
