@@ -33,8 +33,8 @@ El sistema garantiza:
 ### 2.1 Backend CI/CD Pipeline (`backend-ci.yml`)
 
 #### Disparadores (`on`):
-- `push` a rama `main`.
-- `pull_request` contra rama `main`.
+- `push` a ramas `[main, staging, develop]`.
+- `pull_request` contra ramas `[main, staging, develop]`.
 
 #### Jobs y Secuencia:
 1. **`code-quality-and-tests`**:
@@ -48,18 +48,22 @@ El sistema garantiza:
    - `npm test` (Jest en ambiente `NODE_ENV=test` con variables dummy seguras para evitar llamadas de red a AWS S3 o Resend).
 
 2. **`db-integrity-and-drift`** (`needs: [code-quality-and-tests]`):
-   - Conexión directa a Supabase utilizando `${{ secrets.DATABASE_URL }}` (puerto 5432 / session pooler directo).
-   - `npx prisma migrate status`: Detecta migraciones no aplicadas o desfase estructural.
+   - Conexión al Session Pooler de Supabase en IPv4 utilizando `${{ secrets.DATABASE_URL }}` (`aws-0-us-west-2.pooler.supabase.com:5432`).
+   - `npx prisma migrate status` con análisis contextual inteligente:
+     - Si el esquema está al día (código 0): Aprobado.
+     - Si se detecta *drift* estructural o error de conexión: Falla inmediata del pipeline.
+     - Si se detectan migraciones pendientes locales: En eventos `pull_request` o pushes a ramas no-producción (`staging`, `develop`) se aprueba informando que se desplegarán al mezclar a `main`, evitando falsos negativos en revisión de código. En eventos `push` a `main`, da paso ordenado al job de despliegue.
 
 3. **`deploy-to-render`** (`needs: [db-integrity-and-drift]`, condicional: `github.ref == 'refs/heads/main' && github.event_name == 'push'`):
-   - `npx prisma migrate deploy`: Aplica atómicamente las migraciones pendientes en Supabase.
+   - `npx prisma migrate deploy`: Aplica atómicamente todas las migraciones pendientes en Supabase.
+   - `npx prisma migrate status`: Post-verificación obligatoria garantizando que la base de datos de producción quedó 100% al día.
    - Disparo seguro de `RENDER_DEPLOY_HOOK_URL` mediante cURL con validación de código HTTP 200/201.
 
 ### 2.2 Frontend CI Quality Gate (`frontend-ci.yml`)
 
 #### Disparadores (`on`):
-- `push` a rama `main`.
-- `pull_request` contra rama `main`.
+- `push` a ramas `[main, staging, develop]`.
+- `pull_request` contra ramas `[main, staging, develop]`.
 
 #### Jobs y Secuencia:
 1. **`quality-gate`**:

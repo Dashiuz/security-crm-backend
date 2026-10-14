@@ -2,9 +2,9 @@ name: Backend CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging, develop]
   pull_request:
-    branches: [main]
+    branches: [main, staging, develop]
 
 jobs:
   code-quality-and-tests:
@@ -73,7 +73,42 @@ jobs:
         run: npx prisma generate
 
       - name: Check Database Migrations & Drift vs Supabase
-        run: npx prisma migrate status
+        run: |
+          set +e
+          STATUS_OUTPUT=$(npx prisma migrate status 2>&1)
+          EXIT_CODE=$?
+          set -e
+
+          echo "$STATUS_OUTPUT"
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ Database schema is 100% up to date with Supabase."
+            exit 0
+          fi
+
+          # Fail immediately if true database drift is detected
+          if echo "$STATUS_OUTPUT" | grep -qi "drift"; then
+            echo "❌ Error: Database schema drift detected against Supabase!"
+            exit 1
+          fi
+
+          # If the only discrepancy is unapplied migrations waiting to be deployed:
+          if echo "$STATUS_OUTPUT" | grep -q "Following migrations have not yet been applied"; then
+            echo "ℹ️ Pending migrations detected. These will be deployed automatically upon merge to main."
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "✅ PR validation passed: pending migrations will be applied when merged."
+              exit 0
+            fi
+            if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+              echo "ℹ️ Push to non-main branch (${{ github.ref }}): pending migrations will deploy upon merge to main."
+              exit 0
+            fi
+            echo "Push to main: proceeding to deploy job to apply pending migrations..."
+            exit 0
+          fi
+
+          # For any other failure (e.g. network timeout, auth failure), exit with original code
+          exit $EXIT_CODE
 
   deploy-to-render:
     name: Apply Migrations & Deploy to Render
@@ -100,6 +135,9 @@ jobs:
 
       - name: Apply Pending Migrations to Supabase Production
         run: npx prisma migrate deploy
+
+      - name: Verify Post-Deployment Database Integrity
+        run: npx prisma migrate status
 
       - name: Trigger Render Deploy Hook
         run: |
