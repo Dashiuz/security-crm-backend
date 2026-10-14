@@ -242,6 +242,20 @@ export class StructureConfigDto {
   guestParkingAmount?: number;
 
   @ApiProperty({ default: false, required: false })
+  @IsBoolean({
+    message: 'El indicador de parqueadero de motos debe ser booleano.',
+  })
+  @IsOptional()
+  hasMotorcycleParking?: boolean;
+
+  @ApiProperty({ default: 0, required: false })
+  @IsInt({
+    message: 'La cantidad de parqueaderos de motos debe ser un entero.',
+  })
+  @IsOptional()
+  motorcycleParkingAmount?: number;
+
+  @ApiProperty({ default: false, required: false })
   @IsBoolean({ message: 'El indicador de bicicletero debe ser booleano.' })
   @IsOptional()
   hasBicycleRack?: boolean;
@@ -250,6 +264,13 @@ export class StructureConfigDto {
   @IsInt({ message: 'La cantidad de bicicleteros debe ser un entero.' })
   @IsOptional()
   bicycleRackAmount?: number;
+
+  @ApiProperty({ default: 0, required: false })
+  @IsInt({
+    message: 'La capacidad por bicicletero debe ser un entero.',
+  })
+  @IsOptional()
+  bicycleCapacityPerRack?: number;
 
   @ApiProperty({ default: false, required: false })
   @IsBoolean({
@@ -471,12 +492,27 @@ export class UpdateClientOperationsDto {
   @ApiProperty({ required: false })
   @IsBoolean()
   @IsOptional()
+  hasMotorcycleParking?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  motorcycleParkingAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
   hasBicycleRack?: boolean;
 
   @ApiProperty({ required: false })
   @IsInt()
   @IsOptional()
   bicycleRackAmount?: number;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  bicycleCapacityPerRack?: number;
 
   @ApiProperty({ required: false })
   @IsBoolean()
