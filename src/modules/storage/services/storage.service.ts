@@ -57,7 +57,10 @@ export class StorageService {
       uploadedById: userId,
     };
 
-    if (dto.clientId) {
+    const isTempId = (id?: string | null) =>
+      !id || id === 'temp' || id === 'new' || id.startsWith('temp_');
+
+    if (dto.clientId && !isTempId(dto.clientId)) {
       data.client = { connect: { id: dto.clientId } };
     }
 
@@ -71,8 +74,10 @@ export class StorageService {
       data.parkingVehicle = { connect: { id: dto.entityId } };
     } else if (dto.entityType === MediaTypeCategory.EMPLOYEE) {
       data.employee = { connect: { id: dto.entityId } };
-    } else if (dto.entityType === MediaTypeCategory.CLIENT) {
-      data.client = { connect: { id: dto.entityId } };
+    } else if (dto.entityType === MediaTypeCategory.CLIENT || (dto.entityType as any) === 'DOCUMENT') {
+      if (!isTempId(dto.entityId)) {
+        data.client = { connect: { id: dto.entityId } };
+      }
     } else if (dto.entityType === MediaTypeCategory.PQRS) {
       if (dto.subType === 'message') {
         data.pqrsMessage = { connect: { id: dto.entityId } };
