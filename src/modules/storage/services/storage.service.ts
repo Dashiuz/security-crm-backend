@@ -74,7 +74,10 @@ export class StorageService {
       data.parkingVehicle = { connect: { id: dto.entityId } };
     } else if (dto.entityType === MediaTypeCategory.EMPLOYEE) {
       data.employee = { connect: { id: dto.entityId } };
-    } else if (dto.entityType === MediaTypeCategory.CLIENT || (dto.entityType as any) === 'DOCUMENT') {
+    } else if (
+      dto.entityType === MediaTypeCategory.CLIENT ||
+      (dto.entityType as any) === 'DOCUMENT'
+    ) {
       if (!isTempId(dto.entityId)) {
         data.client = { connect: { id: dto.entityId } };
       }
