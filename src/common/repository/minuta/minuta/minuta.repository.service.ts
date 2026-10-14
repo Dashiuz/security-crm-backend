@@ -17,7 +17,7 @@ export class MinutaRepositoryService {
     const args: Prisma.MinutaFindManyArgs = {
       where,
       include: {
-        createdBy: { select: { id: true, fullName: true } },
+        createdBy: { select: { id: true, fullName: true, position: true } },
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
         resident: {
@@ -43,6 +43,7 @@ export class MinutaRepositoryService {
     return rows.map((r: any) => ({
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',
+      creatorPosition: r.createdBy?.position || 'Guarda',
       clientName: r.client?.name || null,
       unitName: r.unit?.unitName || null,
       residentName: r.resident
@@ -55,7 +56,7 @@ export class MinutaRepositoryService {
     const r = await this.prisma.minuta.findUnique({
       where,
       include: {
-        createdBy: { select: { id: true, fullName: true } },
+        createdBy: { select: { id: true, fullName: true, position: true } },
         client: { select: { id: true, name: true } },
         unit: { select: { id: true, unitName: true, unitType: true } },
         resident: {
@@ -70,6 +71,7 @@ export class MinutaRepositoryService {
     return {
       ...r,
       createdBy: r.createdBy?.fullName || 'Sistema',
+      creatorPosition: r.createdBy?.position || 'Guarda',
       clientName: r.client?.name || null,
       unitName: r.unit?.unitName || null,
       residentName: r.resident
