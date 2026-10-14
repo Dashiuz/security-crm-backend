@@ -633,8 +633,10 @@ export class ClientService {
     if (geofence !== undefined) clientData.geofence = geofence;
     if (mapboxBaseImageS3Key !== undefined)
       clientData.mapboxBaseImageS3Key = mapboxBaseImageS3Key;
-    if (mapboxCenterLat !== undefined) clientData.mapboxCenterLat = mapboxCenterLat;
-    if (mapboxCenterLng !== undefined) clientData.mapboxCenterLng = mapboxCenterLng;
+    if (mapboxCenterLat !== undefined)
+      clientData.mapboxCenterLat = mapboxCenterLat;
+    if (mapboxCenterLng !== undefined)
+      clientData.mapboxCenterLng = mapboxCenterLng;
     if (mapboxZoom !== undefined) clientData.mapboxZoom = mapboxZoom;
     if (mapboxBboxMinLat !== undefined)
       clientData.mapboxBboxMinLat = mapboxBboxMinLat;

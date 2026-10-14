@@ -146,6 +146,7 @@ export class EmployeeService {
       document,
       birthdate,
       gender: dto.gender.trim(),
+      address: dto.address.trim(),
       clientId: dto.clientId || null,
       departmentId: dto.departmentId || null,
       positionId: dto.positionId || null,

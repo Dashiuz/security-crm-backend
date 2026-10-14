@@ -264,7 +264,11 @@ export class UpdateClientGeneralDto {
   @IsOptional()
   internalCode?: string;
 
-  @ApiProperty({ enum: ClientStatus, default: ClientStatus.ACTIVE, required: false })
+  @ApiProperty({
+    enum: ClientStatus,
+    default: ClientStatus.ACTIVE,
+    required: false,
+  })
   @IsEnum(ClientStatus, { message: 'Estado del cliente no válido.' })
   @IsOptional()
   clientStatus?: ClientStatus;
@@ -280,8 +284,13 @@ export class UpdateClientGeneralDto {
   name?: string;
 
   @ApiProperty({ example: 'admin@laspalmas.com', required: false })
-  @ValidateIf((o) => o.email !== undefined && o.email !== null && o.email !== '')
-  @IsEmail({}, { message: 'El correo electrónico principal no tiene un formato válido.' })
+  @ValidateIf(
+    (o) => o.email !== undefined && o.email !== null && o.email !== '',
+  )
+  @IsEmail(
+    {},
+    { message: 'El correo electrónico principal no tiene un formato válido.' },
+  )
   @IsOptional()
   email?: string;
 
@@ -350,7 +359,11 @@ export class UpdateClientGeneralDto {
   @IsOptional()
   observations?: string;
 
-  @ApiProperty({ enum: ClientSector, default: ClientSector.RESIDENTIAL, required: false })
+  @ApiProperty({
+    enum: ClientSector,
+    default: ClientSector.RESIDENTIAL,
+    required: false,
+  })
   @IsEnum(ClientSector, { message: 'Sector del cliente no válido.' })
   @IsOptional()
   sector?: ClientSector;

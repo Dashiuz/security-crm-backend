@@ -128,7 +128,10 @@ describe('ClientService (SPEC-UI-002)', () => {
       providers: [
         ClientService,
         { provide: ClientRepositoryService, useValue: clientRepository },
-        { provide: ClientStructureGeneratorService, useValue: structureGenerator },
+        {
+          provide: ClientStructureGeneratorService,
+          useValue: structureGenerator,
+        },
         { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
@@ -263,7 +266,11 @@ describe('ClientService (SPEC-UI-002)', () => {
       });
 
       await expect(
-        service.updateGeneral('client-001', { nit: '900123456-7' }, mockAdminUser),
+        service.updateGeneral(
+          'client-001',
+          { nit: '900123456-7' },
+          mockAdminUser,
+        ),
       ).rejects.toThrow(ConflictException);
     });
   });
