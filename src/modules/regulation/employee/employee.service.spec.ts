@@ -41,7 +41,9 @@ describe('EmployeeService', () => {
     };
 
     mockS3Service = {
-      getPresignedUrl: jest.fn().mockResolvedValue('https://s3.example.com/avatar.jpg'),
+      getPresignedUrl: jest
+        .fn()
+        .mockResolvedValue('https://s3.example.com/avatar.jpg'),
     };
 
     const module: TestingModule = await Test.createTestingModule({

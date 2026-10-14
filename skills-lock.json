@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "access-control-rbac": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/access-control-rbac/SKILL.md",
+      "computedHash": "da43d66056c50af4c5ea3f24331d5862c9928b5a4dcbbab6d9dc4930b02fc0b3"
+    },
+    "api-authentication": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/api-authentication/SKILL.md",
+      "computedHash": "da093972b72908b941d2255e1b717292cb5220d850efbb38e80b0e38bd6072f9"
+    },
+    "api-design-principles": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/backend-development/skills/api-design-principles/SKILL.md",
+      "computedHash": "a91429c25bb978f99f5da8d8752b8ae87ece51abcb24acb3953a5b1662c9bd5c"
+    },
+    "generate-swagger-docs": {
+      "source": "qodex-ai/ai-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/generate-swagger-docs/SKILL.md",
+      "computedHash": "9285d7f0a03e5aa0192e85b9f8397316e3e4cd1834f26d6c999d5952059f7294"
+    },
+    "nestjs-expert": {
+      "source": "sickn33/agentic-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nestjs-expert/SKILL.md",
+      "computedHash": "7b83be17282c0125e7cf9249524f6da6d3072ccdea42e08e5e80cb3a4bfaa764"
+    },
+    "prisma-expert": {
+      "source": "sickn33/agentic-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/prisma-expert/SKILL.md",
+      "computedHash": "b3daea9cf7050b46163b6faeea984fa01679e32d61a1f2705cadd9365e549f09"
+    }
+  }
+}

@@ -140,7 +140,11 @@ describe('ClientController', () => {
       } as any);
 
       const result = await controller.updateOperations('c-1', dto, mockRequest);
-      expect(service.updateOperations).toHaveBeenCalledWith('c-1', dto, mockUser);
+      expect(service.updateOperations).toHaveBeenCalledWith(
+        'c-1',
+        dto,
+        mockUser,
+      );
       expect(result).toEqual({ id: 'c-1', hasSocialRoom: true });
     });
   });
@@ -182,7 +186,10 @@ describe('ClientController', () => {
     });
 
     it('should delegate reactivate to service', async () => {
-      service.reactivate.mockResolvedValue({ id: 'c-1', isActive: true } as any);
+      service.reactivate.mockResolvedValue({
+        id: 'c-1',
+        isActive: true,
+      } as any);
       const result = await controller.reactivate('c-1', mockRequest);
       expect(service.reactivate).toHaveBeenCalledWith('c-1', mockUser);
       expect(result).toEqual({ id: 'c-1', isActive: true });
