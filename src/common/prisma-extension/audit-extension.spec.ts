@@ -152,4 +152,33 @@ describe('auditExtension - Multi Client Scope', () => {
       expect(mockQuery).toHaveBeenCalledWith(args);
     });
   });
+
+  it('should automatically inject tenantId for tenant satellite models (TenantProfile, TenantSubscription, TenantSettings)', async () => {
+    const ctx = {
+      userId: 'user-1',
+      tenantId: 'tenant-abc',
+      features: [],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+      const satelliteModels = [
+        'TenantProfile',
+        'TenantSubscription',
+        'TenantSettings',
+      ];
+
+      for (const model of satelliteModels) {
+        const args: any = { where: {} };
+        await allOps({
+          model,
+          operation: 'findUnique',
+          args,
+          query: mockQuery,
+        });
+
+        expect(args.where.tenantId).toBe('tenant-abc');
+      }
+    });
+  });
 });

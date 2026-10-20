@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PermissionRepositoryService } from '../../../common/repository/index';
 import { RequestContextService } from '../../../common/context/request-context.service';
@@ -14,6 +15,8 @@ import {
 
 @Injectable()
 export class PermissionService {
+  private readonly logger = new Logger(PermissionService.name);
+
   constructor(
     private readonly permissionRepository: PermissionRepositoryService,
     private readonly contextService: RequestContextService,
@@ -37,6 +40,10 @@ export class PermissionService {
     try {
       return await this.permissionRepository.createPermission(dto);
     } catch (e: any) {
+      this.logger.error(
+        `Error al crear permiso [${dto.key}]: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2002') {
         throw new BadRequestException(
           `Permission with key "${dto.key}" already exists`,
@@ -66,6 +73,10 @@ export class PermissionService {
     try {
       return await this.permissionRepository.updatePermission(id, dto);
     } catch (e: any) {
+      this.logger.error(
+        `Error al actualizar permiso [${id}]: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2002') {
         throw new BadRequestException(
           `Permission with key "${dto.key}" already exists`,
@@ -91,6 +102,10 @@ export class PermissionService {
     try {
       return await this.permissionRepository.deletePermission(id);
     } catch (e: any) {
+      this.logger.error(
+        `Error al eliminar permiso [${id}]: ${e?.message || e}`,
+        e?.stack,
+      );
       // Prisma error for foreign key violation
       if (e?.code === 'P2003') {
         throw new BadRequestException(

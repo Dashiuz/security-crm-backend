@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { ResidentRepositoryService } from '../../../../common/repository/resident/resident.repository.service';
 import { PrismaService } from '../../../../prisma/prisma.service';
@@ -16,6 +17,8 @@ import { ResidentType, IdType } from '@prisma/client';
 
 @Injectable()
 export class ResidentService {
+  private readonly logger = new Logger(ResidentService.name);
+
   constructor(
     private readonly residentRepository: ResidentRepositoryService,
     private readonly prisma: PrismaService,
@@ -103,6 +106,10 @@ export class ResidentService {
       const res = await this.residentRepository.create(data);
       return this.findOne(res.id, user);
     } catch (err: any) {
+      this.logger.error(
+        `Error al crear residente [${dto.document}]: ${err?.message || err}`,
+        err?.stack,
+      );
       if (err?.code === 'P2002') {
         throw new ConflictException(
           `Ya existe un residente registrado con el número de documento "${dto.document}" en este conjunto residencial.`,
@@ -276,6 +283,10 @@ export class ResidentService {
     try {
       await this.residentRepository.update(id, data);
     } catch (err: any) {
+      this.logger.error(
+        `Error al actualizar residente [${id}]: ${err?.message || err}`,
+        err?.stack,
+      );
       if (err?.code === 'P2002') {
         throw new ConflictException(
           `Ya existe un residente registrado con el número de documento "${dto.document || current.document}" en este conjunto residencial.`,
@@ -490,6 +501,10 @@ export class ResidentService {
         createdResidents.push(created);
         successRows++;
       } catch (err: any) {
+        this.logger.error(
+          `Error al importar residente fila ${rowNum} (${row.document}): ${err?.message || err}`,
+          err?.stack,
+        );
         errorRows++;
         errors.push({
           row: rowNum,

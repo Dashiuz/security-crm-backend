@@ -23,8 +23,16 @@ import { PqrsTicketAssignedEvent } from '../events/pqrs-ticket-assigned.event';
 import { PqrsRepository } from '../repositories/pqrs.repository';
 
 const ALLOWED_TRANSITIONS: Record<PqrsStatus, PqrsStatus[]> = {
-  [PqrsStatus.OPEN]: [PqrsStatus.ASSIGNED, PqrsStatus.REJECTED, PqrsStatus.VOIDED],
-  [PqrsStatus.ASSIGNED]: [PqrsStatus.IN_PROGRESS, PqrsStatus.REJECTED, PqrsStatus.VOIDED],
+  [PqrsStatus.OPEN]: [
+    PqrsStatus.ASSIGNED,
+    PqrsStatus.REJECTED,
+    PqrsStatus.VOIDED,
+  ],
+  [PqrsStatus.ASSIGNED]: [
+    PqrsStatus.IN_PROGRESS,
+    PqrsStatus.REJECTED,
+    PqrsStatus.VOIDED,
+  ],
   [PqrsStatus.IN_PROGRESS]: [PqrsStatus.RESOLVED],
   [PqrsStatus.RESOLVED]: [PqrsStatus.CLOSED, PqrsStatus.IN_PROGRESS],
   [PqrsStatus.CLOSED]: [],
@@ -483,7 +491,7 @@ export class PqrsService {
     const tenantId = this.contextService.tenantId;
     const userId = this.contextService.userId;
 
-    const ticket = await this.repository.findTicketById(id, tenantId!);
+    const ticket = await this.repository.findTicketById(id, tenantId);
     if (!ticket) {
       throw new NotFoundException(`Ticket PQRS [${id}] no encontrado`);
     }

@@ -8,9 +8,9 @@ model Tenant {
   createdBy      String?
   updatedBy      String?
   logoUrl        String?
-  primaryColor   String?  @default("#1976d2")
-  secondaryColor String?  @default("#9c27b0")
-  sidebarColor   String?
+  primaryColor   String?  @default("#7C3AED")
+  secondaryColor String?  @default("#5B21B6")
+  sidebarColor   String?  @default("#1E1B4B")
 
   profile                        TenantProfile?
   subscription                   TenantSubscription?

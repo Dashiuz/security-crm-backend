@@ -43,7 +43,9 @@ describe('RoleController', () => {
   describe('list', () => {
     it('should delegate list to roleService.list with tenantId', async () => {
       const req = { user: { tenantId: 'tenant-1' } };
-      mockRoleService.list.mockResolvedValue([{ id: 'role-1', name: 'OPERATOR' }]);
+      mockRoleService.list.mockResolvedValue([
+        { id: 'role-1', name: 'OPERATOR' },
+      ]);
 
       const result = await controller.list(req);
       expect(mockRoleService.list).toHaveBeenCalledWith('tenant-1');
@@ -54,10 +56,16 @@ describe('RoleController', () => {
   describe('findOne', () => {
     it('should delegate findOne to roleService.findOne with tenantId and roleId', async () => {
       const req = { user: { tenantId: 'tenant-1' } };
-      mockRoleService.findOne.mockResolvedValue({ id: 'role-1', name: 'OPERATOR' });
+      mockRoleService.findOne.mockResolvedValue({
+        id: 'role-1',
+        name: 'OPERATOR',
+      });
 
       const result = await controller.findOne(req, 'role-1');
-      expect(mockRoleService.findOne).toHaveBeenCalledWith('tenant-1', 'role-1');
+      expect(mockRoleService.findOne).toHaveBeenCalledWith(
+        'tenant-1',
+        'role-1',
+      );
       expect(result).toEqual({ id: 'role-1', name: 'OPERATOR' });
     });
   });
@@ -69,7 +77,11 @@ describe('RoleController', () => {
       mockRoleService.update.mockResolvedValue({ id: 'role-1', ...dto });
 
       const result = await controller.update(req, 'role-1', dto);
-      expect(mockRoleService.update).toHaveBeenCalledWith('tenant-1', 'role-1', dto);
+      expect(mockRoleService.update).toHaveBeenCalledWith(
+        'tenant-1',
+        'role-1',
+        dto,
+      );
       expect(result).toEqual({ id: 'role-1', ...dto });
     });
   });
@@ -77,12 +89,19 @@ describe('RoleController', () => {
   describe('toggleStatus', () => {
     it('should delegate toggleStatus to roleService.update with isActive', async () => {
       const req = { user: { tenantId: 'tenant-1' } };
-      mockRoleService.update.mockResolvedValue({ id: 'role-1', isActive: false });
-
-      const result = await controller.toggleStatus(req, 'role-1', false);
-      expect(mockRoleService.update).toHaveBeenCalledWith('tenant-1', 'role-1', {
+      mockRoleService.update.mockResolvedValue({
+        id: 'role-1',
         isActive: false,
       });
+
+      const result = await controller.toggleStatus(req, 'role-1', false);
+      expect(mockRoleService.update).toHaveBeenCalledWith(
+        'tenant-1',
+        'role-1',
+        {
+          isActive: false,
+        },
+      );
       expect(result).toEqual({ id: 'role-1', isActive: false });
     });
   });

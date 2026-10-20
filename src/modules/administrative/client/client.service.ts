@@ -71,6 +71,10 @@ export class ClientService {
   }
 
   private handlePrismaError(error: any): never {
+    this.logger.error(
+      `Error en operación Prisma de Client: ${error?.message || error}`,
+      error?.stack,
+    );
     if (error?.code === 'P2002') {
       const target = (error?.meta?.target as string[]) || [];
       const targetStr = Array.isArray(target)
@@ -220,6 +224,10 @@ export class ClientService {
           user.sub,
         );
       } catch (err: any) {
+        this.logger.error(
+          `Error al generar la estructura física del conjunto: ${err?.message || err}`,
+          err?.stack,
+        );
         throw new BadRequestException(
           `Error al generar la estructura física del conjunto: ${err.message}`,
         );
@@ -981,6 +989,10 @@ export class ClientService {
         createdClients.push(created);
         successRows++;
       } catch (err: any) {
+        this.logger.error(
+          `Error al importar cliente fila ${rowNum} (${row.nit || row.NIT}): ${err?.message || err}`,
+          err?.stack,
+        );
         errorRows++;
         errors.push({
           row: rowNum,
@@ -1376,8 +1388,11 @@ export class ClientService {
             },
           });
         }
-      } catch (err) {
-        // Continue if employee sync fails
+      } catch (err: any) {
+        this.logger.error(
+          `Error sincronizando historial de cliente en empleado ${employee.id}: ${err?.message || err}`,
+          err?.stack,
+        );
       }
     }
 
