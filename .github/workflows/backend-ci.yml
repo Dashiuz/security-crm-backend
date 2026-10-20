@@ -93,7 +93,7 @@ jobs:
           fi
 
           # If the only discrepancy is unapplied migrations waiting to be deployed:
-          if echo "$STATUS_OUTPUT" | grep -q "Following migrations have not yet been applied"; then
+          if echo "$STATUS_OUTPUT" | grep -qi "have not yet been applied"; then
             echo "ℹ️ Pending migrations detected. These will be deployed automatically upon merge to main."
             if [ "${{ github.event_name }}" = "pull_request" ]; then
               echo "✅ PR validation passed: pending migrations will be applied when merged."
