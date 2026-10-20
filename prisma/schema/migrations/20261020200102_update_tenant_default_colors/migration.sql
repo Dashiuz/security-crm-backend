@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "tenant" ALTER COLUMN "primaryColor" SET DEFAULT '#7C3AED',
+ALTER COLUMN "secondaryColor" SET DEFAULT '#5B21B6',
+ALTER COLUMN "sidebarColor" SET DEFAULT '#1E1B4B';

@@ -47,6 +47,10 @@ export class ProspectService {
   }
 
   private handlePrismaError(error: any): never {
+    this.logger.error(
+      `Error en operación Prisma de Prospect: ${error?.message || error}`,
+      error?.stack,
+    );
     if (error?.code === 'P2002') {
       const target = (error?.meta?.target as string[]) || [];
       const targetStr = Array.isArray(target)
@@ -107,6 +111,10 @@ export class ProspectService {
           user.sub,
         );
       } catch (err: any) {
+        this.logger.error(
+          `Error al generar la estructura del prospecto: ${err?.message || err}`,
+          err?.stack,
+        );
         throw new BadRequestException(
           `Error al generar la estructura del prospecto: ${err.message}`,
         );
