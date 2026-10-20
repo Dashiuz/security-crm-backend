@@ -2,23 +2,30 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import {
   UserRepositoryService,
   EmployeeRepositoryService,
   RoleRepositoryService,
+  ClientRepositoryService,
 } from '../../../common/repository/index';
 import { RequestContextService } from '../../../common/context/request-context.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateUserDto, UserResponseDto } from './dtos/index';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     private readonly userRepository: UserRepositoryService,
     private readonly employeeRepository: EmployeeRepositoryService,
     private readonly roleRepository: RoleRepositoryService,
     private readonly contextService: RequestContextService,
+    private readonly clientRepository: ClientRepositoryService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private mapUserToResponse(row: any): UserResponseDto {
@@ -83,6 +90,60 @@ export class UserService {
           'El ID del cliente es requerido para administradores de conjunto.',
         );
       }
+
+      // 1) Verify client existence and tenant isolation
+      const client = await this.clientRepository.findOne(clientId);
+      if (!client || client.tenantId !== this.contextService.tenantId) {
+        throw new BadRequestException(
+          'El conjunto residencial especificado no existe o no pertenece a la organización.',
+        );
+      }
+
+      // 2) Validate that dto.document belongs to client's registered administrators
+      const admComp: any = client.administrationCompanyData || {};
+      const validDocs: string[] = [];
+
+      if (
+        client.administrationType === 'INDIVIDUAL' ||
+        !client.administrationType
+      ) {
+        const doc = (
+          admComp.identificationNumber ||
+          admComp.representativeDocument ||
+          ''
+        ).trim();
+        if (doc) validDocs.push(doc);
+        if (!fullName && client.administrator) {
+          fullName = client.administrator.trim();
+        }
+      } else if (client.administrationType === 'ENTERPRISE') {
+        const repDoc = (admComp.legalRepId || '').trim();
+        if (repDoc) {
+          validDocs.push(repDoc);
+          if (!fullName && repDoc === dto.document.trim()) {
+            fullName = (admComp.legalRepName || '').trim();
+          }
+        }
+        const additional = Array.isArray(admComp.additionalContacts)
+          ? admComp.additionalContacts
+          : [];
+        for (const c of additional) {
+          const cDoc = (c.document || c.idNumber || '').trim();
+          if (cDoc) {
+            validDocs.push(cDoc);
+            if (!fullName && cDoc === dto.document.trim()) {
+              fullName = (c.name || '').trim();
+            }
+          }
+        }
+      }
+
+      if (!validDocs.includes(dto.document.trim())) {
+        throw new BadRequestException(
+          'El documento de identidad no corresponde a ningún administrador registrado en los datos legales del conjunto residencial.',
+        );
+      }
+
       if (!fullName) {
         throw new BadRequestException('El nombre completo es requerido.');
       }
@@ -110,7 +171,84 @@ export class UserService {
     const existingUser = await this.userRepository.findByDocument(dto.document);
 
     if (existingUser) {
+      if (
+        existingUser.tenantId !== this.contextService.tenantId &&
+        !isSystemTenant
+      ) {
+        throw new BadRequestException(
+          'El documento ya se encuentra registrado en otra organización.',
+        );
+      }
+
       if (existingUser.isActive) {
+        if (isResidenceManager) {
+          // Check if user already has access to this client
+          const existingAccess = await this.prisma.userClientAccess.findFirst({
+            where: {
+              userId: existingUser.id,
+              clientId: clientId!,
+              isActive: true,
+            },
+          });
+
+          if (existingUser.clientId === clientId || existingAccess) {
+            throw new BadRequestException(
+              'Este administrador ya cuenta con acceso activo a este conjunto residencial.',
+            );
+          }
+
+          // Authorize access to additional client (Multi-client support)
+          await this.prisma.userClientAccess.upsert({
+            where: {
+              userId_clientId: {
+                userId: existingUser.id,
+                clientId: clientId!,
+              },
+            },
+            create: {
+              tenantId: this.contextService.tenantId!,
+              userId: existingUser.id,
+              clientId: clientId!,
+              roleName: dto.roleName || 'Administrador de Conjunto',
+              isActive: true,
+            },
+            update: {
+              isActive: true,
+              roleName: dto.roleName || undefined,
+            },
+          });
+
+          // Ensure active primary clientId if null
+          if (!existingUser.clientId) {
+            await this.prisma.user.update({
+              where: { id: existingUser.id },
+              data: { clientId },
+            });
+          }
+
+          // Ensure residence-manager role
+          let role = await this.roleRepository.findByName(
+            'residence-manager',
+            this.contextService.tenantId!,
+          );
+          if (!role) {
+            role = await this.roleRepository.create({
+              name: 'residence-manager',
+              tenantId: this.contextService.tenantId!,
+            });
+          }
+          const hasRole = (existingUser.roles || []).some(
+            (r: any) =>
+              r.role?.name === 'residence-manager' || r.roleId === role.id,
+          );
+          if (!hasRole) {
+            await this.userRepository.addUserRoles(existingUser.id, [role.id]);
+          }
+
+          const updatedUser = await this.userRepository.getMe(existingUser.id);
+          return this.mapUserToResponse(updatedUser);
+        }
+
         throw new BadRequestException(
           isSystemTenant
             ? 'Ya existe un usuario registrado con este documento en el sistema.'
@@ -118,11 +256,14 @@ export class UserService {
         );
       }
 
-      // REACTIVATION LOGIC
-      // 3) Hash new password
+      // REACTIVATION LOGIC (existingUser.isActive === false)
+      if (!dto.password || dto.password.length < 8) {
+        throw new BadRequestException(
+          'Password must be at least 8 characters.',
+        );
+      }
       const passwordHash = await this.hashPassword(dto.password);
 
-      // 4) Reactivate and update user data
       const reactivatedUser = await this.userRepository.reactivateUser(
         existingUser.id,
         {
@@ -135,17 +276,41 @@ export class UserService {
         } as any,
       );
 
-      // 5) Sync roles (remove old, add new)
-      if (dto.roleIds) {
-        // Remove existing roles
-        const existingRoleIds = existingUser.roles.map((r: any) => r.role.id);
-        if (existingRoleIds.length > 0) {
-          await this.userRepository.deleteUserRoles(
-            existingUser.id,
-            existingRoleIds,
-          );
+      if (isResidenceManager) {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: existingUser.id,
+              clientId: clientId!,
+            },
+          },
+          create: {
+            tenantId: this.contextService.tenantId!,
+            userId: existingUser.id,
+            clientId: clientId!,
+            roleName: dto.roleName || 'Administrador de Conjunto',
+            isActive: true,
+          },
+          update: {
+            isActive: true,
+            roleName: dto.roleName || undefined,
+          },
+        });
+
+        let role = await this.roleRepository.findByName(
+          'residence-manager',
+          this.contextService.tenantId!,
+        );
+        if (!role) {
+          role = await this.roleRepository.create({
+            name: 'residence-manager',
+            tenantId: this.contextService.tenantId!,
+          });
         }
-        // Add new roles
+        await this.userRepository.deleteAllUserRoles(existingUser.id);
+        await this.userRepository.addUserRoles(existingUser.id, [role.id]);
+      } else if (dto.roleIds !== undefined) {
+        await this.userRepository.deleteAllUserRoles(existingUser.id);
         if (dto.roleIds.length > 0) {
           await this.userRepository.addUserRoles(existingUser.id, dto.roleIds);
         }
@@ -155,7 +320,10 @@ export class UserService {
       return this.mapUserToResponse(finalUser);
     }
 
-    // 6) Normal creation flow
+    // Normal creation flow
+    if (!dto.password || dto.password.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters.');
+    }
     const passwordHash = await this.hashPassword(dto.password);
 
     const user = await this.userRepository.createUser({
@@ -169,7 +337,16 @@ export class UserService {
     } as any);
 
     if (isResidenceManager) {
-      // Find or create 'residence-manager' role
+      await this.prisma.userClientAccess.create({
+        data: {
+          tenantId: this.contextService.tenantId!,
+          userId: user.id,
+          clientId: clientId!,
+          roleName: dto.roleName || 'Administrador de Conjunto',
+          isActive: true,
+        },
+      });
+
       let role = await this.roleRepository.findByName(
         'residence-manager',
         this.contextService.tenantId!,
@@ -179,8 +356,6 @@ export class UserService {
           name: 'residence-manager',
           tenantId: this.contextService.tenantId!,
         });
-        // We can assign permissions here if needed using createRolePermissions,
-        // but typically a residence manager would get assigned default permissions in the UI later or handled centrally.
       }
       await this.userRepository.addUserRoles(user.id, [role.id]);
     } else if (dto.roleIds && dto.roleIds.length > 0) {
@@ -207,6 +382,44 @@ export class UserService {
 
     const deleted = await this.userRepository.softDeleteUser(userId);
     return this.mapUserToResponse(deleted);
+  }
+
+  async updateUserStatus(
+    userId: string,
+    isActive: boolean,
+  ): Promise<UserResponseDto> {
+    const user = await this.userRepository.getMe(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    if (user.tenantId === 'system' && !isActive) {
+      const activeCount =
+        await this.userRepository.countActiveInTenant('system');
+      if (activeCount <= 1) {
+        throw new BadRequestException(
+          'No se puede inhabilitar el único usuario administrador (GODLIKE) activo del sistema.',
+        );
+      }
+    }
+
+    await this.userRepository.updateUser(userId, {
+      isActive,
+    });
+
+    if (!isActive) {
+      try {
+        await this.prisma.userSession.updateMany({
+          where: { userId, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not revoke user sessions: ${(error as Error).message}`,
+        );
+      }
+    }
+
+    const fresh = await this.userRepository.getMe(userId);
+    return this.mapUserToResponse(fresh);
   }
 
   async changeUserPassword(
@@ -255,9 +468,49 @@ export class UserService {
     return user ? this.mapUserToResponse(user) : null;
   }
 
-  async findAll(tenantId: string): Promise<UserResponseDto[]> {
-    const users = await this.userRepository.findAll(tenantId);
-    return users.map((u) => this.mapUserToResponse(u));
+  async findAll(
+    tenantId: string,
+    filter?: { userType?: any; isActive?: boolean },
+  ): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.findAll(tenantId, filter);
+    if (!users.length) return [];
+
+    try {
+      const documents = users.map((u) => u.document).filter(Boolean);
+      const employees = await (this.prisma as any).employee.findMany({
+        where: {
+          tenantId,
+          document: { in: documents },
+          deletedAt: null,
+        },
+        select: {
+          document: true,
+          positionRef: { select: { name: true } },
+          departmentRef: { select: { name: true } },
+        },
+      });
+
+      const empMap = new Map<
+        string,
+        { position?: string; department?: string }
+      >();
+      for (const emp of employees || []) {
+        empMap.set(emp.document, {
+          position: emp.positionRef?.name,
+          department: emp.departmentRef?.name,
+        });
+      }
+
+      return users.map((u) => {
+        const mapped = this.mapUserToResponse(u);
+        const emp = empMap.get(u.document);
+        if (emp?.position) mapped.position = emp.position;
+        if (emp?.department) mapped.department = emp.department;
+        return mapped;
+      });
+    } catch {
+      return users.map((u) => this.mapUserToResponse(u));
+    }
   }
 
   async findUsersForAssignment(
@@ -270,6 +523,7 @@ export class UserService {
     const where: any = {
       tenantId,
       isActive: true,
+      userType: 'EMPLOYEE',
     };
 
     // Filtramos suavemente para dar prioridad, pero en la práctica

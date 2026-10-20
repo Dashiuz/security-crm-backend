@@ -5,7 +5,11 @@ import {
   IsBoolean,
   IsOptional,
   IsInt,
+  IsEnum,
 } from 'class-validator';
+import { OperationalCategory } from '@prisma/client';
+
+export { OperationalCategory };
 
 export class CreatePositionDto {
   @ApiProperty({ example: 'Supervisor de Seguridad' })
@@ -19,6 +23,19 @@ export class CreatePositionDto {
   @IsInt({ message: 'El nivel jerárquico debe ser un número entero.' })
   @IsOptional()
   level?: number;
+
+  @ApiProperty({
+    enum: OperationalCategory,
+    example: OperationalCategory.SUPERVISOR,
+    required: false,
+    default: OperationalCategory.GUARD,
+  })
+  @IsEnum(OperationalCategory, {
+    message:
+      'La categoría operativa debe ser un valor válido (DIRECTOR, COORDINATOR, SUPERVISOR, GUARD, OPERATOR, ADMINISTRATIVE, OTHER).',
+  })
+  @IsOptional()
+  operationalCategory?: OperationalCategory;
 
   @ApiProperty({ example: true, required: false })
   @IsBoolean({ message: 'El estado activo debe ser un valor booleano.' })
@@ -39,6 +56,17 @@ export class UpdatePositionDto {
   @IsOptional()
   level?: number;
 
+  @ApiProperty({
+    enum: OperationalCategory,
+    example: OperationalCategory.DIRECTOR,
+    required: false,
+  })
+  @IsEnum(OperationalCategory, {
+    message: 'La categoría operativa debe ser un valor válido.',
+  })
+  @IsOptional()
+  operationalCategory?: OperationalCategory;
+
   @ApiProperty({ example: true, required: false })
   @IsBoolean({ message: 'El estado activo debe ser un valor booleano.' })
   @IsOptional()
@@ -57,6 +85,12 @@ export class PositionResponseDto {
 
   @ApiProperty({ example: 1 })
   level?: number;
+
+  @ApiProperty({
+    enum: OperationalCategory,
+    example: OperationalCategory.SUPERVISOR,
+  })
+  operationalCategory!: OperationalCategory;
 
   @ApiProperty({ example: true })
   isActive!: boolean;

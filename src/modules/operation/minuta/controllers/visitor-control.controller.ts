@@ -75,7 +75,7 @@ export class VisitorControlController {
   }
 
   @Patch(':id/exit')
-  @RequirePermissions('minuta:manage', 'minuta:update')
+  @RequirePermissions('minuta:manage', 'minuta:update', 'minuta:create')
   @ApiOperation({ summary: 'Register visitor exit timestamp' })
   @ApiBody({ type: RegisterVisitorExitDto, required: false })
   registerExit(

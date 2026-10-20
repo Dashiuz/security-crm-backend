@@ -21,4 +21,5 @@ export type EmployeeWithRefs = {
   client?: { name: string } | null;
   departmentRef?: { name: string } | null;
   positionRef?: { name: string } | null;
+  clientHistory?: any;
 };

@@ -6,6 +6,7 @@ import {
   UserRepositoryModule,
   DepartmentRepositoryModule,
   PositionRepositoryModule,
+  ClientRepositoryModule,
 } from '../../../common/repository/index';
 import { StorageModule } from '../../storage/storage.module';
 
@@ -15,6 +16,7 @@ import { StorageModule } from '../../storage/storage.module';
     UserRepositoryModule,
     DepartmentRepositoryModule,
     PositionRepositoryModule,
+    ClientRepositoryModule,
     StorageModule,
   ],
   controllers: [EmployeeController],

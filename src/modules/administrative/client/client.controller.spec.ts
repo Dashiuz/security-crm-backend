@@ -41,6 +41,9 @@ describe('ClientController', () => {
       autocomplete: jest.fn(),
       autocompleteUnits: jest.fn(),
       importClientsFromCsv: jest.fn(),
+      getClientUsers: jest.fn(),
+      assignUser: jest.fn(),
+      unassignUser: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -193,6 +196,38 @@ describe('ClientController', () => {
       const result = await controller.reactivate('c-1', mockRequest);
       expect(service.reactivate).toHaveBeenCalledWith('c-1', mockUser);
       expect(result).toEqual({ id: 'c-1', isActive: true });
+    });
+  });
+
+  describe('Client Users (SPEC-ADM-016)', () => {
+    it('getClientUsers should delegate to service.getClientUsers', async () => {
+      service.getClientUsers.mockResolvedValue([
+        { id: 'uca-1', userId: 'u-1', clientId: 'c-1' },
+      ] as any);
+
+      const result = await controller.getClientUsers('c-1', mockRequest);
+      expect(service.getClientUsers).toHaveBeenCalledWith('c-1', mockUser);
+      expect(result).toHaveLength(1);
+    });
+
+    it('assignUser should delegate to service.assignUser', async () => {
+      const dto = { userId: 'u-1', roleName: 'COORDINADOR' };
+      service.assignUser.mockResolvedValue({
+        id: 'uca-1',
+        userId: 'u-1',
+      } as any);
+
+      const result = await controller.assignUser('c-1', dto, mockRequest);
+      expect(service.assignUser).toHaveBeenCalledWith('c-1', dto, mockUser);
+      expect(result).toEqual({ id: 'uca-1', userId: 'u-1' });
+    });
+
+    it('unassignUser should delegate to service.unassignUser', async () => {
+      service.unassignUser.mockResolvedValue({ success: true } as any);
+
+      const result = await controller.unassignUser('c-1', 'u-1', mockRequest);
+      expect(service.unassignUser).toHaveBeenCalledWith('c-1', 'u-1', mockUser);
+      expect(result).toEqual({ success: true });
     });
   });
 });

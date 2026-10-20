@@ -28,6 +28,7 @@ import {
   UpdateUserPasswordDto,
   UserResponseDto,
   AdminResetPasswordDto,
+  UpdateUserStatusDto,
 } from './dtos/index';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../access-control/permissions.guard';
@@ -67,8 +68,15 @@ export class UserController {
   @ApiOperation({ summary: 'List all users' })
   @ApiOkResponse({ type: [UserResponseDto] })
   @ApiForbiddenResponse({ description: 'Forbidden' })
-  async findAll(@Req() req: any): Promise<UserResponseDto[]> {
-    return this.userService.findAll(req.user.tenantId);
+  async findAll(
+    @Req() req: any,
+    @Query('userType') userType?: string,
+    @Query('isActive') isActive?: string,
+  ): Promise<UserResponseDto[]> {
+    return this.userService.findAll(req.user.tenantId, {
+      userType: userType as any,
+      isActive: isActive !== undefined ? isActive === 'true' : undefined,
+    });
   }
 
   @RequirePermissions('client:manage', 'client:create', 'client:update')
@@ -137,6 +145,20 @@ export class UserController {
   @ApiBody({ type: AdminResetPasswordDto })
   async adminReset(@Body() dto: AdminResetPasswordDto): Promise<any> {
     return this.userService.resetPassword(dto.document, dto.newPassword);
+  }
+
+  @RequirePermissions('user:manage', 'user:update')
+  @Patch(':userId/status')
+  @ApiOperation({ summary: 'Update user active status (enable/disable)' })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiBody({ type: UpdateUserStatusDto })
+  async updateStatus(
+    @Param('userId') userId: string,
+    @Body() dto: UpdateUserStatusDto,
+  ): Promise<UserResponseDto> {
+    return this.userService.updateUserStatus(userId, dto.isActive);
   }
 
   @RequirePermissions('user:manage', 'user:delete')

@@ -1,9 +1,10 @@
 model Position {
-  id       String  @id @default(cuid(2))
-  tenantId String
-  name     String
-  level    Int?
-  isActive Boolean @default(true)
+  id                  String              @id @default(cuid(2))
+  tenantId            String
+  name                String
+  level               Int?
+  operationalCategory OperationalCategory @default(GUARD)
+  isActive            Boolean             @default(true)
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   employees Employee[] @relation("EmployeePosition")
@@ -15,5 +16,6 @@ model Position {
 
   @@unique([tenantId, name])
   @@index([tenantId])
+  @@index([operationalCategory])
   @@map("position")
 }

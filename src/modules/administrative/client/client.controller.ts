@@ -24,12 +24,14 @@ import {
   UpdateClientGeneralDto,
   UpdateClientLegalDto,
   ClientResponseDto,
+  AssignClientUserDto,
 } from './dtos/client.dto';
 import {
   CreateClientWithStructureDto,
   UpdateClientWithStructureDto,
   UpdateClientOperationsDto,
 } from './dtos/client-structure.dto';
+import { ClientAdministratorDto } from './dtos/client-administrator.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
@@ -152,6 +154,22 @@ export class ClientController {
     return this.clientService.findOne(id, req.user);
   }
 
+  @Get(':id/administrators')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_legal',
+    'client:read_all',
+    'user:create',
+    'user:manage',
+  )
+  @ApiOperation({
+    summary: 'Get registered client administrators from legal data',
+  })
+  @ApiOkResponse({ type: [ClientAdministratorDto] })
+  getAdministrators(@Param('id') id: string, @Request() req) {
+    return this.clientService.getClientAdministrators(id, req.user);
+  }
+
   @Patch(':id/general')
   @RequirePermissions('client:manage', 'client:update_general')
   @ApiOperation({ summary: 'Update client general information' })
@@ -228,5 +246,42 @@ export class ClientController {
       body.fileName || 'clientes.csv',
       req.user,
     );
+  }
+
+  @Get(':id/users')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_general',
+    'client:read_assigned',
+    'client:read_workplace',
+  )
+  @ApiOperation({ summary: 'Get assigned users/personnel for a client' })
+  getClientUsers(@Param('id') id: string, @Request() req) {
+    return this.clientService.getClientUsers(id, req.user);
+  }
+
+  @Post(':id/users')
+  @RequirePermissions('client:manage', 'client:update')
+  @ApiOperation({ summary: 'Assign/link a user to a client' })
+  assignUser(
+    @Param('id') id: string,
+    @Body() dto: AssignClientUserDto,
+    @Request() req,
+  ) {
+    return this.clientService.assignUser(id, dto, req.user);
+  }
+
+  @Delete(':id/users/:userOrAccessId')
+  @RequirePermissions('client:manage', 'client:update')
+  @ApiOperation({
+    summary: 'Unassign/unlink a user or workforce access from a client',
+  })
+  unassignUser(
+    @Param('id') id: string,
+    @Param('userOrAccessId') userOrAccessId: string,
+    @Request() req,
+  ) {
+    return this.clientService.unassignUser(id, userOrAccessId, req.user);
   }
 }

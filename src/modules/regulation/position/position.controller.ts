@@ -68,6 +68,14 @@ export class PositionController {
     return this.positionService.update(id, dto);
   }
 
+  @Patch(':id/status')
+  @RequirePermissions('position:manage', 'position:update')
+  @ApiOperation({ summary: 'Toggle position active status' })
+  @ApiOkResponse({ type: PositionResponseDto })
+  toggleStatus(@Param('id') id: string, @Body('isActive') isActive: boolean) {
+    return this.positionService.update(id, { isActive });
+  }
+
   @Delete(':id')
   @RequirePermissions('position:manage', 'position:delete')
   @ApiOperation({ summary: 'Delete position' })

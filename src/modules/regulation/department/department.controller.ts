@@ -68,6 +68,14 @@ export class DepartmentController {
     return this.departmentService.update(id, dto);
   }
 
+  @Patch(':id/status')
+  @RequirePermissions('department:manage', 'department:update')
+  @ApiOperation({ summary: 'Toggle department active status' })
+  @ApiOkResponse({ type: DepartmentResponseDto })
+  toggleStatus(@Param('id') id: string, @Body('isActive') isActive: boolean) {
+    return this.departmentService.update(id, { isActive });
+  }
+
   @Delete(':id')
   @RequirePermissions('department:manage', 'department:delete')
   @ApiOperation({ summary: 'Delete department' })

@@ -1,0 +1,31 @@
+model UserClientAccess {
+  id         String    @id @default(cuid(2))
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Acceso de Usuario Digital (opcional si es personal sin cuenta digital)
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Expediente Laboral de Empleado (opcional si es usuario sin nómina, ej: Residence Manager)
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  clientId   String
+  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  roleName   String?
+  isActive   Boolean   @default(true)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([userId, clientId])
+  @@unique([employeeId, clientId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([employeeId])
+  @@index([clientId])
+  @@map("user_client_access")
+}
+

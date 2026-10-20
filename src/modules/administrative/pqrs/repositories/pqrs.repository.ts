@@ -89,6 +89,7 @@ export class PqrsRepository {
           client: { select: { id: true, name: true, nit: true } },
           assignedTo: { select: { id: true, fullName: true, document: true } },
           createdBy: { select: { id: true, fullName: true, document: true } },
+          voidedBy: { select: { id: true, fullName: true, document: true } },
           _count: {
             select: {
               messages: true,
@@ -129,6 +130,9 @@ export class PqrsRepository {
         createdBy: {
           select: { id: true, fullName: true, document: true },
         },
+        voidedBy: {
+          select: { id: true, fullName: true, document: true },
+        },
         attachments: {
           orderBy: { createdAt: 'desc' },
         },
@@ -160,6 +164,7 @@ export class PqrsRepository {
         tenantId,
         isActive: true,
         isRetired: false,
+        userType: 'EMPLOYEE',
       },
       select: {
         id: true,
@@ -219,17 +224,56 @@ export class PqrsRepository {
   }
 
   /**
-   * Actualiza el estado de un ticket
+   * Actualiza el estado de un ticket y opcionalmente asigna el funcionario
    */
-  async updateTicketStatus(id: string, status: PqrsStatus): Promise<any> {
+  async updateTicketStatus(
+    id: string,
+    status: PqrsStatus,
+    assignedToId?: string,
+  ): Promise<any> {
     return this.prisma.pqrsTicket.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        ...(assignedToId
+          ? { assignedTo: { connect: { id: assignedToId } } }
+          : {}),
+      },
       include: {
         client: {
           select: { name: true, email: true, administratorEmail: true },
         },
         assignedTo: {
+          select: { id: true, fullName: true, document: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Anula formalmente un ticket registrando motivo y metadatos de auditoría
+   */
+  async voidTicket(
+    id: string,
+    voidReason: string,
+    voidedById: string,
+  ): Promise<any> {
+    return this.prisma.pqrsTicket.update({
+      where: { id },
+      data: {
+        status: PqrsStatus.VOIDED,
+        voidReason,
+        voidedAt: new Date(),
+        voidedBy: { connect: { id: voidedById } },
+      },
+      include: {
+        client: {
+          select: { name: true, email: true, administratorEmail: true },
+        },
+        assignedTo: {
+          select: { id: true, fullName: true, document: true },
+        },
+        voidedBy: {
           select: { id: true, fullName: true, document: true },
         },
       },

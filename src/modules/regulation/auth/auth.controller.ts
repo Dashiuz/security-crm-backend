@@ -175,4 +175,24 @@ export class AuthController {
       originalTenantId: req.user.originalTenantId || null,
     };
   }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('switch-client/:clientId')
+  @ApiOperation({
+    summary: 'Switch active client context for residence manager',
+  })
+  async switchClient(@Req() req: any, @Param('clientId') clientId: string) {
+    const userId = req.user.sub as string;
+    return this.authService.switchClient(userId, clientId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('my-accessible-clients')
+  @ApiOperation({ summary: 'Get list of accessible clients for current user' })
+  async getMyAccessibleClients(@Req() req: any) {
+    const userId = req.user.sub as string;
+    return this.authService.getMyAccessibleClients(userId);
+  }
 }

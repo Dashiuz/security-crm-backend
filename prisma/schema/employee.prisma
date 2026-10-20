@@ -6,6 +6,8 @@ model Employee {
   clientId String?
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
+  clientHistory Json? @default("[]") @db.JsonB
+
   firstName       String
   secondName      String?
   lastName        String
@@ -34,6 +36,7 @@ model Employee {
   positionRef   Position?   @relation("EmployeePosition", fields: [positionId], references: [id], onDelete: SetNull)
 
   mediaAttachments   MediaAttachment[]
+  clientAccesses     UserClientAccess[]
 
   parkingControls        ParkingResidentVehicleControl[]
   visitorControls        VisitorEntryControl[]

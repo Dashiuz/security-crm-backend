@@ -13,6 +13,8 @@ import {
   VisitorControlRepositoryModule,
   CorrespondenceRepositoryModule,
 } from '../../../common/repository/index';
+import { NotificationsModule } from '../../notifications/notifications.module';
+import { PrismaModule } from '../../../prisma/prisma.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import {
     ParkingControlRepositoryModule,
     VisitorControlRepositoryModule,
     CorrespondenceRepositoryModule,
+    NotificationsModule,
+    PrismaModule,
   ],
   controllers: [
     MinutaGeneralController,

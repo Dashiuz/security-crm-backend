@@ -75,7 +75,7 @@ export class CorrespondenceControlController {
   }
 
   @Patch(':id/deliver')
-  @RequirePermissions('minuta:manage', 'minuta:update')
+  @RequirePermissions('minuta:manage', 'minuta:update', 'minuta:create')
   @ApiOperation({ summary: 'Deliver correspondence to resident with evidence' })
   @ApiBody({ type: DeliverCorrespondenceDto })
   deliver(

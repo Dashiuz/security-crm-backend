@@ -5,6 +5,7 @@ import {
   CreatePositionDto,
   UpdatePositionDto,
   PositionResponseDto,
+  OperationalCategory,
 } from './dtos/position.dto';
 
 @Injectable()
@@ -14,11 +15,41 @@ export class PositionService {
     private readonly userRepository: UserRepositoryService,
   ) {}
 
+  deriveOperationalCategory(name = '', categoryStr = ''): OperationalCategory {
+    const rawCat = categoryStr.trim().toUpperCase();
+    if (Object.values(OperationalCategory).includes(rawCat as any)) {
+      return rawCat as OperationalCategory;
+    }
+    const lower = name.toLowerCase();
+    if (lower.includes('direct') || lower.includes('geren'))
+      return OperationalCategory.DIRECTOR;
+    if (lower.includes('coord')) return OperationalCategory.COORDINATOR;
+    if (lower.includes('superv')) return OperationalCategory.SUPERVISOR;
+    if (
+      lower.includes('cctv') ||
+      lower.includes('medio') ||
+      lower.includes('operad') ||
+      lower.includes('consola')
+    )
+      return OperationalCategory.OPERATOR;
+    if (
+      lower.includes('admin') ||
+      lower.includes('comercial') ||
+      lower.includes('rrhh') ||
+      lower.includes('talento')
+    )
+      return OperationalCategory.ADMINISTRATIVE;
+    return OperationalCategory.GUARD;
+  }
+
   async create(dto: CreatePositionDto): Promise<PositionResponseDto> {
     const name = dto.name?.trim().toUpperCase();
+    const operationalCategory =
+      dto.operationalCategory || this.deriveOperationalCategory(name);
     return this.positionRepository.create({
       ...dto,
       name,
+      operationalCategory,
     } as any) as Promise<PositionResponseDto>;
   }
 
@@ -39,7 +70,9 @@ export class PositionService {
 
   async findAll(): Promise<any[]> {
     const positions = await this.positionRepository.findMany();
-    const createdByIds = positions.map((p: any) => p.createdBy).filter(Boolean);
+    const createdByIds = positions
+      .map((p: any) => p.createdBy)
+      .filter((id: any) => Boolean(id) && id !== 'system');
     const userMap = await this.userRepository.findNamesByIds(createdByIds);
 
     return positions.map((p: any) => ({
@@ -55,7 +88,7 @@ export class PositionService {
     const pos = (await this.positionRepository.findOne(id)) as any;
     if (!pos) throw new NotFoundException('Position not found');
     const userMap = await this.userRepository.findNamesByIds(
-      pos.createdBy ? [pos.createdBy] : [],
+      pos.createdBy && pos.createdBy !== 'system' ? [pos.createdBy] : [],
     );
     return {
       ...pos,
@@ -136,11 +169,22 @@ export class PositionService {
           user?.roles?.includes('GODLIKE') ||
           user?.tenantId === 'system' ||
           user?.sub === 'system';
+        const rawCategory =
+          row.CategoriaOperativa ??
+          row.categoriaOperativa ??
+          row.operationalCategory ??
+          row.Category ??
+          row.category;
+        const operationalCategory = this.deriveOperationalCategory(
+          name,
+          rawCategory,
+        );
         const createdBy = isGodlike ? 'system' : user?.sub;
 
         const newPos = await this.positionRepository.create({
           name,
           level,
+          operationalCategory,
           isActive,
           createdBy,
         } as any);
