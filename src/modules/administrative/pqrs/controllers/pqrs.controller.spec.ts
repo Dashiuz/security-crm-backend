@@ -97,4 +97,20 @@ describe('PqrsController', () => {
     ]);
     expect(result.id).toBe('msg-1');
   });
+
+  it('debe llamar a service.voidTicket con ticketId, dto y permisos', async () => {
+    const req = { user: { permissions: ['pqrs:manage'] } };
+    const dto = { reason: 'Duplicado administrativo formalmente justificado' };
+    service.voidTicket = jest.fn().mockResolvedValue({
+      id: 'ticket-1',
+      status: PqrsStatus.VOIDED,
+      voidedReason: dto.reason,
+    });
+
+    const result = await controller.voidTicket(req, 'ticket-1', dto);
+    expect(service.voidTicket).toHaveBeenCalledWith('ticket-1', dto, [
+      'pqrs:manage',
+    ]);
+    expect(result.status).toBe(PqrsStatus.VOIDED);
+  });
 });

@@ -34,6 +34,9 @@ import {
   UpdateEmployeeDto,
   EmployeeResponseDto,
   DeletedEmployeeDto,
+  AssignEmployeeClientDto,
+  UnassignEmployeeClientDto,
+  EnableEmployeeUserDto,
 } from './dtos/index';
 
 @ApiTags('Employee')
@@ -178,6 +181,108 @@ export class EmployeeController {
   })
   async reactivate(@Param('id') id: string): Promise<EmployeeResponseDto> {
     return this.employeeService.reactivateEmployee(id);
+  }
+
+  @Get(':id/workforce-summary')
+  @RequirePermissions('employee:manage', 'employee:read')
+  @ApiOperation({
+    summary:
+      'Consolidated workforce profile including user and multi-client assignments',
+  })
+  getWorkforceSummary(@Param('id') id: string) {
+    return this.employeeService.getWorkforceSummary(id);
+  }
+
+  @Post(':id/assign-client')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({ summary: 'Assign or link employee to a client' })
+  @ApiBody({ type: AssignEmployeeClientDto })
+  @ApiOkResponse({
+    description: 'Client assigned successfully to employee.',
+    type: EmployeeResponseDto,
+  })
+  assignClientPost(
+    @Param('id') id: string,
+    @Body() dto: AssignEmployeeClientDto,
+    @Req() req: any,
+  ) {
+    const recordedBy = req.user?.email || req.user?.id || 'Sistema';
+    return this.employeeService.assignClient(id, dto, recordedBy);
+  }
+
+  @Patch(':id/assign-client')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({ summary: 'Assign or transfer employee to a client' })
+  @ApiBody({ type: AssignEmployeeClientDto })
+  @ApiOkResponse({
+    description: 'Client assigned successfully to employee.',
+    type: EmployeeResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Employee or Client not found.' })
+  @ApiBadRequestResponse({ description: 'Invalid dates or retired employee.' })
+  assignClient(
+    @Param('id') id: string,
+    @Body() dto: AssignEmployeeClientDto,
+    @Req() req: any,
+  ) {
+    const recordedBy = req.user?.email || req.user?.id || 'Sistema';
+    return this.employeeService.assignClient(id, dto, recordedBy);
+  }
+
+  @Post(':id/unassign-client')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({
+    summary: 'Unassign employee from specific or current client',
+  })
+  @ApiBody({ type: UnassignEmployeeClientDto })
+  @ApiOkResponse({
+    description: 'Employee unassigned successfully from client.',
+    type: EmployeeResponseDto,
+  })
+  unassignClientPost(
+    @Param('id') id: string,
+    @Body() dto: UnassignEmployeeClientDto,
+    @Req() req: any,
+  ) {
+    const recordedBy = req.user?.email || req.user?.id || 'Sistema';
+    return this.employeeService.unassignClient(id, dto, recordedBy);
+  }
+
+  @Patch(':id/unassign-client')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({ summary: 'Unassign employee from current client' })
+  @ApiBody({ type: UnassignEmployeeClientDto })
+  @ApiOkResponse({
+    description: 'Employee unassigned successfully from client.',
+    type: EmployeeResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Employee not found.' })
+  @ApiBadRequestResponse({
+    description: 'Employee has no active client assignment.',
+  })
+  unassignClient(
+    @Param('id') id: string,
+    @Body() dto: UnassignEmployeeClientDto,
+    @Req() req: any,
+  ) {
+    const recordedBy = req.user?.email || req.user?.id || 'Sistema';
+    return this.employeeService.unassignClient(id, dto, recordedBy);
+  }
+
+  @Post(':id/enable-user')
+  @RequirePermissions('employee:manage', 'employee:update')
+  @ApiOperation({
+    summary:
+      'Enable digital user account for employee and inherit client assignments',
+  })
+  @ApiBody({ type: EnableEmployeeUserDto })
+  enableUser(
+    @Param('id') id: string,
+    @Body() dto: EnableEmployeeUserDto,
+    @Req() req: any,
+  ) {
+    const recordedBy = req.user?.email || req.user?.id || 'Sistema';
+    return this.employeeService.enableUser(id, dto, recordedBy);
   }
 
   @Post('import/csv')

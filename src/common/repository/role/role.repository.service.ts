@@ -62,10 +62,14 @@ export class RoleRepositoryService {
     });
   }
 
-  async updateRole(roleId: string, name: string): Promise<Role> {
+  async updateRole(
+    roleId: string,
+    data: { name?: string; isActive?: boolean } | string,
+  ): Promise<Role> {
+    const updateData = typeof data === 'string' ? { name: data } : data;
     return (this.prisma.role as any).update({
       where: { id: roleId },
-      data: { name },
+      data: updateData,
     });
   }
 

@@ -30,6 +30,7 @@ export class RoleService {
       id: row.id,
       name: row.name,
       tenantId: row.tenantId,
+      isActive: row.isActive ?? true,
       createdAt: row.createdAt,
       createdBy:
         userName ||
@@ -101,7 +102,9 @@ export class RoleService {
     const role = await this.roleRepository.findRoleId(roleId);
     if (!role) throw new NotFoundException('Role not found');
 
-    if (dto.name) {
+    const updateData: { name?: string; isActive?: boolean } = {};
+
+    if (dto.name !== undefined) {
       const name = dto.name.trim().toUpperCase();
       if (
         ['GODLIKE', 'SUPERADMIN'].includes(name) &&
@@ -111,13 +114,21 @@ export class RoleService {
           'El nombre de rol GODLIKE o SUPERADMIN está reservado exclusivamente para el sistema.',
         );
       }
+      updateData.name = name;
+    }
+
+    if (dto.isActive !== undefined) {
+      updateData.isActive = dto.isActive;
+    }
+
+    if (Object.keys(updateData).length > 0) {
       try {
-        const updated = await this.roleRepository.updateRole(roleId, name);
+        const updated = await this.roleRepository.updateRole(roleId, updateData);
         return this.mapRoleToResponse(updated);
       } catch (e: any) {
         if (e?.code === 'P2002') {
           throw new ConflictException(
-            `Ya existe un rol registrado con el nombre "${name}" en la empresa.`,
+            `Ya existe un rol registrado con el nombre "${updateData.name}" en la empresa.`,
           );
         }
         throw e;

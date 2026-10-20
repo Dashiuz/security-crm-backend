@@ -136,3 +136,13 @@ enum SecurityStudyStatus {
   CURRENT
   DISCONTINUED
 }
+
+enum OperationalCategory {
+  DIRECTOR
+  COORDINATOR
+  SUPERVISOR
+  GUARD
+  OPERATOR
+  ADMINISTRATIVE
+  OTHER
+}

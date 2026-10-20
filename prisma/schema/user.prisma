@@ -25,12 +25,10 @@ model User {
   retiredAt DateTime? @db.Date
   deletedAt DateTime?
 
-  roles    UserRole[]
-  sessions UserSession[]
+  roles          UserRole[]
+  sessions       UserSession[]
+  clientAccesses UserClientAccess[]
 
-  // Client assignments
-  coordinatedClients Client[] @relation("ClientCoordinator")
-  commercialClients  Client[] @relation("ClientCommercialContact")
 
   // Minuta audit fields
   minutasCreated Minuta[] @relation("MinutaCreatedBy")
@@ -78,6 +76,7 @@ model User {
   ticketsAssigned     PqrsTicket[]  @relation("TicketAssignedTo")
   ticketsCreated      PqrsTicket[]  @relation("TicketCreatedBy")
   ticketsUpdated      PqrsTicket[]  @relation("TicketUpdatedBy")
+  ticketsVoided       PqrsTicket[]  @relation("TicketVoidedBy")
   pqrsMessagesCreated PqrsMessage[] @relation("MessageCreatedBy")
   pqrsMessagesUpdated PqrsMessage[] @relation("MessageUpdatedBy")
 

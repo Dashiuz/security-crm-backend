@@ -7,15 +7,19 @@ import {
   UserRepositoryModule,
   EmployeeRepositoryModule,
   RoleRepositoryModule,
+  ClientRepositoryModule,
 } from '../../../common/repository/index';
 import { ContextModule } from '../../../common/context/context.module';
+import { PrismaModule } from '../../../prisma/prisma.module';
 
 @Module({
   imports: [
     UserRepositoryModule,
     EmployeeRepositoryModule,
     RoleRepositoryModule,
+    ClientRepositoryModule,
     ContextModule,
+    PrismaModule,
   ],
   controllers: [UserController, UsersRolesController],
   providers: [UserService, UsersRolesService],

@@ -79,4 +79,24 @@ export class EmployeeResponseDto {
 
   @ApiPropertyOptional({ description: 'List of media attachments' })
   mediaAttachments?: any[];
+
+  @ApiPropertyOptional({
+    description: 'Chronological history of assigned clients and posts',
+    type: 'array',
+  })
+  clientHistory?: any[];
+
+  @ApiPropertyOptional({
+    description: 'Whether employee has an active linked user account',
+  })
+  hasUser?: boolean;
+
+  @ApiPropertyOptional({ description: 'Primary role name of the linked user' })
+  userRole?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'All roles assigned to the linked user',
+    type: [String],
+  })
+  userRoles?: string[];
 }

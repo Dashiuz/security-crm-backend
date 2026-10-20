@@ -43,6 +43,7 @@ export class EmployeeRepositoryService {
       select: {
         id: true,
         name: true,
+        operationalCategory: true,
       },
     },
     email: true,
@@ -57,6 +58,7 @@ export class EmployeeRepositoryService {
     updatedBy: true,
     retiredAt: true,
     deletedAt: true,
+    clientHistory: true,
     mediaAttachments: {
       select: {
         id: true,

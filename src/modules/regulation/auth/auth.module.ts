@@ -8,6 +8,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from 'src/modules/regulation/auth/strategies/jwt.strategy';
 import { requireEnv } from 'src/settings/env';
 import { UserRepositoryModule } from '../../../common/repository/index';
+import { PrismaModule } from '../../../prisma/prisma.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { UserRepositoryModule } from '../../../common/repository/index';
       }),
     }),
     UserRepositoryModule,
+    PrismaModule,
   ],
   controllers: [AuthController, AuthRefreshController],
   providers: [AuthService, LocalStrategy, JwtStrategy],

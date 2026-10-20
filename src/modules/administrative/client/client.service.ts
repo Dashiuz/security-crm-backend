@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { ClientRepositoryService } from '../../../common/repository/client/client.repository.service';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -12,14 +13,19 @@ import {
   UpdateClientGeneralDto,
   UpdateClientLegalDto,
   ClientResponseDto,
+  AssignClientUserDto,
+  ClientWorkforceItemDto,
+  DigitalAccountStatus,
 } from './dtos/client.dto';
 import {
   CreateClientWithStructureDto,
   UpdateClientOperationsDto,
 } from './dtos/client-structure.dto';
+import { ClientAdministratorDto } from './dtos/client-administrator.dto';
 import { ClientStructureGeneratorService } from './services/client-structure-generator.service';
 import { UserContext } from '../../../common/interfaces/user-context.interface';
 import { toDateOnlyIso } from '../../../common/utils/convertDate';
+import { randomUUID } from 'crypto';
 import {
   ClientStatus,
   ClientSector,
@@ -29,6 +35,8 @@ import { CursorPaginationDto } from '../../../common/dto/cursor-pagination.dto';
 
 @Injectable()
 export class ClientService {
+  private readonly logger = new Logger(ClientService.name);
+
   constructor(
     private readonly clientRepository: ClientRepositoryService,
     private readonly structureGenerator: ClientStructureGeneratorService,
@@ -112,24 +120,6 @@ export class ClientService {
     delete data.coordinatorInChargeId;
     delete data.commercialContactId;
 
-    if (
-      clientFields.coordinatorInChargeId &&
-      String(clientFields.coordinatorInChargeId).trim() !== ''
-    ) {
-      data.coordinatorInCharge = {
-        connect: { id: clientFields.coordinatorInChargeId },
-      };
-    }
-
-    if (
-      clientFields.commercialContactId &&
-      String(clientFields.commercialContactId).trim() !== ''
-    ) {
-      data.commercialContact = {
-        connect: { id: clientFields.commercialContactId },
-      };
-    }
-
     // Helper for optional date parsing
     const parseOptionalDate = (val: any) => {
       if (!val || typeof val !== 'string' || val.trim() === '') return null;
@@ -162,6 +152,63 @@ export class ClientService {
       res = await this.clientRepository.create(data);
     } catch (err: any) {
       this.handlePrismaError(err);
+    }
+
+    if (res?.id) {
+      if (
+        clientFields.coordinatorInChargeId &&
+        String(clientFields.coordinatorInChargeId).trim() !== ''
+      ) {
+        try {
+          await this.prisma.userClientAccess.upsert({
+            where: {
+              userId_clientId: {
+                userId: clientFields.coordinatorInChargeId,
+                clientId: res.id,
+              },
+            },
+            create: {
+              tenantId: user.tenantId,
+              userId: clientFields.coordinatorInChargeId,
+              clientId: res.id,
+              roleName: 'COORDINADOR',
+              isActive: true,
+            },
+            update: { isActive: true, roleName: 'COORDINADOR' },
+          });
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Could not sync coordinator userClientAccess: ${(error as Error).message}`,
+          );
+        }
+      }
+      if (
+        clientFields.commercialContactId &&
+        String(clientFields.commercialContactId).trim() !== ''
+      ) {
+        try {
+          await this.prisma.userClientAccess.upsert({
+            where: {
+              userId_clientId: {
+                userId: clientFields.commercialContactId,
+                clientId: res.id,
+              },
+            },
+            create: {
+              tenantId: user.tenantId,
+              userId: clientFields.commercialContactId,
+              clientId: res.id,
+              roleName: 'COMERCIAL',
+              isActive: true,
+            },
+            update: { isActive: true, roleName: 'COMERCIAL' },
+          });
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Could not sync commercial userClientAccess: ${(error as Error).message}`,
+          );
+        }
+      }
     }
 
     if (structureConfig) {
@@ -199,10 +246,12 @@ export class ClientService {
       !user.permissions.includes('client:read_all')
     ) {
       if (user.permissions.includes('client:read_assigned')) {
-        where.OR = [
-          { coordinatorInChargeId: user.sub },
-          { commercialContactId: user.sub },
-        ];
+        const userAccesses = await this.prisma.userClientAccess.findMany({
+          where: { tenantId: user.tenantId, userId: user.sub, isActive: true },
+          select: { clientId: true },
+        });
+        const assignedIds = userAccesses.map((a) => a.clientId);
+        where.id = { in: assignedIds };
       } else if (user.permissions.includes('client:read_workplace')) {
         const currentUser = await this.prisma.user.findUnique({
           where: { id: user.sub },
@@ -226,8 +275,6 @@ export class ClientService {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        coordinatorInCharge: true,
-        commercialContact: true,
         createdBy: true,
         clientProperties: true,
       },
@@ -262,8 +309,6 @@ export class ClientService {
 
   async findOne(id: string, user: UserContext): Promise<ClientResponseDto> {
     const client = await this.clientRepository.findOne(id, {
-      coordinatorInCharge: true,
-      commercialContact: true,
       createdBy: true,
       clientProperties: true,
       towers: {
@@ -348,10 +393,12 @@ export class ClientService {
       !user.permissions.includes('client:read_all')
     ) {
       if (user.permissions.includes('client:read_assigned')) {
-        where.OR = [
-          { coordinatorInChargeId: user.sub },
-          { commercialContactId: user.sub },
-        ];
+        const userAccesses = await this.prisma.userClientAccess.findMany({
+          where: { tenantId: user.tenantId, userId: user.sub, isActive: true },
+          select: { clientId: true },
+        });
+        const assignedIds = userAccesses.map((a) => a.clientId);
+        where.id = { in: assignedIds };
       } else if (user.permissions.includes('client:read_workplace')) {
         const currentUser = await this.prisma.user.findUnique({
           where: { id: user.sub },
@@ -454,28 +501,56 @@ export class ClientService {
       clientFields.coordinatorInChargeId &&
       String(clientFields.coordinatorInChargeId).trim() !== ''
     ) {
-      data.coordinatorInCharge = {
-        connect: { id: clientFields.coordinatorInChargeId },
-      };
-    } else if (
-      clientFields.coordinatorInChargeId === null ||
-      clientFields.coordinatorInChargeId === ''
-    ) {
-      data.coordinatorInCharge = { disconnect: true };
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: clientFields.coordinatorInChargeId,
+              clientId: id,
+            },
+          },
+          create: {
+            tenantId: user.tenantId,
+            userId: clientFields.coordinatorInChargeId,
+            clientId: id,
+            roleName: 'COORDINADOR',
+            isActive: true,
+          },
+          update: { isActive: true, roleName: 'COORDINADOR' },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not sync coordinator userClientAccess: ${(error as Error).message}`,
+        );
+      }
     }
 
     if (
       clientFields.commercialContactId &&
       String(clientFields.commercialContactId).trim() !== ''
     ) {
-      data.commercialContact = {
-        connect: { id: clientFields.commercialContactId },
-      };
-    } else if (
-      clientFields.commercialContactId === null ||
-      clientFields.commercialContactId === ''
-    ) {
-      data.commercialContact = { disconnect: true };
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: clientFields.commercialContactId,
+              clientId: id,
+            },
+          },
+          create: {
+            tenantId: user.tenantId,
+            userId: clientFields.commercialContactId,
+            clientId: id,
+            roleName: 'COMERCIAL',
+            isActive: true,
+          },
+          update: { isActive: true, roleName: 'COMERCIAL' },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not sync commercial userClientAccess: ${(error as Error).message}`,
+        );
+      }
     }
 
     // Helper for optional date parsing
@@ -542,28 +617,56 @@ export class ClientService {
       dto.coordinatorInChargeId &&
       String(dto.coordinatorInChargeId).trim() !== ''
     ) {
-      data.coordinatorInCharge = {
-        connect: { id: dto.coordinatorInChargeId },
-      };
-    } else if (
-      dto.coordinatorInChargeId === null ||
-      dto.coordinatorInChargeId === ''
-    ) {
-      data.coordinatorInCharge = { disconnect: true };
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: dto.coordinatorInChargeId,
+              clientId: id,
+            },
+          },
+          create: {
+            tenantId: user.tenantId,
+            userId: dto.coordinatorInChargeId,
+            clientId: id,
+            roleName: 'COORDINADOR',
+            isActive: true,
+          },
+          update: { isActive: true, roleName: 'COORDINADOR' },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not sync coordinator userClientAccess: ${(error as Error).message}`,
+        );
+      }
     }
 
     if (
       dto.commercialContactId &&
       String(dto.commercialContactId).trim() !== ''
     ) {
-      data.commercialContact = {
-        connect: { id: dto.commercialContactId },
-      };
-    } else if (
-      dto.commercialContactId === null ||
-      dto.commercialContactId === ''
-    ) {
-      data.commercialContact = { disconnect: true };
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: dto.commercialContactId,
+              clientId: id,
+            },
+          },
+          create: {
+            tenantId: user.tenantId,
+            userId: dto.commercialContactId,
+            clientId: id,
+            roleName: 'COMERCIAL',
+            isActive: true,
+          },
+          update: { isActive: true, roleName: 'COMERCIAL' },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not sync commercial userClientAccess: ${(error as Error).message}`,
+        );
+      }
     }
 
     if (user.sub && user.sub !== 'system') {
@@ -912,6 +1015,480 @@ export class ClientService {
       errorRows,
       errors,
       importedCount: createdClients.length,
+    };
+  }
+
+  async getClientAdministrators(
+    clientId: string,
+    user: UserContext,
+  ): Promise<ClientAdministratorDto[]> {
+    const client = await this.clientRepository.findOne(clientId);
+    if (!client || client.tenantId !== user.tenantId) {
+      throw new NotFoundException('Cliente no encontrado');
+    }
+
+    const result: ClientAdministratorDto[] = [];
+    const admComp: any = client.administrationCompanyData || {};
+
+    if (
+      client.administrationType === 'INDIVIDUAL' ||
+      !client.administrationType
+    ) {
+      const doc = (
+        admComp.identificationNumber ||
+        admComp.representativeDocument ||
+        ''
+      ).trim();
+      const name = (client.administrator || '').trim();
+
+      if (name || doc) {
+        result.push({
+          name,
+          document: doc,
+          email: (client.administratorEmail || '').trim(),
+          phone: (client.administratorPhone || '').trim(),
+          roleName: 'Administrador Titular',
+          administrationType: 'INDIVIDUAL',
+          isAlreadyUser: false,
+          hasAccessToThisClient: false,
+        });
+      }
+    } else if (client.administrationType === 'ENTERPRISE') {
+      // 1. Representante Legal
+      const repName = (admComp.legalRepName || '').trim();
+      const repDoc = (admComp.legalRepId || '').trim();
+      if (repName || repDoc) {
+        result.push({
+          name: repName,
+          document: repDoc,
+          email: (admComp.email || client.administratorEmail || '').trim(),
+          phone: (
+            admComp.legalRepPhone ||
+            admComp.phone ||
+            client.administratorPhone ||
+            ''
+          ).trim(),
+          roleName: 'Representante Legal',
+          administrationType: 'ENTERPRISE',
+          isAlreadyUser: false,
+          hasAccessToThisClient: false,
+        });
+      }
+
+      // 2. Contactos Adicionales / Delegados
+      const additional = Array.isArray(admComp.additionalContacts)
+        ? admComp.additionalContacts
+        : [];
+      for (const contact of additional) {
+        const cName = (contact.name || '').trim();
+        const cDoc = (contact.document || contact.idNumber || '').trim();
+        if (cName || cDoc) {
+          result.push({
+            name: cName,
+            document: cDoc,
+            email: (contact.email || '').trim(),
+            phone: (contact.phone || '').trim(),
+            roleName: (
+              contact.roleName ||
+              contact.title ||
+              'Contacto Delegado'
+            ).trim(),
+            administrationType: 'ENTERPRISE',
+            isAlreadyUser: false,
+            hasAccessToThisClient: false,
+          });
+        }
+      }
+    }
+
+    // Check existing users in database for each administrator
+    for (const item of result) {
+      if (item.document) {
+        const existing = await this.prisma.user.findUnique({
+          where: { document: item.document },
+          include: { clientAccesses: true },
+        });
+
+        if (existing) {
+          item.isAlreadyUser = true;
+          item.userId = existing.id;
+          item.hasAccessToThisClient =
+            existing.clientId === clientId ||
+            (existing.clientAccesses || []).some(
+              (ca) => ca.clientId === clientId && ca.isActive,
+            );
+        }
+      }
+    }
+
+    return result;
+  }
+
+  async getClientUsers(
+    clientId: string,
+    user: UserContext,
+  ): Promise<ClientWorkforceItemDto[]> {
+    await this.findOne(clientId, user);
+
+    const accesses = await this.prisma.userClientAccess.findMany({
+      where: {
+        clientId,
+        tenantId: user.tenantId,
+        isActive: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            document: true,
+            department: true,
+            position: true,
+            userType: true,
+            isActive: true,
+            roles: {
+              include: {
+                role: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        employee: {
+          select: {
+            id: true,
+            fullName: true,
+            document: true,
+            email: true,
+            phone: true,
+            isActive: true,
+            positionRef: {
+              select: {
+                name: true,
+                operationalCategory: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return accesses.map((acc) => {
+      const hasDigitalAccess = Boolean(acc.user && acc.user.isActive);
+      let digitalAccountStatus = DigitalAccountStatus.NO_ACCOUNT;
+      if (acc.user) {
+        digitalAccountStatus = acc.user.isActive
+          ? DigitalAccountStatus.ACTIVE
+          : DigitalAccountStatus.DISABLED;
+      }
+
+      const fullName =
+        acc.user?.fullName || acc.employee?.fullName || 'Personal Asignado';
+      const document = acc.user?.document || acc.employee?.document || '';
+      const email = acc.employee?.email || null;
+      const phone = acc.employee?.phone || null;
+      const roleName =
+        acc.roleName ||
+        acc.employee?.positionRef?.name ||
+        acc.user?.position ||
+        'OPERATIVO';
+
+      return {
+        id: acc.id,
+        userId: acc.userId,
+        employeeId: acc.employeeId,
+        clientId: acc.clientId,
+        roleName,
+        isActive: acc.isActive,
+        hasDigitalAccess,
+        digitalAccountStatus,
+        createdAt: acc.createdAt,
+        user: {
+          id: acc.user?.id || null,
+          fullName,
+          document,
+          email,
+          phone,
+          isActive: acc.user?.isActive ?? false,
+          department: acc.user?.department || null,
+          position: roleName,
+          roles: acc.user?.roles || [],
+        },
+      };
+    });
+  }
+
+  async assignUser(
+    clientId: string,
+    dto: AssignClientUserDto,
+    user: UserContext,
+  ) {
+    await this.findOne(clientId, user);
+
+    const targetUser = await this.prisma.user.findFirst({
+      where: { id: dto.userId, tenantId: user.tenantId, deletedAt: null },
+    });
+    if (!targetUser) {
+      throw new NotFoundException('El usuario especificado no existe.');
+    }
+
+    if ((targetUser as any).userType === 'RESIDENCE_MANAGER') {
+      throw new BadRequestException(
+        'Los administradores de copropiedad no pueden ser asignados como personal operativo o funcionarios del cliente.',
+      );
+    }
+
+    // Single source of truth: Get employee's official position
+    const employee = await this.prisma.employee.findFirst({
+      where: { document: targetUser.document, tenantId: user.tenantId },
+      include: { positionRef: true },
+    });
+
+    const officialRoleName =
+      employee?.positionRef?.name ||
+      dto.roleName ||
+      targetUser.position ||
+      'OPERATIVO';
+
+    const existingAccess = await this.prisma.userClientAccess.findFirst({
+      where: {
+        clientId,
+        tenantId: user.tenantId,
+        OR: [
+          { userId: dto.userId },
+          ...(employee ? [{ employeeId: employee.id }] : []),
+        ],
+      },
+    });
+
+    let access: any;
+    if (existingAccess) {
+      access = await this.prisma.userClientAccess.update({
+        where: { id: existingAccess.id },
+        data: {
+          userId: dto.userId,
+          employeeId: employee?.id || existingAccess.employeeId,
+          roleName: officialRoleName,
+          isActive: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              document: true,
+              department: true,
+              position: true,
+              userType: true,
+              isActive: true,
+              roles: {
+                include: {
+                  role: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    } else {
+      access = await this.prisma.userClientAccess.create({
+        data: {
+          tenantId: user.tenantId,
+          userId: dto.userId,
+          employeeId: employee?.id || null,
+          clientId,
+          roleName: officialRoleName,
+          isActive: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              document: true,
+              department: true,
+              position: true,
+              userType: true,
+              isActive: true,
+              roles: {
+                include: {
+                  role: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Sincronizar bidireccionalmente con el historial del empleado
+    if (employee) {
+      try {
+        const client = await this.prisma.client.findUnique({
+          where: { id: clientId },
+          select: { id: true, name: true, internalCode: true },
+        });
+        const clientName = client?.name || 'Cliente';
+        const clientCode = client?.internalCode || null;
+
+        const rawHistory: any[] = Array.isArray((employee as any).clientHistory)
+          ? [...(employee as any).clientHistory]
+          : [];
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        const existingActiveIdx = rawHistory.findIndex(
+          (h) => h.clientId === clientId && h.unassignedAt === null,
+        );
+
+        if (existingActiveIdx === -1) {
+          rawHistory.push({
+            id: randomUUID(),
+            clientId,
+            clientName,
+            clientCode,
+            assignedAt: todayStr,
+            unassignedAt: null,
+            recordedAt: new Date().toISOString(),
+            recordedBy: user.sub,
+            notes: 'Asignado desde el módulo del cliente',
+          });
+
+          await this.prisma.employee.update({
+            where: { id: employee.id },
+            data: {
+              clientId,
+              clientHistory: rawHistory as any,
+            },
+          });
+        }
+      } catch (err) {
+        // Continue if employee sync fails
+      }
+    }
+
+    return {
+      id: access.id,
+      userId: access.userId,
+      employeeId: access.employeeId,
+      clientId: access.clientId,
+      roleName: access.roleName,
+      isActive: access.isActive,
+      createdAt: access.createdAt,
+      user: access.user,
+    };
+  }
+
+  async unassignUser(
+    clientId: string,
+    userOrAccessId: string,
+    user: UserContext,
+  ) {
+    await this.findOne(clientId, user);
+
+    let access = await this.prisma.userClientAccess.findFirst({
+      where: {
+        id: userOrAccessId,
+        clientId,
+        tenantId: user.tenantId,
+      },
+    });
+
+    if (!access) {
+      access = await this.prisma.userClientAccess.findFirst({
+        where: {
+          clientId,
+          tenantId: user.tenantId,
+          OR: [{ userId: userOrAccessId }, { employeeId: userOrAccessId }],
+        },
+      });
+    }
+
+    if (!access) {
+      throw new NotFoundException(
+        'El usuario o personal no se encuentra asignado a este cliente.',
+      );
+    }
+
+    await this.prisma.userClientAccess.update({
+      where: { id: access.id },
+      data: { isActive: false },
+    });
+
+    // Sincronizar cierre en el historial del empleado
+    try {
+      let employee: any = null;
+      if (access.employeeId) {
+        employee = await this.prisma.employee.findUnique({
+          where: { id: access.employeeId },
+        });
+      } else if (access.userId) {
+        const userRecord = await this.prisma.user.findUnique({
+          where: { id: access.userId },
+          select: { document: true, tenantId: true },
+        });
+        if (userRecord) {
+          employee = await this.prisma.employee.findFirst({
+            where: { document: userRecord.document, tenantId: user.tenantId },
+          });
+        }
+      }
+
+      if (employee && Array.isArray(employee.clientHistory)) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const historyList = [...employee.clientHistory];
+        let changed = false;
+        for (let i = 0; i < historyList.length; i++) {
+          if (
+            historyList[i].clientId === clientId &&
+            historyList[i].unassignedAt === null
+          ) {
+            historyList[i] = {
+              ...historyList[i],
+              unassignedAt: todayStr,
+              reason: 'Desvinculado desde el módulo del cliente',
+            };
+            changed = true;
+          }
+        }
+        if (changed) {
+          const remainingActive = historyList.filter(
+            (h) => h.unassignedAt === null,
+          );
+          const newClientId =
+            remainingActive.length > 0
+              ? remainingActive[remainingActive.length - 1].clientId
+              : null;
+          await this.prisma.employee.update({
+            where: { id: employee.id },
+            data: {
+              clientId: newClientId,
+              clientHistory: historyList as any,
+            },
+          });
+        }
+      }
+    } catch {
+      // Continue if employee sync fails
+    }
+
+    return {
+      success: true,
+      message: 'Usuario desvinculado del cliente exitosamente.',
     };
   }
 }

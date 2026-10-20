@@ -13,6 +13,7 @@ enum PqrsStatus {
   RESOLVED
   CLOSED
   REJECTED
+  VOIDED
 }
 
 enum PqrsPriority {
@@ -40,6 +41,12 @@ model PqrsTicket {
   assignedToId String?
   assignedTo   User?       @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
+  // Metadatos de Anulación Formal (Auditoría)
+  voidReason  String?      @db.Text
+  voidedAt    DateTime?
+  voidedById  String?
+  voidedBy    User?        @relation("TicketVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
+
   messages    PqrsMessage[]
   attachments MediaAttachment[]
 
@@ -55,6 +62,7 @@ model PqrsTicket {
   @@index([tenantId])
   @@index([clientId])
   @@index([assignedToId])
+  @@index([status])
   @@map("pqrs_tickets")
 }
 
