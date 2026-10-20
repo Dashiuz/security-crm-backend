@@ -22,9 +22,9 @@ async function main() {
       createdBy: 'system',
       updatedBy: 'system',
       logoUrl: '',
-      primaryColor: '#224229',
-      secondaryColor: '#24b343',
-      sidebarColor: '#252b27',
+      primaryColor: '#7C3AED',
+      secondaryColor: '#5B21B6',
+      sidebarColor: '#1E1B4B',
     },
     {
       id: 'p1vk4imb6ugp1z0flglw86pk',

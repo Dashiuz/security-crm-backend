@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import {
   RoleRepositoryService,
@@ -19,6 +20,8 @@ import {
 
 @Injectable()
 export class RoleService {
+  private readonly logger = new Logger(RoleService.name);
+
   constructor(
     private readonly roleRepository: RoleRepositoryService,
     private readonly userRepository: UserRepositoryService,
@@ -62,6 +65,10 @@ export class RoleService {
       const row = await this.roleRepository.createRole(name);
       return this.mapRoleToResponse(row);
     } catch (e: any) {
+      this.logger.error(
+        `Error al crear rol [${name}]: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2002') {
         throw new ConflictException(
           `Ya existe un rol registrado con el nombre "${name}" en la empresa.`,
@@ -123,9 +130,16 @@ export class RoleService {
 
     if (Object.keys(updateData).length > 0) {
       try {
-        const updated = await this.roleRepository.updateRole(roleId, updateData);
+        const updated = await this.roleRepository.updateRole(
+          roleId,
+          updateData,
+        );
         return this.mapRoleToResponse(updated);
       } catch (e: any) {
+        this.logger.error(
+          `Error al actualizar rol [${roleId}]: ${e?.message || e}`,
+          e?.stack,
+        );
         if (e?.code === 'P2002') {
           throw new ConflictException(
             `Ya existe un rol registrado con el nombre "${updateData.name}" en la empresa.`,
@@ -151,6 +165,10 @@ export class RoleService {
       const deleted = await this.roleRepository.deleteRole(roleId);
       return this.mapRoleToResponse(deleted);
     } catch (e: any) {
+      this.logger.error(
+        `Error al eliminar rol [${roleId}]: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2003') {
         throw new BadRequestException(
           'No es posible eliminar el rol porque se encuentra asignado a uno o más usuarios.',

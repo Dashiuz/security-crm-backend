@@ -205,9 +205,9 @@ describe('RoleService', () => {
         tenantId: 'system',
       });
 
-      await expect(
-        service.remove('test-tenant', 'role-god'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.remove('test-tenant', 'role-god')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('debe lanzar BadRequestException si el rol está asignado a usuarios (P2003)', async () => {
@@ -218,9 +218,9 @@ describe('RoleService', () => {
       });
       mockRoleRepository.deleteRole.mockRejectedValue({ code: 'P2003' });
 
-      await expect(
-        service.remove('test-tenant', 'role-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.remove('test-tenant', 'role-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

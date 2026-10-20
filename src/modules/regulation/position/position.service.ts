@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PositionRepositoryService } from '../../../common/repository/position/position.repository.service';
 import { UserRepositoryService } from '../../../common/repository/user/user.repository.service';
 import {
@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class PositionService {
+  private readonly logger = new Logger(PositionService.name);
+
   constructor(
     private readonly positionRepository: PositionRepositoryService,
     private readonly userRepository: UserRepositoryService,
@@ -192,6 +194,10 @@ export class PositionService {
         existingPositions.push(newPos);
         successRows++;
       } catch (err: any) {
+        this.logger.error(
+          `Error al importar cargo fila ${rowNum} ("${row.name}"): ${err?.message || err}`,
+          err?.stack,
+        );
         errorRows++;
         errors.push({
           row: rowNum,

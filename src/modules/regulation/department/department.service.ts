@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { DepartmentRepositoryService } from '../../../common/repository/department/department.repository.service';
 import { UserRepositoryService } from '../../../common/repository/user/user.repository.service';
 import {
@@ -9,6 +9,8 @@ import {
 
 @Injectable()
 export class DepartmentService {
+  private readonly logger = new Logger(DepartmentService.name);
+
   constructor(
     private readonly departmentRepository: DepartmentRepositoryService,
     private readonly userRepository: UserRepositoryService,
@@ -137,6 +139,10 @@ export class DepartmentService {
         existingDepartments.push(newDept);
         successRows++;
       } catch (err: any) {
+        this.logger.error(
+          `Error al importar departamento fila ${rowNum} ("${row.name}"): ${err?.message || err}`,
+          err?.stack,
+        );
         errorRows++;
         errors.push({
           row: rowNum,

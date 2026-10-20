@@ -130,10 +130,15 @@ describe('PositionController', () => {
 
   describe('toggleStatus', () => {
     it('should delegate toggleStatus to positionService.update with isActive', async () => {
-      mockPositionService.update.mockResolvedValue({ id: 'pos-1', isActive: false });
+      mockPositionService.update.mockResolvedValue({
+        id: 'pos-1',
+        isActive: false,
+      });
 
       const result = await controller.toggleStatus('pos-1', false);
-      expect(mockPositionService.update).toHaveBeenCalledWith('pos-1', { isActive: false });
+      expect(mockPositionService.update).toHaveBeenCalledWith('pos-1', {
+        isActive: false,
+      });
       expect(result).toEqual({ id: 'pos-1', isActive: false });
     });
   });
