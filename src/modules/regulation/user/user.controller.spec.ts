@@ -70,8 +70,23 @@ describe('UserController', () => {
       mockUserService.findAll.mockResolvedValue([{ id: 'u-1' }]);
 
       const result = await controller.findAll(req);
-      expect(mockUserService.findAll).toHaveBeenCalledWith('tenant-1');
+      expect(mockUserService.findAll).toHaveBeenCalledWith('tenant-1', {
+        userType: undefined,
+        isActive: undefined,
+      });
       expect(result).toEqual([{ id: 'u-1' }]);
+    });
+
+    it('should pass parsed filters when query params are supplied', async () => {
+      const req = { user: { tenantId: 'tenant-1' } };
+      mockUserService.findAll.mockResolvedValue([{ id: 'u-2' }]);
+
+      const result = await controller.findAll(req, 'RESIDENT', 'true');
+      expect(mockUserService.findAll).toHaveBeenCalledWith('tenant-1', {
+        userType: 'RESIDENT',
+        isActive: true,
+      });
+      expect(result).toEqual([{ id: 'u-2' }]);
     });
   });
 
