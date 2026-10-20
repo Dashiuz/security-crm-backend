@@ -39,6 +39,7 @@ model Tenant {
   pqrsTickets                    PqrsTicket[]
   pqrsMessages                   PqrsMessage[]
   notifications                  Notification[]
+  userClientAccesses             UserClientAccess[]
 
   @@map("tenant")
 }

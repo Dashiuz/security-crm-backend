@@ -75,7 +75,7 @@ export class ParkingControlController {
   }
 
   @Patch(':id/exit')
-  @RequirePermissions('minuta:manage', 'minuta:update')
+  @RequirePermissions('minuta:manage', 'minuta:update', 'minuta:create')
   @ApiOperation({ summary: 'Register parking vehicle exit timestamp' })
   @ApiBody({ type: RegisterParkingExitDto, required: false })
   registerExit(

@@ -58,17 +58,15 @@ export class AuditInterceptor implements NestInterceptor {
       allowedClientIds = 'ALL';
     } else if (permissions.includes('client:read_assigned')) {
       if (user.tenantId && userId) {
-        const assignedClients = await this.prisma.client.findMany({
+        const accesses = await this.prisma.userClientAccess.findMany({
           where: {
             tenantId: user.tenantId,
-            OR: [
-              { coordinatorInChargeId: userId },
-              { commercialContactId: userId },
-            ],
+            userId,
+            isActive: true,
           },
-          select: { id: true },
+          select: { clientId: true },
         });
-        const ids = assignedClients.map((c) => c.id);
+        const ids = accesses.map((a) => a.clientId);
         if (user.clientId && !ids.includes(user.clientId)) {
           ids.push(user.clientId);
         }

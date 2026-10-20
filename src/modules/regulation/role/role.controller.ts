@@ -56,7 +56,14 @@ export class RoleController {
     return this.roleService.create(req.user.tenantId, dto);
   }
 
-  @RequirePermissions('role:manage', 'role:read')
+  @RequirePermissions(
+    'role:manage',
+    'role:read',
+    'user:manage',
+    'user:create',
+    'employee:manage',
+    'employee:update',
+  )
   @Get()
   @ApiOperation({ summary: 'List roles' })
   @ApiOkResponse({ type: [RoleResponseDto] })
@@ -92,6 +99,18 @@ export class RoleController {
     @Body() dto: UpdateRoleDto,
   ): Promise<RoleResponseDto> {
     return this.roleService.update(req.user.tenantId, roleId, dto);
+  }
+
+  @RequirePermissions('role:manage', 'role:update')
+  @Patch(':roleId/status')
+  @ApiOperation({ summary: 'Toggle role active status' })
+  @ApiOkResponse({ type: RoleResponseDto })
+  async toggleStatus(
+    @Req() req: any,
+    @Param('roleId') roleId: string,
+    @Body('isActive') isActive: boolean,
+  ): Promise<RoleResponseDto> {
+    return this.roleService.update(req.user.tenantId, roleId, { isActive });
   }
 
   @RequirePermissions('role:manage', 'role:delete')

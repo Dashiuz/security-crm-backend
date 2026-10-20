@@ -24,7 +24,14 @@ export class MinutaRepositoryService {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
         mediaAttachments: {
-          select: { id: true, url: true, fileName: true, mimeType: true },
+          select: {
+            id: true,
+            url: true,
+            fileName: true,
+            mimeType: true,
+            sizeBytes: true,
+            createdAt: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -63,7 +70,14 @@ export class MinutaRepositoryService {
           select: { id: true, firstName: true, lastName: true, document: true },
         },
         mediaAttachments: {
-          select: { id: true, url: true, fileName: true, mimeType: true },
+          select: {
+            id: true,
+            url: true,
+            fileName: true,
+            mimeType: true,
+            sizeBytes: true,
+            createdAt: true,
+          },
         },
       },
     });

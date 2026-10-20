@@ -34,6 +34,7 @@ describe('PqrsService', () => {
       updateTicketStatus: jest.fn(),
       updateTicketPriority: jest.fn(),
       createMessage: jest.fn(),
+      voidTicket: jest.fn(),
     };
 
     contextService = {
@@ -341,6 +342,167 @@ describe('PqrsService', () => {
           'pqrs:update',
         ]),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('debe exigir funcionario responsable al transicionar a ASSIGNED si el ticket no tenía asignación previa', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.OPEN,
+        assignedToId: null,
+      });
+
+      await expect(
+        service.updateStatus('ticket-1', { status: PqrsStatus.ASSIGNED }, [
+          'pqrs:manage',
+        ]),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe validar que el funcionario asignado exista si se envía assignedToId en updateStatus', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.OPEN,
+        assignedToId: null,
+      });
+      repository.findAssigneeUser.mockResolvedValue(null);
+
+      await expect(
+        service.updateStatus(
+          'ticket-1',
+          { status: PqrsStatus.ASSIGNED, assignedToId: 'invalid-user' },
+          ['pqrs:manage'],
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe transicionar exitosamente a ASSIGNED vinculando el funcionario indicado en assignedToId', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.OPEN,
+        assignedToId: null,
+        client: { name: 'Conjunto' },
+      });
+      repository.findAssigneeUser.mockResolvedValue({
+        id: 'staff-1',
+        fullName: 'Carlos Guardia',
+      });
+      repository.updateTicketStatus.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.ASSIGNED,
+        assignedToId: 'staff-1',
+        client: { name: 'Conjunto' },
+      });
+
+      const result = await service.updateStatus(
+        'ticket-1',
+        { status: PqrsStatus.ASSIGNED, assignedToId: 'staff-1' },
+        ['pqrs:manage'],
+      );
+
+      expect(result.status).toBe(PqrsStatus.ASSIGNED);
+      expect(repository.updateTicketStatus).toHaveBeenCalledWith(
+        'ticket-1',
+        PqrsStatus.ASSIGNED,
+        'staff-1',
+      );
+    });
+  });
+
+  describe('voidTicket', () => {
+    it('debe anular una solicitud exitosamente si tiene justificación válida y emite evento', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        code: 'PQRS-2026-0001',
+        status: PqrsStatus.OPEN,
+        createdById: mockUserId,
+        tenantId: mockTenantId,
+        clientId: mockClientId,
+        client: { name: 'Conjunto' },
+      });
+      repository.voidTicket.mockResolvedValue({
+        id: 'ticket-1',
+        code: 'PQRS-2026-0001',
+        status: PqrsStatus.VOIDED,
+        voidedReason: 'Radicado por duplicidad involuntaria del usuario',
+        tenantId: mockTenantId,
+        clientId: mockClientId,
+        client: { name: 'Conjunto' },
+      });
+
+      const result = await service.voidTicket(
+        'ticket-1',
+        { reason: 'Radicado por duplicidad involuntaria del usuario' },
+        ['pqrs:update'],
+      );
+
+      expect(result.status).toBe(PqrsStatus.VOIDED);
+      expect(repository.voidTicket).toHaveBeenCalledWith(
+        'ticket-1',
+        'Radicado por duplicidad involuntaria del usuario',
+        mockUserId,
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'pqrs.ticket.status_changed',
+        expect.any(Object),
+      );
+    });
+
+    it('debe lanzar BadRequestException si la solicitud ya está en estado VOIDED', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.VOIDED,
+      });
+
+      await expect(
+        service.voidTicket(
+          'ticket-1',
+          { reason: 'Intento de anulación redundante' },
+          ['pqrs:manage'],
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe lanzar BadRequestException si se intenta anular un ticket resuelto o cerrado', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.RESOLVED,
+      });
+
+      await expect(
+        service.voidTicket(
+          'ticket-1',
+          { reason: 'Intento de anulación sobre resuelto' },
+          ['pqrs:manage'],
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('debe lanzar ForbiddenException si el usuario no es el creador y no tiene permisos manage', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.OPEN,
+        createdById: 'another-user',
+      });
+
+      await expect(
+        service.voidTicket(
+          'ticket-1',
+          { reason: 'Intento de anulación sin permisos' },
+          ['pqrs:update'],
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('debe lanzar BadRequestException si la justificación tiene menos de 10 caracteres', async () => {
+      repository.findTicketById.mockResolvedValue({
+        id: 'ticket-1',
+        status: PqrsStatus.OPEN,
+        createdById: mockUserId,
+      });
+
+      await expect(
+        service.voidTicket('ticket-1', { reason: 'Corta' }, ['pqrs:manage']),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

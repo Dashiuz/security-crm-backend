@@ -3,7 +3,8 @@ model Role {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  name  String
+  name     String
+  isActive Boolean @default(true)
   users UserRole[]
   perms RolePermission[]
 

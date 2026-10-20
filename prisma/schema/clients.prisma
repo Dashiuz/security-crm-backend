@@ -26,11 +26,6 @@ model Client {
 
   sector ClientSector @default(RESIDENTIAL)
 
-  coordinatorInChargeId String?
-  coordinatorInCharge   User? @relation("ClientCoordinator", fields: [coordinatorInChargeId], references: [id], onDelete: SetNull)
-
-  commercialContactId String?
-  commercialContact   User? @relation("ClientCommercialContact", fields: [commercialContactId], references: [id], onDelete: SetNull)
 
   installedTech      Boolean @default(false)
   securityStudy      String?
@@ -67,6 +62,7 @@ model Client {
   isActive Boolean @default(true)
 
   users            User[]
+  clientAccesses   UserClientAccess[]
   employees        Employee[]
   minutas          Minuta[]
   visitorEntries   VisitorEntryControl[]
@@ -98,8 +94,6 @@ model Client {
   @@unique([tenantId, internalCode])
   @@unique([tenantId, contractNumber])
   @@index([tenantId])
-  @@index([coordinatorInChargeId])
-  @@index([commercialContactId])
   @@index([createdById])
   @@map("client")
 }

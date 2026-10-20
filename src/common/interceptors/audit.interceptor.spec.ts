@@ -16,6 +16,11 @@ describe('AuditInterceptor', () => {
           .fn()
           .mockResolvedValue([{ id: 'cli-1' }, { id: 'cli-2' }]),
       },
+      userClientAccess: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ clientId: 'cli-1' }, { clientId: 'cli-2' }]),
+      },
     };
     interceptor = new AuditInterceptor(contextService, prismaMock);
   });

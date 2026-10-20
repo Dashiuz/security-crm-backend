@@ -27,6 +27,7 @@ import { UpdatePqrsPriorityDto } from '../dtos/update-pqrs-priority.dto';
 import { AssignPqrsTicketDto } from '../dtos/assign-pqrs-ticket.dto';
 import { CreatePqrsMessageDto } from '../dtos/create-pqrs-message.dto';
 import { QueryPqrsTicketDto } from '../dtos/query-pqrs-ticket.dto';
+import { VoidPqrsTicketDto } from '../dtos/void-pqrs-ticket.dto';
 
 @ApiTags('Administrative: PQRS')
 @ApiBearerAuth('access-token')
@@ -110,6 +111,24 @@ export class PqrsController {
   ) {
     const permissions: string[] = req.user?.permissions ?? [];
     return this.service.updateStatus(id, dto, permissions);
+  }
+
+  @Patch(':id/void')
+  @RequirePermissions('pqrs:update', 'pqrs:manage')
+  @ApiOperation({
+    summary: 'Anular una solicitud PQRS con justificación formal obligatoria',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Solicitud PQRS anulada exitosamente',
+  })
+  voidTicket(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: VoidPqrsTicketDto,
+  ) {
+    const permissions: string[] = req.user?.permissions ?? [];
+    return this.service.voidTicket(id, dto, permissions);
   }
 
   @Patch(':id/priority')

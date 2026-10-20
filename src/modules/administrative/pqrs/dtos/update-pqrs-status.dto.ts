@@ -18,4 +18,12 @@ export class UpdatePqrsStatusDto {
   @IsString()
   @IsOptional()
   reason?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'ID del funcionario a asignar (requerido si el nuevo estado es ASSIGNED y el ticket no tenía funcionario)',
+  })
+  @IsString()
+  @IsOptional()
+  assignedToId?: string;
 }

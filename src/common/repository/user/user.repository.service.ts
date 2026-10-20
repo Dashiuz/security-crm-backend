@@ -55,7 +55,12 @@ export class UserRepositoryService {
     return await (this.prisma.user as any).findFirst({
       bypassTenant: true,
       where: { document },
-      include: { tenant: true },
+      include: {
+        tenant: true,
+        roles: {
+          include: { role: true },
+        },
+      },
     });
   }
 
@@ -110,13 +115,29 @@ export class UserRepositoryService {
     });
   }
 
-  async findAll(tenantId: string) {
+  async findAll(
+    tenantId: string,
+    filter?: { userType?: any; isActive?: boolean },
+  ) {
+    const where: any = {
+      tenantId,
+      tenant: { isActive: true },
+    };
+
+    if (filter?.isActive !== undefined) {
+      where.isActive = filter.isActive;
+    }
+    if (filter?.userType) {
+      where.userType = filter.userType;
+    }
+
     return await (this.prisma.user as any).findMany({
-      where: { tenantId, isActive: true, tenant: { isActive: true } },
+      where,
       select: {
         id: true,
         tenantId: true,
         clientId: true,
+        userType: true,
         fullName: true,
         document: true,
         department: true,
@@ -184,6 +205,16 @@ export class UserRepositoryService {
             primaryColor: true,
             secondaryColor: true,
             sidebarColor: true,
+            profile: {
+              select: {
+                legalName: true,
+                taxId: true,
+                contactEmail: true,
+                contactPhone: true,
+                address: true,
+                city: true,
+              },
+            },
           },
         },
       },
@@ -204,6 +235,16 @@ export class UserRepositoryService {
           primaryColor: true,
           secondaryColor: true,
           sidebarColor: true,
+          profile: {
+            select: {
+              legalName: true,
+              taxId: true,
+              contactEmail: true,
+              contactPhone: true,
+              address: true,
+              city: true,
+            },
+          },
         },
       });
       if (overrideTenant) {
@@ -407,6 +448,12 @@ export class UserRepositoryService {
   async deleteUserRoles(userId: string, roleIds: string[]) {
     return this.prisma.userRole.deleteMany({
       where: { userId, roleId: { in: roleIds } },
+    });
+  }
+
+  async deleteAllUserRoles(userId: string) {
+    return this.prisma.userRole.deleteMany({
+      where: { userId },
     });
   }
 

@@ -59,7 +59,7 @@ export class StorageController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 15 * 1024 * 1024 }), // Max 15MB
+          new MaxFileSizeValidator({ maxSize: 35 * 1024 * 1024 }), // Max 35MB (for video clips and evidence)
         ],
         fileIsRequired: true,
       }),

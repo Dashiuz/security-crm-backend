@@ -1,14 +1,20 @@
+import { randomUUID } from 'crypto';
 import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ConflictException,
+  Logger,
 } from '@nestjs/common';
+import * as argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
 import {
   EmployeeRepositoryService,
   UserRepositoryService,
   DepartmentRepositoryService,
   PositionRepositoryService,
+  ClientRepositoryService,
 } from '../../../common/repository/index';
 import { S3Service } from '../../storage/services/s3.service';
 import {
@@ -16,18 +22,26 @@ import {
   UpdateEmployeeDto,
   EmployeeResponseDto,
   DeletedEmployeeDto,
+  AssignEmployeeClientDto,
+  UnassignEmployeeClientDto,
+  EnableEmployeeUserDto,
 } from './dtos/index';
 import { toDateOnlyIso } from '../../../common/utils/convertDate';
 import { EmployeeWithRefs } from './types/employee-with-refs';
+import { EmployeeClientHistoryItem } from './types/employee-client-history.interface';
 
 @Injectable()
 export class EmployeeService {
+  private readonly logger = new Logger(EmployeeService.name);
+
   constructor(
     private readonly employeeRepository: EmployeeRepositoryService,
     private readonly userRepository: UserRepositoryService,
     private readonly departmentRepository: DepartmentRepositoryService,
     private readonly positionRepository: PositionRepositoryService,
+    private readonly clientRepository: ClientRepositoryService,
     private readonly s3Service: S3Service,
+    private readonly prisma: PrismaService,
   ) {}
 
   private buildFullName(input: {
@@ -85,6 +99,7 @@ export class EmployeeService {
       positionName: row.positionRef?.name ?? null,
       avatarUrl,
       mediaAttachments: row.mediaAttachments ?? [],
+      clientHistory: Array.isArray(row.clientHistory) ? row.clientHistory : [],
     };
   }
 
@@ -135,7 +150,30 @@ export class EmployeeService {
       maternalSurname: dto.maternalSurname,
     });
 
-    // 4) Create employee - tenantId is handled by Prisma Extension
+    // 4) Build initial clientHistory if clientId is provided
+    const initialClientHistory: EmployeeClientHistoryItem[] = [];
+    if (dto.clientId) {
+      try {
+        const client = await this.clientRepository.findOne(dto.clientId);
+        if (client) {
+          initialClientHistory.push({
+            id: randomUUID(),
+            clientId: client.id,
+            clientName: client.name,
+            clientCode: (client as any).internalCode ?? null,
+            assignedAt: toDateOnlyIso(entryDate),
+            unassignedAt: null,
+            recordedAt: new Date().toISOString(),
+            recordedBy: null,
+            notes: 'Asignación inicial al registrar empleado',
+          });
+        }
+      } catch {
+        // Continue if client lookup fails
+      }
+    }
+
+    // 5) Create employee - tenantId is handled by Prisma Extension
     const employee = await this.employeeRepository.createEmployee({
       firstName: dto.firstName.trim(),
       secondName: dto.secondName?.trim() || null,
@@ -156,6 +194,7 @@ export class EmployeeService {
       isRetired: dto.isRetired ?? false,
       isActive: dto.isActive ?? true,
       retiredAt: retiredAt,
+      clientHistory: initialClientHistory as any,
     } as any);
 
     // Sync clientId to User account if it exists
@@ -177,9 +216,55 @@ export class EmployeeService {
 
   async findAll(): Promise<EmployeeResponseDto[]> {
     const employees = await this.employeeRepository.findAll();
-    return Promise.all(
+    const responses = await Promise.all(
       employees.map((emp) => this.mapEmployeeToResponse(emp as any)),
     );
+
+    if (!this.prisma?.user?.findMany || responses.length === 0) {
+      return responses;
+    }
+
+    try {
+      const documents = responses.map((e) => e.document).filter(Boolean);
+      const users = await this.prisma.user.findMany({
+        where: {
+          document: { in: documents },
+          isActive: true,
+        },
+        select: {
+          document: true,
+          roles: {
+            select: {
+              role: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const userMap = new Map<string, string[]>();
+      for (const u of users) {
+        const roleNames = (u.roles || [])
+          .map((r: any) => r.role?.name)
+          .filter(Boolean);
+        userMap.set(u.document, roleNames);
+      }
+
+      return responses.map((res) => {
+        const roles = userMap.get(res.document);
+        return {
+          ...res,
+          hasUser: Boolean(roles),
+          userRole: roles && roles.length > 0 ? roles[0] : null,
+          userRoles: roles || [],
+        };
+      });
+    } catch {
+      return responses;
+    }
   }
 
   async findActiveByDocument(
@@ -334,20 +419,36 @@ export class EmployeeService {
       this.employeeRepository as any
     ).updateEmployee(employeeId, patch);
 
-    // Sync clientId to User account if updated
-    if (dto.clientId !== undefined) {
-      try {
-        const effectiveDocument = dto.document?.trim() ?? current.document;
-        const user =
-          await this.userRepository.findByDocument(effectiveDocument);
-        if (user) {
-          await this.userRepository.updateUser(user.id, {
-            clientId: dto.clientId || null,
-          } as any);
+    // Sync User account if exists
+    try {
+      const effectiveDocument = dto.document?.trim() ?? current.document;
+      const user = await this.userRepository.findByDocument(effectiveDocument);
+      if (user) {
+        const userUpdate: any = {};
+        if (dto.clientId !== undefined)
+          userUpdate.clientId = dto.clientId || null;
+        if (patch.fullName) userUpdate.fullName = patch.fullName;
+        if (dto.positionId) {
+          const pos = await this.prisma.position.findUnique({
+            where: { id: dto.positionId },
+          });
+          if (pos) userUpdate.position = pos.name;
         }
-      } catch {
-        // Ignore if user not found
+        if (dto.departmentId) {
+          const dept = await this.prisma.department.findUnique({
+            where: { id: dto.departmentId },
+          });
+          if (dept) userUpdate.department = dept.name;
+        }
+        if (Object.keys(userUpdate).length > 0) {
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: userUpdate,
+          });
+        }
       }
+    } catch {
+      // Ignore if user not found
     }
 
     return await this.mapEmployeeToResponse(updatedEmployee);
@@ -548,5 +649,524 @@ export class EmployeeService {
       errorRows,
       errors,
     };
+  }
+
+  async assignClient(
+    employeeId: string,
+    dto: AssignEmployeeClientDto,
+    recordedBy?: string,
+  ): Promise<EmployeeResponseDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
+    if (!current) throw new NotFoundException('Empleado no encontrado.');
+
+    if (current.isRetired || !current.isActive) {
+      throw new BadRequestException(
+        'No se puede asignar un cliente a un empleado inactivo o retirado.',
+      );
+    }
+
+    const targetClient = await this.clientRepository.findOne(dto.clientId);
+    if (!targetClient) {
+      throw new NotFoundException('El cliente seleccionado no existe.');
+    }
+
+    const todayStr = toDateOnlyIso(new Date());
+    const effectiveAssignedAt = dto.assignedAt || todayStr;
+    const effectiveUnassignedAt = dto.unassignedAt || todayStr;
+
+    // Validación cronológica: si existía cliente anterior y se desvincula, la desvinculación no puede ser posterior al nuevo inicio si se especificó fecha
+    if (
+      dto.assignedAt &&
+      dto.unassignedAt &&
+      dto.unassignedAt > dto.assignedAt
+    ) {
+      throw new BadRequestException(
+        'La fecha de desvinculación del puesto anterior no puede ser posterior a la fecha de inicio en el nuevo puesto.',
+      );
+    }
+
+    const rawHistory = Array.isArray((current as any).clientHistory)
+      ? (current as any).clientHistory
+      : [];
+    const updatedHistory: EmployeeClientHistoryItem[] = [...rawHistory];
+
+    const isConcurrent = dto.isConcurrent !== false; // defaults to true
+
+    // Check if target client is already actively assigned
+    const alreadyActive = updatedHistory.some(
+      (h) => h.clientId === targetClient.id && h.unassignedAt === null,
+    );
+    if (alreadyActive) {
+      throw new BadRequestException(
+        'El empleado ya se encuentra asignado activamente a este cliente o puesto.',
+      );
+    }
+
+    if (!isConcurrent && current.clientId) {
+      // Close existing active assignments if not concurrent
+      for (let i = 0; i < updatedHistory.length; i++) {
+        if (updatedHistory[i].unassignedAt === null) {
+          updatedHistory[i] = {
+            ...updatedHistory[i],
+            unassignedAt: effectiveUnassignedAt,
+          };
+        }
+      }
+    }
+
+    // Agregar nueva asignación
+    const newHistoryItem: EmployeeClientHistoryItem = {
+      id: randomUUID(),
+      clientId: targetClient.id,
+      clientName: targetClient.name,
+      clientCode: (targetClient as any)?.internalCode || null,
+      assignedAt: effectiveAssignedAt,
+      unassignedAt: null,
+      recordedAt: new Date().toISOString(),
+      recordedBy: recordedBy || null,
+      notes: dto.notes?.trim() || null,
+    };
+    updatedHistory.push(newHistoryItem);
+
+    // Actualizar registro en base de datos
+    const updatedEmployee = await this.employeeRepository.updateEmployee(
+      employeeId,
+      {
+        clientId: targetClient.id,
+        clientHistory: updatedHistory as any,
+      } as any,
+    );
+
+    // Sincronizar con cuenta de usuario y UserClientAccess (SSOT Relacional)
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { document: current.document, tenantId: current.tenantId },
+      });
+
+      const roleName =
+        (current as any).positionRef?.name ||
+        (current as any).positionId ||
+        'OPERATIVO';
+
+      if (!isConcurrent) {
+        await this.prisma.userClientAccess.updateMany({
+          where: {
+            OR: [{ employeeId }, ...(user ? [{ userId: user.id }] : [])],
+            clientId: { not: targetClient.id },
+          },
+          data: { isActive: false },
+        });
+      }
+
+      await this.prisma.userClientAccess.upsert({
+        where: {
+          employeeId_clientId: {
+            employeeId,
+            clientId: targetClient.id,
+          },
+        },
+        create: {
+          tenantId: current.tenantId,
+          employeeId,
+          userId: user?.id || null,
+          clientId: targetClient.id,
+          roleName,
+          isActive: true,
+        },
+        update: {
+          isActive: true,
+          userId: user?.id || undefined,
+          roleName,
+        },
+      });
+
+      if (user) {
+        if (!user.clientId) {
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: { clientId: targetClient.id },
+          });
+          try {
+            await this.userRepository.updateUser(user.id, {
+              clientId: targetClient.id,
+            } as any);
+          } catch (error: unknown) {
+            this.logger.warn(
+              `Could not sync linked user clientId: ${(error as Error).message}`,
+            );
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Could not sync UserClientAccess in assignClient: ${(err as Error).message}`,
+      );
+    }
+
+    return await this.mapEmployeeToResponse(updatedEmployee);
+  }
+
+  async unassignClient(
+    employeeId: string,
+    dto: UnassignEmployeeClientDto,
+    recordedBy?: string,
+  ): Promise<EmployeeResponseDto> {
+    const current = await this.employeeRepository.findAnyById(employeeId);
+    if (!current) throw new NotFoundException('Empleado no encontrado.');
+
+    const rawHistory = Array.isArray((current as any).clientHistory)
+      ? (current as any).clientHistory
+      : [];
+    const updatedHistory: EmployeeClientHistoryItem[] = [...rawHistory];
+
+    const activeAssignments = updatedHistory.filter(
+      (h) => h.unassignedAt === null,
+    );
+
+    if (activeAssignments.length === 0 && !current.clientId) {
+      throw new BadRequestException(
+        'El empleado no tiene ningún cliente asignado actualmente.',
+      );
+    }
+
+    const todayStr = toDateOnlyIso(new Date());
+    const effectiveUnassignedAt = dto.unassignedAt || todayStr;
+    let targetClientIdToClose = dto.clientId;
+
+    if (targetClientIdToClose) {
+      const targetIndex = updatedHistory.findIndex(
+        (h) => h.clientId === targetClientIdToClose && h.unassignedAt === null,
+      );
+      if (targetIndex === -1) {
+        throw new BadRequestException(
+          'El empleado no tiene asignado activamente el cliente especificado.',
+        );
+      }
+      updatedHistory[targetIndex] = {
+        ...updatedHistory[targetIndex],
+        unassignedAt: effectiveUnassignedAt,
+        notes: dto.notes?.trim() || updatedHistory[targetIndex].notes,
+      };
+    } else {
+      if (activeAssignments.length > 0) {
+        targetClientIdToClose = activeAssignments[0].clientId;
+        const activeIndex = updatedHistory.findIndex(
+          (h) => h.unassignedAt === null,
+        );
+        if (activeIndex !== -1) {
+          updatedHistory[activeIndex] = {
+            ...updatedHistory[activeIndex],
+            unassignedAt: effectiveUnassignedAt,
+            notes: dto.notes?.trim() || updatedHistory[activeIndex].notes,
+          };
+        }
+      }
+    }
+
+    const remainingActive = updatedHistory.filter(
+      (h) => h.unassignedAt === null,
+    );
+    const newClientId =
+      remainingActive.length > 0
+        ? remainingActive[remainingActive.length - 1].clientId
+        : null;
+
+    const updatedEmployee = await this.employeeRepository.updateEmployee(
+      employeeId,
+      {
+        clientId: newClientId,
+        clientHistory: updatedHistory as any,
+      } as any,
+    );
+
+    // Sincronizar con User y UserClientAccess
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { document: current.document, tenantId: current.tenantId },
+      });
+      if (targetClientIdToClose) {
+        await this.prisma.userClientAccess.updateMany({
+          where: {
+            OR: [{ employeeId }, ...(user ? [{ userId: user.id }] : [])],
+            clientId: targetClientIdToClose,
+          },
+          data: { isActive: false },
+        });
+      }
+      if (user) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { clientId: newClientId },
+        });
+        try {
+          await this.userRepository.updateUser(user.id, {
+            clientId: newClientId,
+          } as any);
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Could not sync linked user clientId on unassign: ${(error as Error).message}`,
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Could not sync UserClientAccess on unassign: ${(err as Error).message}`,
+      );
+    }
+
+    return await this.mapEmployeeToResponse(updatedEmployee);
+  }
+
+  async getWorkforceSummary(employeeId: string) {
+    const employee = await this.employeeRepository.findAnyById(employeeId);
+    if (!employee) throw new NotFoundException('Empleado no encontrado.');
+
+    const employeeDto = await this.mapEmployeeToResponse(employee);
+
+    // Find linked user
+    const linkedUser = await this.prisma.user.findFirst({
+      where: {
+        document: employee.document,
+        tenantId: employee.tenantId,
+        deletedAt: null,
+      },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+        clientAccesses: {
+          where: { isActive: true },
+          include: {
+            client: {
+              select: {
+                id: true,
+                name: true,
+                internalCode: true,
+                nit: true,
+                address: true,
+                city: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const rawHistory: EmployeeClientHistoryItem[] = Array.isArray(
+      (employee as any).clientHistory,
+    )
+      ? (employee as any).clientHistory
+      : [];
+
+    const activeFromHistory = rawHistory.filter((h) => h.unassignedAt === null);
+
+    const activeAssignmentsMap = new Map<string, any>();
+
+    for (const h of activeFromHistory) {
+      activeAssignmentsMap.set(h.clientId, {
+        clientId: h.clientId,
+        clientName: h.clientName,
+        clientCode: h.clientCode,
+        assignedAt: h.assignedAt,
+        notes: h.notes,
+        roleName: (employee as any).positionRef?.name || null,
+        source: 'EMPLOYEE_HISTORY',
+      });
+    }
+
+    const historyList: EmployeeClientHistoryItem[] = [...rawHistory];
+
+    if (linkedUser?.clientAccesses) {
+      for (const ca of linkedUser.clientAccesses) {
+        if (!activeAssignmentsMap.has(ca.clientId)) {
+          activeAssignmentsMap.set(ca.clientId, {
+            clientId: ca.clientId,
+            clientName: ca.client?.name || 'Cliente',
+            clientCode: ca.client?.internalCode || null,
+            assignedAt: toDateOnlyIso(ca.createdAt),
+            roleName: ca.roleName,
+            source: 'USER_CLIENT_ACCESS',
+          });
+        } else {
+          const existing = activeAssignmentsMap.get(ca.clientId);
+          if (ca.roleName) {
+            existing.roleName = ca.roleName;
+          }
+        }
+
+        // Si la sede no está en el historial del empleado, agregarla para que aparezca en el timeline
+        const inHistory = historyList.some((h) => h.clientId === ca.clientId);
+        if (!inHistory) {
+          historyList.push({
+            id: ca.id,
+            clientId: ca.clientId,
+            clientName: ca.client?.name || 'Cliente',
+            clientCode: ca.client?.internalCode || null,
+            assignedAt: toDateOnlyIso(ca.createdAt),
+            unassignedAt: ca.isActive ? null : toDateOnlyIso(ca.updatedAt),
+            recordedAt: ca.createdAt.toISOString(),
+            recordedBy: null,
+            notes: 'Asignación sincronizada desde acceso digital',
+          });
+        }
+      }
+    }
+
+    const userData = linkedUser
+      ? {
+          id: linkedUser.id,
+          document: linkedUser.document,
+          fullName: linkedUser.fullName,
+          userType: linkedUser.userType,
+          isActive: linkedUser.isActive,
+          isFirstLogin: linkedUser.isFirstLogin,
+          createdAt: linkedUser.createdAt,
+          roles: linkedUser.roles.map((r) => ({
+            id: r.role.id,
+            name: r.role.name,
+          })),
+          clientAccesses: (linkedUser.clientAccesses || []).map((ca) => ({
+            clientId: ca.clientId,
+            roleName: ca.roleName,
+            isActive: ca.isActive,
+            client: ca.client,
+          })),
+        }
+      : null;
+
+    return {
+      employee: employeeDto,
+      user: userData,
+      activeAssignments: Array.from(activeAssignmentsMap.values()),
+      clientHistory: historyList,
+      history: historyList,
+    };
+  }
+
+  async enableUser(
+    employeeId: string,
+    dto: EnableEmployeeUserDto,
+    recordedBy?: string,
+  ) {
+    const employee = await this.employeeRepository.findAnyById(employeeId);
+    if (!employee) throw new NotFoundException('Empleado no encontrado.');
+
+    if (employee.isRetired || !employee.isActive) {
+      throw new BadRequestException(
+        'No se puede habilitar usuario para un empleado retirado o inactivo.',
+      );
+    }
+
+    // Check if user already exists
+    const existingUser = await this.prisma.user.findFirst({
+      where: { document: employee.document, tenantId: employee.tenantId },
+    });
+    if (existingUser) {
+      throw new ConflictException(
+        'El empleado ya cuenta con una cuenta de usuario digital vinculada.',
+      );
+    }
+
+    const passwordHash = await argon2.hash(dto.password, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    });
+
+    let roleIds = dto.roleIds || [];
+    if (roleIds.length === 0) {
+      const defaultRole = await this.prisma.role.findFirst({
+        where: {
+          tenantId: employee.tenantId,
+          name: { in: ['EMPLOYEE', 'VIGILANTE', 'OPERATIVO'] },
+        },
+      });
+      if (defaultRole) {
+        roleIds = [defaultRole.id];
+      }
+    }
+
+    const newUser = await this.prisma.user.create({
+      data: {
+        tenantId: employee.tenantId,
+        document: employee.document,
+        fullName: employee.fullName,
+        department: (employee as any).departmentRef?.name || 'OPERACIONES',
+        position: (employee as any).positionRef?.name || 'VIGILANTE',
+        passwordHash,
+        clientId: employee.clientId || null,
+        isFirstLogin: true,
+        isActive: true,
+        isRetired: false,
+        createdBy: recordedBy || null,
+        roles: {
+          create: roleIds.map((rId) => ({
+            roleId: rId,
+          })),
+        },
+      },
+      include: {
+        roles: { include: { role: true } },
+      },
+    });
+
+    // Vincular userId en los UserClientAccess existentes del empleado
+    try {
+      await this.prisma.userClientAccess.updateMany({
+        where: { employeeId: employee.id },
+        data: { userId: newUser.id },
+      });
+    } catch (linkErr) {
+      this.logger.warn(
+        `Could not link new user to existing UserClientAccess: ${(linkErr as Error).message}`,
+      );
+    }
+
+    // Heredar asignaciones activas en UserClientAccess
+    const rawHistory = Array.isArray((employee as any).clientHistory)
+      ? (employee as any).clientHistory
+      : [];
+    const activeAssignments = rawHistory.filter((h) => h.unassignedAt === null);
+
+    const clientsToInherit = new Set<string>();
+    if (employee.clientId) clientsToInherit.add(employee.clientId);
+    for (const a of activeAssignments) {
+      if (a.clientId) clientsToInherit.add(a.clientId);
+    }
+
+    for (const cId of clientsToInherit) {
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            employeeId_clientId: {
+              employeeId: employee.id,
+              clientId: cId,
+            },
+          },
+          create: {
+            tenantId: employee.tenantId,
+            employeeId: employee.id,
+            userId: newUser.id,
+            clientId: cId,
+            roleName: (employee as any).positionRef?.name || 'OPERATIVO',
+            isActive: true,
+          },
+          update: {
+            userId: newUser.id,
+            isActive: true,
+          },
+        });
+      } catch (inheritErr) {
+        this.logger.error(
+          'Error inheriting client to userClientAccess:',
+          inheritErr,
+        );
+      }
+    }
+
+    return await this.getWorkforceSummary(employeeId);
   }
 }

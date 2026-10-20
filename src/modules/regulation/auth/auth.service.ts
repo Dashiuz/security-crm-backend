@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { CookieOptions } from 'express';
@@ -13,6 +14,7 @@ import { JwtPayload } from './types/jwt-payload';
 import { LoginResult } from './types/login-result';
 import { RefreshResult } from './types/refresh-result';
 import { SessionObjectInterface } from '../../../common/interfaces/index';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly userRepository: UserRepositoryService,
     private readonly jwt: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   // Password verification (LocalStrategy uses this)
@@ -372,5 +375,79 @@ export class AuthService {
     };
 
     return { name: this.refreshCookieName, value: '', options };
+  }
+
+  async switchClient(userId: string, targetClientId: string) {
+    const access = await this.prisma.userClientAccess.findFirst({
+      where: {
+        userId,
+        clientId: targetClientId,
+        isActive: true,
+      },
+      include: { client: true },
+    });
+
+    if (!access) {
+      throw new ForbiddenException(
+        'No tiene acceso autorizado a este conjunto residencial.',
+      );
+    }
+
+    // Update active clientId in user record
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { clientId: targetClientId },
+    });
+
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    const [permissions, roles, features] = await Promise.all([
+      this.userRepository.getUserPermissions(user.id),
+      this.userRepository.getUserRoles(user.id),
+      this.userRepository.getTenantFeatures(user.tenantId),
+    ]);
+
+    const accessToken = await this.signAccessToken({
+      sub: user.id,
+      tenantId: user.tenantId,
+      clientId: targetClientId,
+      userType: user.userType || undefined,
+      permissions,
+      roles,
+      features,
+      jti: this.newJti(),
+    });
+
+    return {
+      accessToken,
+      activeClientId: targetClientId,
+      clientName: access.client.name,
+    };
+  }
+
+  async getMyAccessibleClients(userId: string) {
+    const accesses = await this.prisma.userClientAccess.findMany({
+      where: { userId, isActive: true },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            internalCode: true,
+            nit: true,
+          },
+        },
+      },
+      orderBy: { client: { name: 'asc' } },
+    });
+
+    return accesses.map((a) => ({
+      id: a.client.id,
+      name: a.client.name,
+      internalCode: a.client.internalCode,
+      nit: a.client.nit,
+      roleName: a.roleName,
+    }));
   }
 }

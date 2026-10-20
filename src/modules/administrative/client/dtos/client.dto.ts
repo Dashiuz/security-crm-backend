@@ -10,6 +10,7 @@ import {
   Min,
   ValidateIf,
   IsObject,
+  IsNotEmpty,
 } from 'class-validator';
 import {
   ClientStatus,
@@ -518,4 +519,91 @@ export class ClientResponseDto extends CreateClientDto {
 
   @ApiProperty()
   updatedAt: Date;
+}
+
+export class AssignClientUserDto {
+  @ApiProperty({
+    description: 'ID del usuario a vincular con el cliente',
+    example: 'cuid-user-1',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
+    description: 'Rol o cargo contextual asignado en el cliente',
+    example: 'COORDINADOR',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  roleName?: string;
+}
+
+export enum DigitalAccountStatus {
+  ACTIVE = 'ACTIVE', // Cuenta digital activa (puede ingresar al software)
+  DISABLED = 'DISABLED', // Cuenta digital suspendida
+  NO_ACCOUNT = 'NO_ACCOUNT', // Solo puesto físico, sin credenciales creadas
+}
+
+export class ClientWorkforceItemDto {
+  @ApiProperty({ description: 'ID de la asignación UserClientAccess' })
+  id: string;
+
+  @ApiProperty({
+    description: 'ID del usuario digital vinculado',
+    required: false,
+    nullable: true,
+  })
+  userId: string | null;
+
+  @ApiProperty({
+    description: 'ID del empleado vinculado',
+    required: false,
+    nullable: true,
+  })
+  employeeId: string | null;
+
+  @ApiProperty({ description: 'ID del cliente' })
+  clientId: string;
+
+  @ApiProperty({
+    description: 'Cargo / Rol contextual',
+    required: false,
+    nullable: true,
+  })
+  roleName: string | null;
+
+  @ApiProperty({ description: 'Estado de la vinculación' })
+  isActive: boolean;
+
+  @ApiProperty({ description: 'Indica si tiene acceso digital activo' })
+  hasDigitalAccess: boolean;
+
+  @ApiProperty({
+    enum: DigitalAccountStatus,
+    description: 'Estado detallado de la cuenta digital',
+  })
+  digitalAccountStatus: DigitalAccountStatus;
+
+  @ApiProperty({ description: 'Fecha de creación de la vinculación' })
+  createdAt: Date | string;
+
+  @ApiProperty({ description: 'Datos del personal unificado' })
+  user: {
+    id: string | null;
+    fullName: string;
+    document: string;
+    department?: string | null;
+    position?: string | null;
+    email: string | null;
+    phone: string | null;
+    isActive: boolean;
+    roles?: Array<{
+      role: {
+        id: string;
+        name: string;
+      };
+    }>;
+  };
 }

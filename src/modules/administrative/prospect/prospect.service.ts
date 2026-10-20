@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -18,6 +19,8 @@ import { ClientStatus } from '@prisma/client';
 
 @Injectable()
 export class ProspectService {
+  private readonly logger = new Logger(ProspectService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly structureGenerator: ClientStructureGeneratorService,
@@ -247,11 +250,59 @@ export class ProspectService {
     };
 
     if (dto.coordinatorInChargeId && dto.coordinatorInChargeId.trim() !== '') {
-      data.coordinatorInCharge = { connect: { id: dto.coordinatorInChargeId } };
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: dto.coordinatorInChargeId,
+              clientId: id,
+            },
+          },
+          create: {
+            tenantId: user.tenantId,
+            userId: dto.coordinatorInChargeId,
+            clientId: id,
+            roleName: 'COORDINATOR',
+            isActive: true,
+          },
+          update: {
+            isActive: true,
+            roleName: 'COORDINATOR',
+          },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not sync coordinator userClientAccess for prospect: ${(error as Error).message}`,
+        );
+      }
     }
 
     if (dto.commercialContactId && dto.commercialContactId.trim() !== '') {
-      data.commercialContact = { connect: { id: dto.commercialContactId } };
+      try {
+        await this.prisma.userClientAccess.upsert({
+          where: {
+            userId_clientId: {
+              userId: dto.commercialContactId,
+              clientId: id,
+            },
+          },
+          create: {
+            tenantId: user.tenantId,
+            userId: dto.commercialContactId,
+            clientId: id,
+            roleName: 'COMMERCIAL',
+            isActive: true,
+          },
+          update: {
+            isActive: true,
+            roleName: 'COMMERCIAL',
+          },
+        });
+      } catch (error: unknown) {
+        this.logger.warn(
+          `Could not sync commercial userClientAccess for prospect: ${(error as Error).message}`,
+        );
+      }
     }
 
     if (user.sub && user.sub !== 'system') {

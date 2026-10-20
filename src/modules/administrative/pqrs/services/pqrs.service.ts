@@ -15,6 +15,7 @@ import { UpdatePqrsPriorityDto } from '../dtos/update-pqrs-priority.dto';
 import { AssignPqrsTicketDto } from '../dtos/assign-pqrs-ticket.dto';
 import { CreatePqrsMessageDto } from '../dtos/create-pqrs-message.dto';
 import { QueryPqrsTicketDto } from '../dtos/query-pqrs-ticket.dto';
+import { VoidPqrsTicketDto } from '../dtos/void-pqrs-ticket.dto';
 import { PqrsTicketCreatedEvent } from '../events/pqrs-ticket-created.event';
 import { PqrsTicketStatusChangedEvent } from '../events/pqrs-ticket-status-changed.event';
 import { PqrsTicketRepliedEvent } from '../events/pqrs-ticket-replied.event';
@@ -22,12 +23,13 @@ import { PqrsTicketAssignedEvent } from '../events/pqrs-ticket-assigned.event';
 import { PqrsRepository } from '../repositories/pqrs.repository';
 
 const ALLOWED_TRANSITIONS: Record<PqrsStatus, PqrsStatus[]> = {
-  [PqrsStatus.OPEN]: [PqrsStatus.ASSIGNED, PqrsStatus.REJECTED],
-  [PqrsStatus.ASSIGNED]: [PqrsStatus.IN_PROGRESS, PqrsStatus.REJECTED],
+  [PqrsStatus.OPEN]: [PqrsStatus.ASSIGNED, PqrsStatus.REJECTED, PqrsStatus.VOIDED],
+  [PqrsStatus.ASSIGNED]: [PqrsStatus.IN_PROGRESS, PqrsStatus.REJECTED, PqrsStatus.VOIDED],
   [PqrsStatus.IN_PROGRESS]: [PqrsStatus.RESOLVED],
   [PqrsStatus.RESOLVED]: [PqrsStatus.CLOSED, PqrsStatus.IN_PROGRESS],
   [PqrsStatus.CLOSED]: [],
   [PqrsStatus.REJECTED]: [],
+  [PqrsStatus.VOIDED]: [],
 };
 
 @Injectable()
@@ -305,8 +307,9 @@ export class PqrsService {
       );
     }
 
-    // Si el ticket está en estado OPEN, al asignarse avanza automáticamente a ASSIGNED
-    const shouldTransitionToAssigned = ticket.status === PqrsStatus.OPEN;
+    // Si el ticket está en estado OPEN o no tiene funcionario, al asignarse avanza automáticamente a ASSIGNED
+    const shouldTransitionToAssigned =
+      ticket.status === PqrsStatus.OPEN || !ticket.assignedToId;
     const newStatus = shouldTransitionToAssigned
       ? PqrsStatus.ASSIGNED
       : ticket.status;
@@ -420,7 +423,32 @@ export class PqrsService {
       );
     }
 
-    const updated = await this.repository.updateTicketStatus(id, nextStatus);
+    // Si la transición es hacia ASSIGNED, exigir que el ticket tenga funcionario o que venga en dto.assignedToId
+    let assigneeIdToBind: string | undefined = undefined;
+    if (nextStatus === PqrsStatus.ASSIGNED) {
+      if (dto.assignedToId) {
+        const targetUser = await this.repository.findAssigneeUser(
+          dto.assignedToId,
+          tenantId!,
+        );
+        if (!targetUser) {
+          throw new BadRequestException(
+            'El usuario a asignar no existe, no pertenece a la empresa o no es un funcionario operativo.',
+          );
+        }
+        assigneeIdToBind = dto.assignedToId;
+      } else if (!ticket.assignedToId) {
+        throw new BadRequestException(
+          'Para cambiar el estado a ASIGNADO es obligatorio indicar el funcionario responsable.',
+        );
+      }
+    }
+
+    const updated = await this.repository.updateTicketStatus(
+      id,
+      nextStatus,
+      assigneeIdToBind,
+    );
 
     // Emitir evento de cambio de estado
     this.eventEmitter.emit(
@@ -437,6 +465,79 @@ export class PqrsService {
         },
         currentStatus,
         dto.reason,
+        userId,
+      ),
+    );
+
+    return updated;
+  }
+
+  /**
+   * Anula formalmente una solicitud PQRS con justificación obligatoria
+   */
+  async voidTicket(
+    id: string,
+    dto: VoidPqrsTicketDto,
+    userPermissions: string[],
+  ) {
+    const tenantId = this.contextService.tenantId;
+    const userId = this.contextService.userId;
+
+    const ticket = await this.repository.findTicketById(id, tenantId!);
+    if (!ticket) {
+      throw new NotFoundException(`Ticket PQRS [${id}] no encontrado`);
+    }
+
+    if (ticket.status === PqrsStatus.VOIDED) {
+      throw new BadRequestException(
+        'Esta solicitud PQRS ya se encuentra anulada.',
+      );
+    }
+
+    if (
+      ticket.status === PqrsStatus.RESOLVED ||
+      ticket.status === PqrsStatus.CLOSED
+    ) {
+      throw new BadRequestException(
+        `No es posible anular un ticket que ya se encuentra en estado terminal (${ticket.status}).`,
+      );
+    }
+
+    const hasManage =
+      userPermissions.includes('pqrs:manage') ||
+      userPermissions.includes('godlike:manage') ||
+      this.contextService.isGodlike;
+
+    // Solo el creador original o un usuario con permisos de gestión puede anular
+    if (!hasManage && ticket.createdById !== userId) {
+      throw new ForbiddenException(
+        'Solo el creador de la solicitud o un administrador puede anular esta PQRS.',
+      );
+    }
+
+    const reason = (dto.reason || '').trim();
+    if (reason.length < 10) {
+      throw new BadRequestException(
+        'El motivo de anulación debe contener al menos 10 caracteres explicativos.',
+      );
+    }
+
+    const updated = await this.repository.voidTicket(id, reason, userId!);
+
+    this.eventEmitter.emit(
+      'pqrs.ticket.status_changed',
+      new PqrsTicketStatusChangedEvent(
+        {
+          id: updated.id,
+          code: updated.code,
+          subject: updated.subject,
+          status: updated.status,
+          tenantId: updated.tenantId,
+          clientId: updated.clientId,
+          client: updated.client,
+        },
+        ticket.status,
+        `Solicitud Anulada: ${reason}`,
         userId,
       ),
     );

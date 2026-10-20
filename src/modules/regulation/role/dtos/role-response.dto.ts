@@ -18,6 +18,9 @@ export class RoleResponseDto {
   @ApiProperty({ example: 'tenant_id_123' })
   tenantId?: string;
 
+  @ApiProperty({ example: true })
+  isActive!: boolean;
+
   @ApiProperty({ type: [RolePermissionResponseDto], required: false })
   permissions?: RolePermissionResponseDto[];
 }
