@@ -1,0 +1,93 @@
+// ============================================================================
+// SPEC-CORE-009: Motor de Firmas Digitales y Ciclo de Vida de Documentos
+// ============================================================================
+
+enum SignatureStatus {
+  DRAFT
+  PENDING
+  VIEWED
+  SIGNED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+enum SignatureDocumentType {
+  QUOTATION
+  PURCHASE_ORDER
+  SERVICE_ORDER
+  EMPLOYMENT_CONTRACT
+  EQUIPMENT_DELIVERY
+  OPERATIONAL_MINUTE
+  GENERAL_FORMAT
+}
+
+enum SignatureCreationMode {
+  DRAW
+  TYPE
+  UPLOAD
+}
+
+model SignatureRequest {
+  id              String                @id @default(cuid(2))
+  tenantId        String
+  tenant          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  // Documento asociado
+  documentType    SignatureDocumentType
+  documentId      String                // ID del registro comercial/operativo
+  documentTitle   String                // Ej: "Orden de Servicio OS-2026-0042"
+  documentVersion Int                   @default(1)
+
+  // Datos estructurados en borrador (0 bytes en S3)
+  draftSnapshot   Json?                 @db.JsonB // Snapshot estructurado JSONB del documento
+
+  // Token Criptográfico de Acceso Público
+  token           String                @unique // Token aleatorio de 64 caracteres hex
+  expiresAt       DateTime
+
+  // Información del Firmante
+  signerName      String
+  signerEmail     String
+  signerDocument  String?               // Cédula de ciudadanía o NIT
+  signerPhone     String?
+  signerRole      String?               // Ej: "Representante Legal / Gerente"
+
+  // Estado del Flujo
+  status          SignatureStatus       @default(DRAFT)
+  rejectionReason String?
+
+  // Pista de Auditoría e Inmutabilidad (Ley 527 de 1999)
+  originalDocHash String?               // Hash SHA-256 del PDF base
+  signedDocHash   String?               // Hash SHA-256 del PDF final firmado
+  signatureMethod SignatureCreationMode?
+  signatureIp     String?
+  signatureUa     String?               // User-Agent del navegador
+  signatureImage  String?               @db.Text // DataURL o path del PNG de firma
+
+  // Timestamps de Ciclo de Vida
+  sentAt          DateTime?
+  viewedAt        DateTime?
+  signedAt        DateTime?
+  revokedAt       DateTime?
+
+  // OTP Opcional (Doble Factor)
+  otpCodeHash     String?
+  otpExpiresAt    DateTime?
+
+  // Relación con el Archivo Oficial Congelado en S3
+  mediaAttachmentId String?
+  mediaAttachment   MediaAttachment?    @relation(fields: [mediaAttachmentId], references: [id], onDelete: SetNull)
+
+  // Metadatos de Auditoría Interna
+  createdById     String?
+  createdBy       User?                 @relation("SignatureRequestsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([token])
+  @@index([documentType, documentId])
+  @@map("signature_requests")
+}

@@ -32,11 +32,15 @@ model Employee {
   retiredAt       DateTime? @db.Date
   deletedAt       DateTime?
 
+  signatureUrl       String?                @db.Text
+  signatureMethod    SignatureCreationMode?
+  signatureUpdatedAt DateTime?
+
   departmentRef Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   positionRef   Position?   @relation("EmployeePosition", fields: [positionId], references: [id], onDelete: SetNull)
 
-  mediaAttachments   MediaAttachment[]
-  clientAccesses     UserClientAccess[]
+  mediaAttachments MediaAttachment[]
+  clientAccesses   UserClientAccess[]
 
   parkingControls        ParkingResidentVehicleControl[]
   visitorControls        VisitorEntryControl[]

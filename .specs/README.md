@@ -17,7 +17,8 @@ Cualquier nueva funcionalidad, módulo o refactorización importante **DEBE** co
 │   └── template.ui-spec.md            # Plantilla detallada de UI/UX para Next.js
 ├── 01-regulation/                     # Especificaciones de Identidad, Auth, Tenants y RBAC
 ├── 02-operation/                      # Especificaciones de Minuta Virtual, Visitantes, Correspondencia, etc.
-└── 03-administrative/                 # Especificaciones de Gestión Comercial y Financiera
+├── 03-administrative/                 # Especificaciones de Gestión Comercial y Financiera
+└── 04-core-architecture/             # Arquitectura Base, Navegación ERP, CI/CD y Firmas Digitales (SPEC-CORE-009)
 ```
 
 ---
