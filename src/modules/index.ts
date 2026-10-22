@@ -73,3 +73,9 @@ export * from './notifications/notifications.module';
 export * from './notifications/services/notifications.service';
 export * from './notifications/controllers/notifications.controller';
 export * from './notifications/sse/sse.service';
+
+// Signatures (Noxia Sign & User Profile Signatures - SPEC-CORE-009)
+export * from './signatures/signatures.module';
+export * from './signatures/services/signature-audit.service';
+export * from './signatures/services/signature-generator.service';
+export * from './signatures/services/signature-request.service';

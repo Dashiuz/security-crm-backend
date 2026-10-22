@@ -19,6 +19,13 @@ Noxia's centralized NestJS API serves as the core backend engine for the Securit
 - **Push Notifications:** `firebase-admin` (FCM)
 - **Deploy:** Railway or Render (Docker container, 24/7, no cold starts)
 
+## Principles
+
+- **Think before working** : Reason about the problem and ask the user for clarification if needed.
+- **Simplicity first** : Avoid complex, clever, or over-engineered solutions (KISS/YAGNI).
+- **Surgical changes** : Make the minimum changes necessary to solve the problem.
+- **Goal-driven execution** : Keep working until the solution meets the validation criteria.
+
 ## TypeScript Guidelines
 
 - Always strict TypeScript (`"strict": true` in `tsconfig.json`).

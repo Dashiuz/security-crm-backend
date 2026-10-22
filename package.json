@@ -38,6 +38,7 @@
     "@nestjs/swagger": "github:nestjs/swagger",
     "@prisma/client": "^6.4.0",
     "@types/multer": "^2.2.0",
+    "@types/qrcode": "^1.5.6",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
@@ -45,8 +46,10 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pdf-lib": "^1.17.1",
     "postgres": "^3.4.7",
     "prisma": "^6.4.0",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.31.0",
     "rxjs": "^7.8.1"
