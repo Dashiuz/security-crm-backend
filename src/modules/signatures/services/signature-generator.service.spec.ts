@@ -48,9 +48,10 @@ describe('SignatureGeneratorService', () => {
   describe('stampSignatureAndAudit', () => {
     it('should stamp signature and append audit certificate with QR code', async () => {
       // Create initial base PDF
-      const basePdfBuffer = await service.generateVectorDocument('Orden de Servicio OS-01', [
-        'Detalle del servicio contratado',
-      ]);
+      const basePdfBuffer = await service.generateVectorDocument(
+        'Orden de Servicio OS-01',
+        ['Detalle del servicio contratado'],
+      );
 
       const result = await service.stampSignatureAndAudit({
         basePdfBuffer,
@@ -81,7 +82,8 @@ describe('SignatureGeneratorService', () => {
     });
 
     it('should throw an error if the signature image buffer is completely invalid', async () => {
-      const basePdfBuffer = await service.generateVectorDocument('Test Document');
+      const basePdfBuffer =
+        await service.generateVectorDocument('Test Document');
       const invalidImageBuffer = Buffer.from('NOT-AN-IMAGE');
 
       await expect(

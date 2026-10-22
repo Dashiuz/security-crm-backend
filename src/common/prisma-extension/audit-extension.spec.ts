@@ -181,4 +181,63 @@ describe('auditExtension - Multi Client Scope', () => {
       }
     });
   });
+
+  it('should automatically inject tenantId and createdById for SignatureRequest on create and findMany', async () => {
+    const ctx = {
+      userId: 'user-signer-creator',
+      tenantId: 'tenant-sig-test',
+      features: [],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+
+      // 1. Test query injection
+      const findArgs: any = { where: { status: 'PENDING' } };
+      await allOps({
+        model: 'SignatureRequest',
+        operation: 'findMany',
+        args: findArgs,
+        query: mockQuery,
+      });
+
+      expect(findArgs.where.tenantId).toBe('tenant-sig-test');
+      expect(findArgs.where.status).toBe('PENDING');
+
+      // 2. Test create injection
+      const createArgs: any = {
+        data: {
+          documentType: 'QUOTATION',
+          documentId: 'doc-123',
+          documentTitle: 'Cotización Test',
+        },
+      };
+      await allOps({
+        model: 'SignatureRequest',
+        operation: 'create',
+        args: createArgs,
+        query: mockQuery,
+      });
+
+      expect(createArgs.data.tenantId).toBe('tenant-sig-test');
+      expect(createArgs.data.createdById).toBe('user-signer-creator');
+      expect(createArgs.data.updatedById).toBeUndefined();
+      expect(createArgs.data.updatedBy).toBeUndefined();
+
+      // 3. Test update does not crash or inject non-existent updatedById/updatedBy
+      const updateArgs: any = {
+        where: { id: 'sig-1' },
+        data: { status: 'VIEWED' },
+      };
+      await allOps({
+        model: 'SignatureRequest',
+        operation: 'update',
+        args: updateArgs,
+        query: mockQuery,
+      });
+
+      expect(updateArgs.data.updatedById).toBeUndefined();
+      expect(updateArgs.data.updatedBy).toBeUndefined();
+    });
+  });
 });

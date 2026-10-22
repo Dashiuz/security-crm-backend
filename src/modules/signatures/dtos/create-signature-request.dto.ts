@@ -21,7 +21,8 @@ export class CreateSignatureRequestDto {
   documentType: SignatureDocumentType;
 
   @ApiProperty({
-    description: 'ID del registro asociado en el ERP (ej: id de cotización o contrato)',
+    description:
+      'ID del registro asociado en el ERP (ej: id de cotización o contrato)',
     example: 'cm20194829103',
   })
   @IsString()
@@ -29,7 +30,8 @@ export class CreateSignatureRequestDto {
   documentId: string;
 
   @ApiProperty({
-    description: 'Título legible del documento para la plantilla de correo y encabezado',
+    description:
+      'Título legible del documento para la plantilla de correo y encabezado',
     example: 'Orden de Servicio OS-2026-0042',
   })
   @IsString()
@@ -45,7 +47,8 @@ export class CreateSignatureRequestDto {
   signerName: string;
 
   @ApiProperty({
-    description: 'Correo electrónico del destinatario donde se enviará el enlace de firma',
+    description:
+      'Correo electrónico del destinatario donde se enviará el enlace de firma',
     example: 'carlos.mendoza@cliente.com',
   })
   @IsEmail()
@@ -76,7 +79,8 @@ export class CreateSignatureRequestDto {
   signerRole?: string;
 
   @ApiPropertyOptional({
-    description: 'Snapshot estructurado en JSONB para renderizado al vuelo en memoria',
+    description:
+      'Snapshot estructurado en JSONB para renderizado al vuelo en memoria',
     example: { total: 4500000, items: [] },
   })
   @IsOptional()

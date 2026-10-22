@@ -27,7 +27,9 @@ export class UserSignatureController {
   constructor(private readonly signatureService: SignatureRequestService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Obtener la firma digital configurada del usuario autenticado' })
+  @ApiOperation({
+    summary: 'Obtener la firma digital configurada del usuario autenticado',
+  })
   @ApiOkResponse({ description: 'Firma digital encontrada o nula' })
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
   async getMySignature(@Req() req: any) {
@@ -37,7 +39,9 @@ export class UserSignatureController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Registrar o actualizar la firma digital en el perfil del usuario' })
+  @ApiOperation({
+    summary: 'Registrar o actualizar la firma digital en el perfil del usuario',
+  })
   @ApiCreatedResponse({ description: 'Firma digital guardada exitosamente' })
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
   async saveMySignature(@Req() req: any, @Body() dto: SaveUserSignatureDto) {

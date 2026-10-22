@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Logger } from '@nestjs/common';
 import { RequestContextService } from '../context/request-context.service';
+
+const logger = new Logger('AuditExtension');
 
 export const auditExtension = (contextService: RequestContextService) => {
   return Prisma.defineExtension((client) => {
@@ -31,6 +33,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'SecurityStudy',
               'PqrsTicket',
               'PqrsMessage',
+              'SignatureRequest',
             ];
             const multiTenantModels = [
               'User',
@@ -58,6 +61,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'TenantProfile',
               'TenantSubscription',
               'TenantSettings',
+              'SignatureRequest',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -310,7 +314,17 @@ export const auditExtension = (contextService: RequestContextService) => {
               const isRelationAudit = relationAuditModels.includes(model);
 
               if (operation === 'create') {
-                if (isRelationAudit) {
+                if (model === 'SignatureRequest') {
+                  const data = (args.data || {}) as any;
+                  if (
+                    !data.createdById &&
+                    !data.createdBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    args.data = { ...data, createdById: userId };
+                  }
+                } else if (isRelationAudit) {
                   const data = (args.data || {}) as any;
                   const newFields: any = {};
                   const isUnchecked = Boolean(
@@ -355,7 +369,9 @@ export const auditExtension = (contextService: RequestContextService) => {
                   };
                 }
               } else if (operation === 'update') {
-                if (isRelationAudit) {
+                if (model === 'SignatureRequest') {
+                  // SignatureRequest has no updatedById or updatedBy fields (only updatedAt managed by Prisma)
+                } else if (isRelationAudit) {
                   const data = (args.data || {}) as any;
                   const isUnchecked = Boolean(
                     data.tenantId ||
@@ -391,7 +407,20 @@ export const auditExtension = (contextService: RequestContextService) => {
                   };
                 }
               } else if (operation === 'upsert') {
-                if (isRelationAudit) {
+                if (model === 'SignatureRequest') {
+                  const createData = (args as any).create || {};
+                  if (
+                    !createData.createdById &&
+                    !createData.createdBy &&
+                    userId &&
+                    userId !== 'system'
+                  ) {
+                    (args as any).create = {
+                      ...createData,
+                      createdById: userId,
+                    };
+                  }
+                } else if (isRelationAudit) {
                   const createData = (args as any).create || {};
                   const updateData = (args as any).update || {};
                   const newCreate: any = {};
@@ -501,7 +530,10 @@ export const auditExtension = (contextService: RequestContextService) => {
               (client as any).auditLog
                 .create({ data: auditLogData })
                 .catch((err: any) => {
-                  console.error('Failed to create audit log:', err);
+                  logger.error(
+                    'Failed to create audit log:',
+                    err?.stack || err,
+                  );
                 });
             }
 

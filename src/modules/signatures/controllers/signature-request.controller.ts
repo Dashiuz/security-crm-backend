@@ -28,7 +28,9 @@ export class SignatureRequestController {
   constructor(private readonly signatureService: SignatureRequestService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Emitir nueva solicitud de firma externa con Magic Link' })
+  @ApiOperation({
+    summary: 'Emitir nueva solicitud de firma externa con Magic Link',
+  })
   @ApiCreatedResponse({ description: 'Solicitud creada y enlace generado' })
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
   async create(@Req() req: any, @Body() dto: CreateSignatureRequestDto) {
@@ -38,7 +40,9 @@ export class SignatureRequestController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Consultar estado y trazabilidad de una solicitud de firma' })
+  @ApiOperation({
+    summary: 'Consultar estado y trazabilidad de una solicitud de firma',
+  })
   @ApiOkResponse({ description: 'Detalle de la solicitud' })
   @ApiNotFoundResponse({ description: 'Solicitud no encontrada' })
   async getById(@Req() req: any, @Param('id') id: string) {
