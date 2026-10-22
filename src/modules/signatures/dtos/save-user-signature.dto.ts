@@ -10,7 +10,8 @@ export class SaveUserSignatureDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^data:image\/(png|svg\+xml);base64,/, {
-    message: 'La firma debe ser una imagen válida en formato DataURL base64 (PNG o SVG)',
+    message:
+      'La firma debe ser una imagen válida en formato DataURL base64 (PNG o SVG)',
   })
   signatureDataUrl: string;
 

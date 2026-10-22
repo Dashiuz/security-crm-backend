@@ -45,7 +45,10 @@ describe('UserSignatureController', () => {
 
   it('should get current user signature', async () => {
     const result = await controller.getMySignature(mockReq);
-    expect(service.getUserSignature).toHaveBeenCalledWith('user-123', 'tenant-1');
+    expect(service.getUserSignature).toHaveBeenCalledWith(
+      'user-123',
+      'tenant-1',
+    );
     expect(result).toHaveProperty('signatureUrl');
   });
 
@@ -55,13 +58,20 @@ describe('UserSignatureController', () => {
       method: SignatureCreationMode.DRAW,
     };
     const result = await controller.saveMySignature(mockReq, dto);
-    expect(service.saveUserSignature).toHaveBeenCalledWith('user-123', 'tenant-1', dto);
+    expect(service.saveUserSignature).toHaveBeenCalledWith(
+      'user-123',
+      'tenant-1',
+      dto,
+    );
     expect(result).toHaveProperty('signatureUrl');
   });
 
   it('should delete user signature', async () => {
     const result = await controller.deleteMySignature(mockReq);
-    expect(service.deleteUserSignature).toHaveBeenCalledWith('user-123', 'tenant-1');
+    expect(service.deleteUserSignature).toHaveBeenCalledWith(
+      'user-123',
+      'tenant-1',
+    );
     expect(result.signatureUrl).toBeNull();
   });
 });

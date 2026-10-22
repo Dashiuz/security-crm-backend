@@ -28,7 +28,11 @@ export class SignatureRequestService {
   // 1. GESTIÓN DE FIRMA EN PERFIL / CONFIGURACIÓN DE USUARIO
   // ==========================================================================
 
-  async saveUserSignature(userId: string, tenantId: string, dto: SaveUserSignatureDto) {
+  async saveUserSignature(
+    userId: string,
+    tenantId: string,
+    dto: SaveUserSignatureDto,
+  ) {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, tenantId },
     });
@@ -63,8 +67,11 @@ export class SignatureRequestService {
           signatureUpdatedAt: new Date(),
         },
       });
-    } catch {
-      // Ignorar si no existe registro de empleado asociado
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Error al sincronizar firma con empleado para documento [${user.document}]: ${errorMessage}`,
+      );
     }
 
     return updatedUser;
@@ -109,8 +116,13 @@ export class SignatureRequestService {
   // 2. GESTIÓN INTERNA DE SOLICITUDES DE FIRMA ERP (NOXIA SIGN)
   // ==========================================================================
 
-  async createRequest(tenantId: string, createdById: string, dto: CreateSignatureRequestDto) {
-    const ttlDays = dto.expiresDays && dto.expiresDays > 0 ? dto.expiresDays : 15;
+  async createRequest(
+    tenantId: string,
+    createdById: string,
+    dto: CreateSignatureRequestDto,
+  ) {
+    const ttlDays =
+      dto.expiresDays && dto.expiresDays > 0 ? dto.expiresDays : 15;
     const expiresAt = new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
     const token = this.auditService.generateSecureToken();
 
@@ -120,7 +132,13 @@ export class SignatureRequestService {
         tenantId,
         documentType: dto.documentType,
         documentId: dto.documentId,
-        status: { in: [SignatureStatus.PENDING, SignatureStatus.VIEWED, SignatureStatus.DRAFT] },
+        status: {
+          in: [
+            SignatureStatus.PENDING,
+            SignatureStatus.VIEWED,
+            SignatureStatus.DRAFT,
+          ],
+        },
       },
       data: {
         status: SignatureStatus.REVOKED,
@@ -183,7 +201,9 @@ export class SignatureRequestService {
     const request = await this.getRequestById(id, tenantId);
 
     if (request.status === SignatureStatus.SIGNED) {
-      throw new BadRequestException('No es posible revocar un documento que ya ha sido firmado');
+      throw new BadRequestException(
+        'No es posible revocar un documento que ya ha sido firmado',
+      );
     }
 
     return this.prisma.signatureRequest.update({
@@ -199,7 +219,11 @@ export class SignatureRequestService {
   // 3. PORTAL PÚBLICO CIFRADO (/sign/[token] & /verify/[id])
   // ==========================================================================
 
-  async getPublicRequestByToken(token: string, clientIp?: string, clientUa?: string) {
+  async getPublicRequestByToken(
+    token: string,
+    clientIp?: string,
+    clientUa?: string,
+  ) {
     const request = await this.prisma.signatureRequest.findUnique({
       where: { token },
       include: {
@@ -220,18 +244,25 @@ export class SignatureRequestService {
     }
 
     if (request.status === SignatureStatus.REVOKED) {
-      throw new ForbiddenException('Este enlace de firma ha sido revocado o sustituido por una nueva versión');
+      throw new ForbiddenException(
+        'Este enlace de firma ha sido revocado o sustituido por una nueva versión',
+      );
     }
 
     // Verificar si expiró
-    if (new Date() > request.expiresAt && request.status !== SignatureStatus.SIGNED) {
+    if (
+      new Date() > request.expiresAt &&
+      request.status !== SignatureStatus.SIGNED
+    ) {
       if (request.status !== SignatureStatus.EXPIRED) {
         await this.prisma.signatureRequest.update({
           where: { id: request.id },
           data: { status: SignatureStatus.EXPIRED },
         });
       }
-      throw new GoneException('El enlace de firma ha caducado por superar los 15 días de vigencia');
+      throw new GoneException(
+        'El enlace de firma ha caducado por superar los 15 días de vigencia',
+      );
     }
 
     // Si está en PENDING, registrar primera apertura como VIEWED
@@ -274,7 +305,9 @@ export class SignatureRequestService {
     clientUa?: string,
   ) {
     if (!dto.acceptedTerms) {
-      throw new BadRequestException('Es obligatorio aceptar los términos y condiciones de la Ley 527 de 1999');
+      throw new BadRequestException(
+        'Es obligatorio aceptar los términos y condiciones de la Ley 527 de 1999',
+      );
     }
 
     const request = await this.prisma.signatureRequest.findUnique({
@@ -294,7 +327,9 @@ export class SignatureRequestService {
     }
 
     if (request.status === SignatureStatus.SIGNED) {
-      throw new BadRequestException('Este documento ya fue firmado previamente');
+      throw new BadRequestException(
+        'Este documento ya fue firmado previamente',
+      );
     }
 
     if (request.status === SignatureStatus.REVOKED) {
@@ -306,7 +341,10 @@ export class SignatureRequestService {
     }
 
     // 1. Extraer el buffer PNG de la firma
-    const base64Data = dto.signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
+    const base64Data = dto.signatureDataUrl.replace(
+      /^data:image\/\w+;base64,/,
+      '',
+    );
     const signaturePngBuffer = Buffer.from(base64Data, 'base64');
 
     // 2. Generar el PDF base vectorial a partir de datos estructurados
@@ -321,11 +359,17 @@ export class SignatureRequestService {
 
     if (request.draftSnapshot && typeof request.draftSnapshot === 'object') {
       const snap = request.draftSnapshot as Record<string, any>;
-      if (snap.total) lines.push(`Valor Total: $${Number(snap.total).toLocaleString('es-CO')}`);
+      if (snap.total)
+        lines.push(
+          `Valor Total: $${Number(snap.total).toLocaleString('es-CO')}`,
+        );
       if (snap.notes) lines.push(`Observaciones: ${snap.notes}`);
     }
 
-    const basePdfBuffer = await this.generatorService.generateVectorDocument(request.documentTitle, lines);
+    const basePdfBuffer = await this.generatorService.generateVectorDocument(
+      request.documentTitle,
+      lines,
+    );
 
     // 3. Estampar la firma y generar Hoja de Evidencias con QR
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -387,7 +431,9 @@ export class SignatureRequestService {
     });
 
     if (!request) {
-      throw new NotFoundException('Documento no encontrado o código de verificación no registrado');
+      throw new NotFoundException(
+        'Documento no encontrado o código de verificación no registrado',
+      );
     }
 
     return {
@@ -403,7 +449,9 @@ export class SignatureRequestService {
       signedDocHash: request.signedDocHash,
       tenantName: request.tenant.profile?.legalName || request.tenant.name,
       tenantNit: request.tenant.profile?.taxId,
-      isAuthentic: request.status === SignatureStatus.SIGNED && Boolean(request.signedDocHash),
+      isAuthentic:
+        request.status === SignatureStatus.SIGNED &&
+        Boolean(request.signedDocHash),
     };
   }
 }

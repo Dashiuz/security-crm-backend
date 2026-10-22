@@ -21,6 +21,7 @@ async function main() {
     { key: 'sec_study', name: 'Estudios de Seguridad', description: 'Gestión documental de estudios de seguridad' },
     { key: 'canva', name: 'Canva de Seguridad', description: 'Diseño interactivo y geofencing en canva' },
     { key: 'pqrs', name: 'Módulo PQRS', description: 'Gestión B2B de Peticiones, Quejas, Reclamos, Sugerencias y Felicitaciones' },
+    { key: 'signature', name: 'Motor de Firmas Digitales (Noxia Sign)', description: 'Gestión y emisión de documentos con firmas electrónicas y validez jurídica' },
   ];
 
   for (const f of featuresData) {

@@ -39,7 +39,9 @@ describe('PublicSignatureController', () => {
       providers: [{ provide: SignatureRequestService, useValue: service }],
     }).compile();
 
-    controller = module.get<PublicSignatureController>(PublicSignatureController);
+    controller = module.get<PublicSignatureController>(
+      PublicSignatureController,
+    );
   });
 
   it('should be defined', () => {

@@ -457,6 +457,32 @@ async function main() {
       key: 'pqrs:manage',
       desc: 'Control total administrativo de tickets PQRS',
     },
+    // Digital Signatures (Noxia Sign - SPEC-CORE-009)
+    {
+      id: 'signatures_profile_manage_perm_id',
+      key: 'signatures:profile:manage',
+      desc: 'Gestionar firma digital personal en perfil y configuraciones',
+    },
+    {
+      id: 'signatures_request_create_perm_id',
+      key: 'signatures:request:create',
+      desc: 'Emitir solicitudes de firma externa y generar magic links',
+    },
+    {
+      id: 'signatures_request_read_perm_id',
+      key: 'signatures:request:read',
+      desc: 'Consultar estado, aperturas y evidencias de solicitudes de firma',
+    },
+    {
+      id: 'signatures_request_revoke_perm_id',
+      key: 'signatures:request:revoke',
+      desc: 'Revocar y forzar expiración de solicitudes de firma pendientes',
+    },
+    {
+      id: 'signatures_verify_public_perm_id',
+      key: 'signatures:verify:public',
+      desc: 'Verificación pública de autenticidad e integridad de documentos por QR',
+    },
   ];
 
   // 5. Departments
