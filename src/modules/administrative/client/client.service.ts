@@ -181,8 +181,9 @@ export class ClientService {
             update: { isActive: true, roleName: 'COORDINADOR' },
           });
         } catch (error: unknown) {
-          this.logger.warn(
+          this.logger.error(
             `Could not sync coordinator userClientAccess: ${(error as Error).message}`,
+            (error as Error).stack,
           );
         }
       }
@@ -208,8 +209,9 @@ export class ClientService {
             update: { isActive: true, roleName: 'COMERCIAL' },
           });
         } catch (error: unknown) {
-          this.logger.warn(
+          this.logger.error(
             `Could not sync commercial userClientAccess: ${(error as Error).message}`,
+            (error as Error).stack,
           );
         }
       }
@@ -527,8 +529,9 @@ export class ClientService {
           update: { isActive: true, roleName: 'COORDINADOR' },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not sync coordinator userClientAccess: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }
@@ -555,8 +558,9 @@ export class ClientService {
           update: { isActive: true, roleName: 'COMERCIAL' },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not sync commercial userClientAccess: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }
@@ -643,8 +647,9 @@ export class ClientService {
           update: { isActive: true, roleName: 'COORDINADOR' },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not sync coordinator userClientAccess: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }
@@ -671,8 +676,9 @@ export class ClientService {
           update: { isActive: true, roleName: 'COMERCIAL' },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not sync commercial userClientAccess: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }
@@ -1497,8 +1503,11 @@ export class ClientService {
           });
         }
       }
-    } catch {
-      // Continue if employee sync fails
+    } catch (err: any) {
+      this.logger.error(
+        `Error al desvincular historial de empleado al desasociar cliente [${clientId}]: ${err?.message || err}`,
+        err?.stack,
+      );
     }
 
     return {

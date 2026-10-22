@@ -279,8 +279,9 @@ export class ProspectService {
           },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not sync coordinator userClientAccess for prospect: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }
@@ -307,8 +308,9 @@ export class ProspectService {
           },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not sync commercial userClientAccess for prospect: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }

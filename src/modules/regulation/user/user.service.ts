@@ -412,8 +412,9 @@ export class UserService {
           data: { revokedAt: new Date() },
         });
       } catch (error: unknown) {
-        this.logger.warn(
+        this.logger.error(
           `Could not revoke user sessions: ${(error as Error).message}`,
+          (error as Error).stack,
         );
       }
     }
@@ -508,7 +509,11 @@ export class UserService {
         if (emp?.department) mapped.department = emp.department;
         return mapped;
       });
-    } catch {
+    } catch (err: any) {
+      this.logger.error(
+        `Error al enriquecer usuarios con datos de empleado: ${err?.message || err}`,
+        err?.stack,
+      );
       return users.map((u) => this.mapUserToResponse(u));
     }
   }
