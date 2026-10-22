@@ -36,7 +36,9 @@ describe('SignatureRequestController', () => {
       providers: [{ provide: SignatureRequestService, useValue: service }],
     }).compile();
 
-    controller = module.get<SignatureRequestController>(SignatureRequestController);
+    controller = module.get<SignatureRequestController>(
+      SignatureRequestController,
+    );
   });
 
   it('should be defined', () => {
@@ -53,7 +55,11 @@ describe('SignatureRequestController', () => {
     };
 
     const result = await controller.create(mockReq, dto);
-    expect(service.createRequest).toHaveBeenCalledWith('tenant-1', 'user-123', dto);
+    expect(service.createRequest).toHaveBeenCalledWith(
+      'tenant-1',
+      'user-123',
+      dto,
+    );
     expect(result).toHaveProperty('signUrl');
   });
 

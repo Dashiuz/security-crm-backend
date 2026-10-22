@@ -73,8 +73,11 @@ export class SignatureAuditService {
         dateStyle: 'full',
         timeStyle: 'long',
       }).format(date);
-    } catch {
-      // Fallback si no está disponible Intl es-CO
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Error al formatear timestamp legal es-CO: ${errorMessage}`,
+      );
       cot = `${utc} (UTC)`;
     }
 

@@ -51,7 +51,10 @@ describe('SignatureRequestService', () => {
     tenant: {
       name: 'Vigilancia Continental',
       slug: 'continental',
-      profile: { legalName: 'Vigilancia Continental SAS', taxId: '900123456-1' },
+      profile: {
+        legalName: 'Vigilancia Continental SAS',
+        taxId: '900123456-1',
+      },
     },
   };
 
@@ -76,7 +79,9 @@ describe('SignatureRequestService', () => {
     auditService = {
       generateSecureToken: jest.fn().mockReturnValue('mocked-64-char-token'),
       calculateSha256: jest.fn().mockReturnValue('mocked-sha256-hash'),
-      generateVerificationQr: jest.fn().mockResolvedValue(Buffer.from('qr-png')),
+      generateVerificationQr: jest
+        .fn()
+        .mockResolvedValue(Buffer.from('qr-png')),
       formatLegalTimestamp: jest.fn().mockReturnValue({
         utc: '2026-10-21T00:00:00.000Z',
         cot: '21 de octubre de 2026',
@@ -85,7 +90,9 @@ describe('SignatureRequestService', () => {
     };
 
     generatorService = {
-      generateVectorDocument: jest.fn().mockResolvedValue(Buffer.from('base-pdf-buffer')),
+      generateVectorDocument: jest
+        .fn()
+        .mockResolvedValue(Buffer.from('base-pdf-buffer')),
       stampSignatureAndAudit: jest.fn().mockResolvedValue({
         signedPdfBuffer: Buffer.from('signed-pdf-buffer'),
         originalDocHash: 'hash-orig-123',
@@ -127,7 +134,9 @@ describe('SignatureRequestService', () => {
       expect(prisma.user.update).toHaveBeenCalled();
       expect(prisma.employee.updateMany).toHaveBeenCalledWith({
         where: { tenantId: 'tenant-1', document: mockUser.document },
-        data: expect.objectContaining({ signatureUrl: 'data:image/png;base64,new-signature' }),
+        data: expect.objectContaining({
+          signatureUrl: 'data:image/png;base64,new-signature',
+        }),
       });
     });
 
@@ -155,9 +164,9 @@ describe('SignatureRequestService', () => {
     it('should throw NotFoundException if user is not found', async () => {
       prisma.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.getUserSignature('user-999', 'tenant-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getUserSignature('user-999', 'tenant-1'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -192,7 +201,13 @@ describe('SignatureRequestService', () => {
           tenantId: 'tenant-1',
           documentType: SignatureDocumentType.SERVICE_ORDER,
           documentId: 'doc-999',
-          status: { in: [SignatureStatus.PENDING, SignatureStatus.VIEWED, SignatureStatus.DRAFT] },
+          status: {
+            in: [
+              SignatureStatus.PENDING,
+              SignatureStatus.VIEWED,
+              SignatureStatus.DRAFT,
+            ],
+          },
         },
         data: expect.objectContaining({ status: SignatureStatus.REVOKED }),
       });
@@ -214,9 +229,9 @@ describe('SignatureRequestService', () => {
     it('should throw NotFoundException if request is not found', async () => {
       prisma.signatureRequest.findFirst.mockResolvedValue(null);
 
-      await expect(service.getRequestById('req-999', 'tenant-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getRequestById('req-999', 'tenant-1'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should revoke request if not yet signed', async () => {
@@ -236,9 +251,9 @@ describe('SignatureRequestService', () => {
         status: SignatureStatus.SIGNED,
       });
 
-      await expect(service.revokeRequest('req-001', 'tenant-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.revokeRequest('req-001', 'tenant-1'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -269,9 +284,9 @@ describe('SignatureRequestService', () => {
     it('should throw NotFoundException if token is invalid', async () => {
       prisma.signatureRequest.findUnique.mockResolvedValue(null);
 
-      await expect(service.getPublicRequestByToken('invalid-token')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getPublicRequestByToken('invalid-token'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException if request was revoked', async () => {
@@ -280,9 +295,9 @@ describe('SignatureRequestService', () => {
         status: SignatureStatus.REVOKED,
       });
 
-      await expect(service.getPublicRequestByToken('revoked-token')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.getPublicRequestByToken('revoked-token'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw GoneException if request is expired', async () => {
@@ -292,9 +307,9 @@ describe('SignatureRequestService', () => {
       });
       prisma.signatureRequest.update.mockResolvedValue({});
 
-      await expect(service.getPublicRequestByToken('expired-token')).rejects.toThrow(
-        GoneException,
-      );
+      await expect(
+        service.getPublicRequestByToken('expired-token'),
+      ).rejects.toThrow(GoneException);
     });
   });
 
@@ -307,7 +322,10 @@ describe('SignatureRequestService', () => {
 
     it('should throw BadRequestException if terms are not accepted', async () => {
       await expect(
-        service.submitPublicSignature('token', { ...validDto, acceptedTerms: false }),
+        service.submitPublicSignature('token', {
+          ...validDto,
+          acceptedTerms: false,
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -317,9 +335,9 @@ describe('SignatureRequestService', () => {
         status: SignatureStatus.SIGNED,
       });
 
-      await expect(service.submitPublicSignature('token', validDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.submitPublicSignature('token', validDto),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should successfully stamp signature and update status to SIGNED', async () => {
@@ -333,7 +351,12 @@ describe('SignatureRequestService', () => {
         signedAt: new Date(),
       });
 
-      const result = await service.submitPublicSignature('token', validDto, '1.2.3.4', 'UA');
+      const result = await service.submitPublicSignature(
+        'token',
+        validDto,
+        '1.2.3.4',
+        'UA',
+      );
 
       expect(generatorService.generateVectorDocument).toHaveBeenCalled();
       expect(generatorService.stampSignatureAndAudit).toHaveBeenCalled();
@@ -369,9 +392,9 @@ describe('SignatureRequestService', () => {
     it('should throw NotFoundException if document id is not found', async () => {
       prisma.signatureRequest.findUnique.mockResolvedValue(null);
 
-      await expect(service.verifyPublicDocument('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.verifyPublicDocument('non-existent'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

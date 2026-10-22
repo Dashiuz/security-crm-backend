@@ -32,7 +32,10 @@ export class SignatureGeneratorService {
   /**
    * Genera un PDF base vectorial inicial en memoria a partir de metadatos o snapshot estructurado
    */
-  async generateVectorDocument(title: string, contentLines: string[] = []): Promise<Buffer> {
+  async generateVectorDocument(
+    title: string,
+    contentLines: string[] = [],
+  ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]); // A4
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -82,27 +85,38 @@ export class SignatureGeneratorService {
   /**
    * Estampa la firma del cliente en el PDF y adjunta la Hoja de Evidencias con QR y Pista de Auditoría
    */
-  async stampSignatureAndAudit(params: StampSignatureParams): Promise<StampSignatureResult> {
+  async stampSignatureAndAudit(
+    params: StampSignatureParams,
+  ): Promise<StampSignatureResult> {
     // 1. Calcular Hash SHA-256 del documento original
-    const originalDocHash = this.auditService.calculateSha256(params.basePdfBuffer);
+    const originalDocHash = this.auditService.calculateSha256(
+      params.basePdfBuffer,
+    );
 
     // 2. Cargar el documento PDF base
     const pdfDoc = await PDFDocument.load(params.basePdfBuffer);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+    const helveticaOblique = await pdfDoc.embedFont(
+      StandardFonts.HelveticaOblique,
+    );
 
     // 3. Incrustar la imagen de la firma PNG
     let signatureImage;
     try {
       signatureImage = await pdfDoc.embedPng(params.signaturePngBuffer);
-    } catch {
+    } catch (pngErr) {
       // Fallback si viene como JPEG u otro formato
+      this.logger.warn(
+        `Firma no es PNG nativo, intentando decodificar como JPG: ${pngErr instanceof Error ? pngErr.message : pngErr}`,
+      );
       try {
         signatureImage = await pdfDoc.embedJpg(params.signaturePngBuffer);
       } catch (e) {
         this.logger.error('Error al incrustar imagen de firma en PDF:', e);
-        throw new Error('El formato de imagen de firma no es compatible con el motor PDF');
+        throw new Error(
+          'El formato de imagen de firma no es compatible con el motor PDF',
+        );
       }
     }
 
@@ -147,7 +161,9 @@ export class SignatureGeneratorService {
     });
 
     // 5. Generar Código QR de Verificación
-    const qrBuffer = await this.auditService.generateVerificationQr(params.verifyUrl);
+    const qrBuffer = await this.auditService.generateVerificationQr(
+      params.verifyUrl,
+    );
     const qrImage = await pdfDoc.embedPng(qrBuffer);
 
     // 6. Adicionar la Hoja de Evidencias (Certificado de Firma y Pista de Auditoría)
@@ -163,21 +179,27 @@ export class SignatureGeneratorService {
       color: rgb(0.12, 0.11, 0.29), // Midnight Obsidian
     });
 
-    auditPage.drawText('CERTIFICADO DE FIRMA ELECTRÓNICA Y PISTA DE AUDITORÍA', {
-      x: 40,
-      y: 805,
-      size: 12,
-      font: helveticaBold,
-      color: rgb(1, 1, 1),
-    });
+    auditPage.drawText(
+      'CERTIFICADO DE FIRMA ELECTRÓNICA Y PISTA DE AUDITORÍA',
+      {
+        x: 40,
+        y: 805,
+        size: 12,
+        font: helveticaBold,
+        color: rgb(1, 1, 1),
+      },
+    );
 
-    auditPage.drawText('NOXIA ERP • Sistema de Gestión de Seguridad Privada e Integridad Documental', {
-      x: 40,
-      y: 785,
-      size: 8,
-      font: helvetica,
-      color: rgb(0.8, 0.8, 0.9),
-    });
+    auditPage.drawText(
+      'NOXIA ERP • Sistema de Gestión de Seguridad Privada e Integridad Documental',
+      {
+        x: 40,
+        y: 785,
+        size: 8,
+        font: helvetica,
+        color: rgb(0.8, 0.8, 0.9),
+      },
+    );
 
     // Marco de advertencia legal
     auditPage.drawRectangle({
@@ -190,13 +212,16 @@ export class SignatureGeneratorService {
       color: rgb(0.98, 0.98, 1.0),
     });
 
-    auditPage.drawText('MARCO LEGAL Y VALIDEZ PROBATORIA (REPÚBLICA DE COLOMBIA):', {
-      x: 50,
-      y: 738,
-      size: 8,
-      font: helveticaBold,
-      color: rgb(0.12, 0.11, 0.29),
-    });
+    auditPage.drawText(
+      'MARCO LEGAL Y VALIDEZ PROBATORIA (REPÚBLICA DE COLOMBIA):',
+      {
+        x: 50,
+        y: 738,
+        size: 8,
+        font: helveticaBold,
+        color: rgb(0.12, 0.11, 0.29),
+      },
+    );
 
     const legalNotice =
       'El presente documento ha sido firmado electrónicamente de conformidad con la Ley 527 de 1999 y el Decreto 2364\n' +
@@ -223,14 +248,22 @@ export class SignatureGeneratorService {
     });
 
     yPos -= 18;
-    auditPage.drawText(`Documento: ${params.documentTitle}`, { x: 50, y: yPos, size: 8, font: helvetica });
-    yPos -= 14;
-    auditPage.drawText(`Empresa Emisora: ${params.tenantName} ${params.tenantNit ? `(NIT: ${params.tenantNit})` : ''}`, {
+    auditPage.drawText(`Documento: ${params.documentTitle}`, {
       x: 50,
       y: yPos,
       size: 8,
       font: helvetica,
     });
+    yPos -= 14;
+    auditPage.drawText(
+      `Empresa Emisora: ${params.tenantName} ${params.tenantNit ? `(NIT: ${params.tenantNit})` : ''}`,
+      {
+        x: 50,
+        y: yPos,
+        size: 8,
+        font: helvetica,
+      },
+    );
 
     // Sección 2: Identidad del Firmante
     yPos -= 28;
@@ -243,16 +276,34 @@ export class SignatureGeneratorService {
     });
 
     yPos -= 18;
-    auditPage.drawText(`Nombre Completo: ${params.signerName}`, { x: 50, y: yPos, size: 8, font: helveticaBold });
+    auditPage.drawText(`Nombre Completo: ${params.signerName}`, {
+      x: 50,
+      y: yPos,
+      size: 8,
+      font: helveticaBold,
+    });
     yPos -= 14;
-    auditPage.drawText(`Correo Electrónico: ${params.signerEmail}`, { x: 50, y: yPos, size: 8, font: helvetica });
+    auditPage.drawText(`Correo Electrónico: ${params.signerEmail}`, {
+      x: 50,
+      y: yPos,
+      size: 8,
+      font: helvetica,
+    });
     if (params.signerDocument) {
       yPos -= 14;
-      auditPage.drawText(`Identificación / Cédula / NIT: ${params.signerDocument}`, { x: 50, y: yPos, size: 8, font: helvetica });
+      auditPage.drawText(
+        `Identificación / Cédula / NIT: ${params.signerDocument}`,
+        { x: 50, y: yPos, size: 8, font: helvetica },
+      );
     }
     if (params.signerRole) {
       yPos -= 14;
-      auditPage.drawText(`Rol / Calidad: ${params.signerRole}`, { x: 50, y: yPos, size: 8, font: helvetica });
+      auditPage.drawText(`Rol / Calidad: ${params.signerRole}`, {
+        x: 50,
+        y: yPos,
+        size: 8,
+        font: helvetica,
+      });
     }
 
     // Sección 3: Evidencias Técnicas de Firma
@@ -266,21 +317,40 @@ export class SignatureGeneratorService {
     });
 
     yPos -= 18;
-    auditPage.drawText(`Fecha y Hora (UTC): ${legalTimestamp.utc}`, { x: 50, y: yPos, size: 8, font: helvetica });
-    yPos -= 14;
-    auditPage.drawText(`Fecha y Hora Oficial Colombia (COT): ${legalTimestamp.cot}`, { x: 50, y: yPos, size: 8, font: helveticaBold });
-    yPos -= 14;
-    auditPage.drawText(`Dirección IP de Firma: ${params.signerIp || 'No registrada / Proxy'}`, { x: 50, y: yPos, size: 8, font: helvetica });
-    yPos -= 14;
-    auditPage.drawText(`Navegador / Dispositivo (User-Agent):`, { x: 50, y: yPos, size: 8, font: helvetica });
-    yPos -= 12;
-    auditPage.drawText(`${params.signerUa ? params.signerUa.substring(0, 85) : 'Cliente Web Estándar'}`, {
+    auditPage.drawText(`Fecha y Hora (UTC): ${legalTimestamp.utc}`, {
       x: 50,
       y: yPos,
-      size: 7,
-      font: helveticaOblique,
-      color: rgb(0.3, 0.3, 0.3),
+      size: 8,
+      font: helvetica,
     });
+    yPos -= 14;
+    auditPage.drawText(
+      `Fecha y Hora Oficial Colombia (COT): ${legalTimestamp.cot}`,
+      { x: 50, y: yPos, size: 8, font: helveticaBold },
+    );
+    yPos -= 14;
+    auditPage.drawText(
+      `Dirección IP de Firma: ${params.signerIp || 'No registrada / Proxy'}`,
+      { x: 50, y: yPos, size: 8, font: helvetica },
+    );
+    yPos -= 14;
+    auditPage.drawText(`Navegador / Dispositivo (User-Agent):`, {
+      x: 50,
+      y: yPos,
+      size: 8,
+      font: helvetica,
+    });
+    yPos -= 12;
+    auditPage.drawText(
+      `${params.signerUa ? params.signerUa.substring(0, 85) : 'Cliente Web Estándar'}`,
+      {
+        x: 50,
+        y: yPos,
+        size: 7,
+        font: helveticaOblique,
+        color: rgb(0.3, 0.3, 0.3),
+      },
+    );
 
     // Sección 4: Trazabilidad Criptográfica SHA-256
     yPos -= 28;
@@ -293,9 +363,20 @@ export class SignatureGeneratorService {
     });
 
     yPos -= 18;
-    auditPage.drawText('Hash SHA-256 Documento Original (Pre-firma):', { x: 50, y: yPos, size: 7.5, font: helveticaBold });
+    auditPage.drawText('Hash SHA-256 Documento Original (Pre-firma):', {
+      x: 50,
+      y: yPos,
+      size: 7.5,
+      font: helveticaBold,
+    });
     yPos -= 12;
-    auditPage.drawText(originalDocHash, { x: 50, y: yPos, size: 7, font: helvetica, color: rgb(0.2, 0.2, 0.2) });
+    auditPage.drawText(originalDocHash, {
+      x: 50,
+      y: yPos,
+      size: 7,
+      font: helvetica,
+      color: rgb(0.2, 0.2, 0.2),
+    });
 
     // Pre-guardar para calcular el hash final
     // Incrustamos el QR de verificación pública
@@ -331,13 +412,16 @@ export class SignatureGeneratorService {
       color: rgb(0.85, 0.85, 0.88),
     });
 
-    auditPage.drawText(`Noxia Sign Engine • Verificación disponible en: ${params.verifyUrl}`, {
-      x: 40,
-      y: 55,
-      size: 7,
-      font: helvetica,
-      color: rgb(0.5, 0.5, 0.5),
-    });
+    auditPage.drawText(
+      `Noxia Sign Engine • Verificación disponible en: ${params.verifyUrl}`,
+      {
+        x: 40,
+        y: 55,
+        size: 7,
+        font: helvetica,
+        color: rgb(0.5, 0.5, 0.5),
+      },
+    );
 
     // Guardar el PDF final
     const finalPdfBytes = await pdfDoc.save();
