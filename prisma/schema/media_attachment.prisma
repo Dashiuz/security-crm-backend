@@ -30,6 +30,7 @@ model MediaAttachment {
   pqrsTicket         PqrsTicket?                    @relation(fields: [pqrsTicketId], references: [id], onDelete: Cascade)
   pqrsMessageId      String?
   pqrsMessage        PqrsMessage?                   @relation(fields: [pqrsMessageId], references: [id], onDelete: Cascade)
+  signatureRequests  SignatureRequest[]
 
   uploadedById String
   createdAt    DateTime @default(now())

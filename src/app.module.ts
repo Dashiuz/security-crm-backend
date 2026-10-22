@@ -28,6 +28,7 @@ import {
   SecurityStudiesModule,
   PqrsModule,
   NotificationsModule,
+  SignaturesModule,
 } from './modules/index';
 
 @Module({
@@ -58,6 +59,7 @@ import {
     SecurityStudiesModule,
     PqrsModule,
     NotificationsModule,
+    SignaturesModule,
   ],
   controllers: [AppController],
   providers: [

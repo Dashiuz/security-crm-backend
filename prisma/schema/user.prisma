@@ -25,10 +25,13 @@ model User {
   retiredAt DateTime? @db.Date
   deletedAt DateTime?
 
+  signatureUrl       String?                @db.Text
+  signatureMethod    SignatureCreationMode?
+  signatureUpdatedAt DateTime?
+
   roles          UserRole[]
   sessions       UserSession[]
   clientAccesses UserClientAccess[]
-
 
   // Minuta audit fields
   minutasCreated Minuta[] @relation("MinutaCreatedBy")
@@ -81,7 +84,10 @@ model User {
   pqrsMessagesUpdated PqrsMessage[] @relation("MessageUpdatedBy")
 
   // Notifications
-  notifications       Notification[]
+  notifications Notification[]
+
+  // Signature Requests
+  signatureRequestsCreated SignatureRequest[] @relation("SignatureRequestsCreated")
 
   @@index([tenantId])
   @@index([clientId])
