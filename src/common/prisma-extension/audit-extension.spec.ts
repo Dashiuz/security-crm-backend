@@ -240,4 +240,53 @@ describe('auditExtension - Multi Client Scope', () => {
       expect(updateArgs.data.updatedBy).toBeUndefined();
     });
   });
+
+  it('should inject createdById/updatedById and NEVER inject createdBy/updatedBy for commercial models (even when Godlike)', async () => {
+    const ctx = {
+      userId: 'seed_id_01',
+      tenantId: 'tenant-commercial',
+      isGodlike: true,
+      allowedClientIds: 'ALL' as const,
+      features: ['commercial'],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+
+      // 1. Create CommercialSettings
+      const createArgs: any = {
+        data: {
+          defaultAiuRate: 0.1,
+        },
+      };
+      await allOps({
+        model: 'CommercialSettings',
+        operation: 'create',
+        args: createArgs,
+        query: mockQuery,
+      });
+
+      expect(createArgs.data.tenantId).toBe('tenant-commercial');
+      expect(createArgs.data.createdById).toBe('seed_id_01');
+      expect(createArgs.data.updatedById).toBe('seed_id_01');
+      expect(createArgs.data.createdBy).toBeUndefined();
+      expect(createArgs.data.updatedBy).toBeUndefined();
+
+      // 2. Update CommercialSettings
+      const updateArgs: any = {
+        where: { id: 'cs-1' },
+        data: { defaultAiuRate: 0.12 },
+      };
+      await allOps({
+        model: 'CommercialSettings',
+        operation: 'update',
+        args: updateArgs,
+        query: mockQuery,
+      });
+
+      expect(updateArgs.data.updatedById).toBe('seed_id_01');
+      expect(updateArgs.data.updatedBy).toBeUndefined();
+      expect(updateArgs.data.createdBy).toBeUndefined();
+    });
+  });
 });

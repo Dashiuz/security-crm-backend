@@ -483,6 +483,17 @@ async function main() {
       key: 'signatures:verify:public',
       desc: 'Verificación pública de autenticidad e integridad de documentos por QR',
     },
+    // Commercial Domain & SVSP Tariff (SPEC-ADM-018)
+    {
+      id: 'commercial_settings_read_perm_id',
+      key: 'commercial:settings:read',
+      desc: 'Consultar parámetros comerciales, tarifas SVSP y catálogo de servicios',
+    },
+    {
+      id: 'commercial_settings_manage_perm_id',
+      key: 'commercial:settings:manage',
+      desc: 'Administrar vigencias tarifarias, salarios, valores agregados y skins',
+    },
   ];
 
   // 5. Departments
@@ -963,6 +974,126 @@ async function main() {
     });
   }
   console.log('✅ User roles seeded');
+
+  // 12. Commercial Settings & SVSP 2026 Reference
+  console.log('Seeding Commercial Settings for active tenants...');
+  const testTenantId = 'p1vk4imb6ugp1z0flglw86pk';
+  const commercialSetting = await prisma.commercialSettings.upsert({
+    where: { tenantId: testTenantId },
+    update: {},
+    create: {
+      tenantId: testTenantId,
+      defaultAiuRate: 0.10,
+      defaultIvaOnAiuRate: 0.19,
+      defaultRetefuenteRate: 0.02,
+      defaultReteIcaRate: 0.0138,
+      maxReinvestmentPct1Yr: 0.80,
+      maxReinvestmentPct2Yr: 1.60,
+      defaultQuoteValidityDays: 15,
+      enableGuardSalaryDisplay: true,
+      qualityDocCode: 'CM-F-001',
+      qualityDocVersion: 'V.4',
+    },
+  });
+
+  // Default Tariff Period for 2026 (SVSP Official Reference)
+  await prisma.tariffPeriodConfig.upsert({
+    where: {
+      tenantId_year_label: {
+        tenantId: testTenantId,
+        year: 2026,
+        label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
+      },
+    },
+    update: {
+      smmlv: 1750905.00,
+      monthlyTransportAux: 249095.00,
+      dailyTransportAux: 8303.17,
+      statutoryWeeklyHours: 44,
+      baseHourlyRate: 7959.00,
+    },
+    create: {
+      tenantId: testTenantId,
+      commercialSettingsId: commercialSetting.id,
+      year: 2026,
+      label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
+      startDate: new Date('2026-01-01'),
+      endDate: new Date('2026-12-31'),
+      isActive: true,
+      smmlv: 1750905.00,
+      monthlyTransportAux: 249095.00,
+      dailyTransportAux: 8303.17,
+      statutoryWeeklyHours: 44,
+      baseHourlyRate: 7959.00,
+      statutoryDayHours: 15,
+      statutoryNightHours: 9,
+      dayProportionFactor: 0.5597,
+      nightProportionFactor: 0.4403,
+      commercialMultiplier: 8.8,
+      strata46Multiplier: 8.6,
+      strata13Multiplier: 7.66376105,
+    },
+  });
+
+  // Default Position Salary Matrix (Guarda Portero 2x2x2)
+  await prisma.positionSalaryMatrix.upsert({
+    where: {
+      tenantId_positionTitle_scheduleType: {
+        tenantId: testTenantId,
+        positionTitle: 'Guarda Portero',
+        scheduleType: 'SCHEDULE_2X2X2',
+      },
+    },
+    update: {
+      baseSalary: 1750905.00,
+      transportAllowance: 249095.00,
+      shiftOrdinaryHours: 8,
+      shiftExtraHours: 4,
+    },
+    create: {
+      tenantId: testTenantId,
+      commercialSettingsId: commercialSetting.id,
+      positionTitle: 'Guarda Portero',
+      scheduleType: 'SCHEDULE_2X2X2',
+      guardsRequiredPerPost: 3.0,
+      baseSalary: 1750905.00,
+      transportAllowance: 249095.00,
+      shiftOrdinaryHours: 8,
+      shiftExtraHours: 4,
+      estimatedOvertimePay: 450000.00,
+      grossSalary: 2449095.00,
+      healthDeductionPct: 0.04,
+      pensionDeductionPct: 0.04,
+      healthDeduction: 88000.00,
+      pensionDeduction: 88000.00,
+      totalDeductions: 176000.00,
+      fixedBonusNonSalary: 0,
+      vehicleAllowance: 0,
+      netTakeHomePay: 2273095.00,
+      isActive: true,
+    },
+  });
+
+  // Default Document Skin
+  await prisma.tenantDocumentSkin.upsert({
+    where: { tenantId: testTenantId },
+    update: {},
+    create: {
+      tenantId: testTenantId,
+      commercialSettingsId: commercialSetting.id,
+      primaryBrandColorHex: '#1E1B4B',
+      accentBrandColorHex: '#7C3AED',
+      companyLegalName: 'Seguridad Test Ltda.',
+      companyNit: '900.123.456-7',
+      supervigilanciaLicense: 'Res. 20264100001234 de SuperVigilancia',
+      commercialDirectorName: 'Carlos Mario Restrepo',
+      commercialDirectorTitle: 'Director Comercial',
+      legalRepName: 'Jheisson Aconcha',
+      legalRepTitle: 'Gerente General y Representante Legal',
+    },
+  });
+
+  console.log('✅ Commercial settings and SVSP 2026 reference seeded');
 
   console.log('🎉 Seed completed successfully!');
 }

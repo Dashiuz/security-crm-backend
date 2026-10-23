@@ -41,6 +41,14 @@ model Tenant {
   notifications                  Notification[]
   userClientAccesses             UserClientAccess[]
   signatureRequests              SignatureRequest[]
+  commercialSettings             CommercialSettings?
+  tariffPeriodConfigs            TariffPeriodConfig[]
+  securityServiceCatalogs        SecurityServiceCatalog[]
+  positionSalaryMatrices         PositionSalaryMatrix[]
+  valueAddedCatalogItems         ValueAddedCatalogItem[]
+  tenantDocumentSkin             TenantDocumentSkin?
+  documentTextSnippets           DocumentTextSnippet[]
+  serviceOrderDistributionRecipients ServiceOrderDistributionRecipient[]
 
   @@map("tenant")
 }

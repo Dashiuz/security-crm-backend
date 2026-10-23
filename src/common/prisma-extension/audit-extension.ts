@@ -34,6 +34,14 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PqrsTicket',
               'PqrsMessage',
               'SignatureRequest',
+              'CommercialSettings',
+              'TariffPeriodConfig',
+              'SecurityServiceCatalog',
+              'PositionSalaryMatrix',
+              'ValueAddedCatalogItem',
+              'TenantDocumentSkin',
+              'DocumentTextSnippet',
+              'ServiceOrderDistributionRecipient',
             ];
             const multiTenantModels = [
               'User',
@@ -62,6 +70,14 @@ export const auditExtension = (contextService: RequestContextService) => {
               'TenantSubscription',
               'TenantSettings',
               'SignatureRequest',
+              'CommercialSettings',
+              'TariffPeriodConfig',
+              'SecurityServiceCatalog',
+              'PositionSalaryMatrix',
+              'ValueAddedCatalogItem',
+              'TenantDocumentSkin',
+              'DocumentTextSnippet',
+              'ServiceOrderDistributionRecipient',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -313,6 +329,18 @@ export const auditExtension = (contextService: RequestContextService) => {
               ];
               const isRelationAudit = relationAuditModels.includes(model);
 
+              const commercialAuditModels = [
+                'CommercialSettings',
+                'TariffPeriodConfig',
+                'SecurityServiceCatalog',
+                'PositionSalaryMatrix',
+                'ValueAddedCatalogItem',
+                'TenantDocumentSkin',
+                'DocumentTextSnippet',
+                'ServiceOrderDistributionRecipient',
+              ];
+              const isCommercialAudit = commercialAuditModels.includes(model);
+
               if (operation === 'create') {
                 if (model === 'SignatureRequest') {
                   const data = (args.data || {}) as any;
@@ -324,6 +352,14 @@ export const auditExtension = (contextService: RequestContextService) => {
                   ) {
                     args.data = { ...data, createdById: userId };
                   }
+                } else if (isCommercialAudit) {
+                  const data = (args.data || {}) as any;
+                  const actorId = userId && userId !== 'system' ? userId : null;
+                  args.data = {
+                    ...data,
+                    createdById: data.createdById || actorId,
+                    updatedById: data.updatedById || actorId,
+                  };
                 } else if (isRelationAudit) {
                   const data = (args.data || {}) as any;
                   const newFields: any = {};
@@ -371,6 +407,15 @@ export const auditExtension = (contextService: RequestContextService) => {
               } else if (operation === 'update') {
                 if (model === 'SignatureRequest') {
                   // SignatureRequest has no updatedById or updatedBy fields (only updatedAt managed by Prisma)
+                } else if (isCommercialAudit) {
+                  const data = (args.data || {}) as any;
+                  const actorId = userId && userId !== 'system' ? userId : null;
+                  if (actorId && !data.updatedById) {
+                    args.data = {
+                      ...data,
+                      updatedById: actorId,
+                    };
+                  }
                 } else if (isRelationAudit) {
                   const data = (args.data || {}) as any;
                   const isUnchecked = Boolean(
@@ -418,6 +463,22 @@ export const auditExtension = (contextService: RequestContextService) => {
                     (args as any).create = {
                       ...createData,
                       createdById: userId,
+                    };
+                  }
+                } else if (isCommercialAudit) {
+                  const createData = (args as any).create || {};
+                  const updateData = (args as any).update || {};
+                  const actorId = userId && userId !== 'system' ? userId : null;
+
+                  (args as any).create = {
+                    ...createData,
+                    createdById: createData.createdById || actorId,
+                    updatedById: createData.updatedById || actorId,
+                  };
+                  if (actorId && !updateData.updatedById) {
+                    (args as any).update = {
+                      ...updateData,
+                      updatedById: actorId,
                     };
                   }
                 } else if (isRelationAudit) {

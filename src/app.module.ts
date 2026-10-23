@@ -29,6 +29,7 @@ import {
   PqrsModule,
   NotificationsModule,
   SignaturesModule,
+  CommercialSettingsModule,
 } from './modules/index';
 
 @Module({
@@ -60,6 +61,7 @@ import {
     PqrsModule,
     NotificationsModule,
     SignaturesModule,
+    CommercialSettingsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -79,3 +79,9 @@ export * from './signatures/signatures.module';
 export * from './signatures/services/signature-audit.service';
 export * from './signatures/services/signature-generator.service';
 export * from './signatures/services/signature-request.service';
+
+// Administrative: Commercial Settings & SVSP Tariff Engine (SPEC-ADM-018)
+export * from './administrative/commercial-settings/commercial-settings.module';
+export * from './administrative/commercial-settings/services/commercial-settings.service';
+export * from './administrative/commercial-settings/services/tariff-calculation.service';
+export * from './administrative/commercial-settings/services/guard-salary-calculation.service';
