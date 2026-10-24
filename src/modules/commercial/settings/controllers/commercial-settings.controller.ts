@@ -9,6 +9,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -300,5 +301,20 @@ export class CommercialSettingsController {
   @ApiOperation({ summary: 'Eliminar una plantilla de texto' })
   deleteTextSnippet(@Param('id') id: string, @Request() req: any) {
     return this.commercialSettingsService.deleteTextSnippet(id, req.user);
+  }
+
+  @Get('employees/search')
+  @RequirePermissions('commercial:settings:read')
+  @ApiOperation({ summary: 'Buscar empleados para firmantes o notificación de órdenes' })
+  searchEmployees(
+    @Query('query') query: string,
+    @Query('limit') limit: string,
+    @Request() req: any,
+  ) {
+    return this.commercialSettingsService.searchEmployees(
+      query,
+      req.user,
+      limit ? parseInt(limit, 10) : 15,
+    );
   }
 }

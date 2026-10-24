@@ -83,6 +83,8 @@ export class EmployeeController {
     'minuta:manage',
     'minuta:create',
     'minuta:read',
+    'commercial:settings:read',
+    'commercial:settings:manage',
   )
   @ApiOperation({
     summary: 'Search active employees with autocomplete by name or document',

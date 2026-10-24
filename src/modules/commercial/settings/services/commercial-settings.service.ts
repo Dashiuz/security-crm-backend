@@ -816,16 +816,6 @@ export class CommercialSettingsService {
           hasBascCertified: dto.hasBascCertified ?? true,
           hasPoliceSupportNetwork: dto.hasPoliceSupportNetwork ?? true,
           hasDijinEnterpriseFront: dto.hasDijinEnterpriseFront ?? true,
-          commercialDirectorName: dto.commercialDirectorName,
-          commercialDirectorTitle: dto.commercialDirectorTitle,
-          commercialDirectorEmail: dto.commercialDirectorEmail,
-          commercialDirectorPhone: dto.commercialDirectorPhone,
-          commercialDirectorSigS3: dto.commercialDirectorSigS3,
-          legalRepName: dto.legalRepName,
-          legalRepTitle: dto.legalRepTitle,
-          legalRepEmail: dto.legalRepEmail,
-          legalRepPhone: dto.legalRepPhone,
-          legalRepSigS3: dto.legalRepSigS3,
           createdById: user.sub,
         },
         update: {
@@ -853,16 +843,6 @@ export class CommercialSettingsService {
           hasBascCertified: dto.hasBascCertified,
           hasPoliceSupportNetwork: dto.hasPoliceSupportNetwork,
           hasDijinEnterpriseFront: dto.hasDijinEnterpriseFront,
-          commercialDirectorName: dto.commercialDirectorName,
-          commercialDirectorTitle: dto.commercialDirectorTitle,
-          commercialDirectorEmail: dto.commercialDirectorEmail,
-          commercialDirectorPhone: dto.commercialDirectorPhone,
-          commercialDirectorSigS3: dto.commercialDirectorSigS3,
-          legalRepName: dto.legalRepName,
-          legalRepTitle: dto.legalRepTitle,
-          legalRepEmail: dto.legalRepEmail,
-          legalRepPhone: dto.legalRepPhone,
-          legalRepSigS3: dto.legalRepSigS3,
           updatedById: user.sub,
         },
       });
@@ -1201,6 +1181,40 @@ export class CommercialSettingsService {
         distributionRecipients: { orderBy: { department: 'asc' } },
         textSnippets: { orderBy: { key: 'asc' } },
       },
+    });
+  }
+
+  async searchEmployees(query: string, user: UserContext, limit = 15) {
+    const trimmed = (query || '').trim();
+    const where: any = {
+      tenantId: user.tenantId,
+      isActive: true,
+      isRetired: false,
+      deletedAt: null,
+    };
+    if (trimmed) {
+      where.OR = [
+        { fullName: { contains: trimmed, mode: 'insensitive' } },
+        { firstName: { contains: trimmed, mode: 'insensitive' } },
+        { lastName: { contains: trimmed, mode: 'insensitive' } },
+        { document: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
+    return this.prisma.employee.findMany({
+      where,
+      take: Math.min(limit, 50),
+      select: {
+        id: true,
+        fullName: true,
+        document: true,
+        documentType: true,
+        email: true,
+        phone: true,
+        signatureUrl: true,
+        departmentRef: { select: { id: true, name: true } },
+        positionRef: { select: { id: true, name: true } },
+      },
+      orderBy: { fullName: 'asc' },
     });
   }
 }

@@ -235,20 +235,7 @@ model TenantDocumentSkin {
   isoDocumentCodePrefix   String? @default("CM-F")
   defaultFooterDisclaimer String? @db.Text
 
-  // Firmantes Autorizados (Compatibilidad Fase 1)
-  commercialDirectorName  String?
-  commercialDirectorTitle String? @default("Director Comercial")
-  commercialDirectorEmail String?
-  commercialDirectorPhone String?
-  commercialDirectorSigS3 String?
-
-  legalRepName  String?
-  legalRepTitle String? @default("Representante Legal y Gerente General")
-  legalRepEmail String?
-  legalRepPhone String?
-  legalRepSigS3 String?
-
-  // Relaciones Dinámicas Fase 2
+  // Firmantes Autorizados y Plantillas Dinámicas
   signers      AuthorizedSigner[]
   textSnippets DocumentTextSnippet[]
 

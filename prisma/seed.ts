@@ -1086,10 +1086,6 @@ async function main() {
       companyLegalName: 'Seguridad Test Ltda.',
       companyNit: '900.123.456-7',
       supervigilanciaLicense: 'Res. 20264100001234 de SuperVigilancia',
-      commercialDirectorName: 'Carlos Mario Restrepo',
-      commercialDirectorTitle: 'Director Comercial',
-      legalRepName: 'Jheisson Aconcha',
-      legalRepTitle: 'Gerente General y Representante Legal',
     },
   });
 
