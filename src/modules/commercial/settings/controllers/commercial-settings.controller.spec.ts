@@ -39,6 +39,7 @@ describe('CommercialSettingsController', () => {
       deleteServiceCatalog: jest.fn().mockResolvedValue({ success: true }),
       getSalaryMatrix: jest.fn().mockResolvedValue([]),
       upsertSalaryMatrix: jest.fn().mockResolvedValue([]),
+      deleteSalaryMatrix: jest.fn().mockResolvedValue({ success: true }),
       getValueAddedCatalog: jest.fn().mockResolvedValue([]),
       createValueAdded: jest.fn().mockResolvedValue({ id: 'vag-1' }),
       updateValueAdded: jest.fn().mockResolvedValue({ id: 'vag-1' }),
@@ -57,7 +58,7 @@ describe('CommercialSettingsController', () => {
   it('debe consultar la configuración comercial', async () => {
     const res = await controller.getSettings(mockReq);
     expect(mockService.getSettings).toHaveBeenCalledWith(mockReq.user);
-    expect(res.id).toBe('set-1');
+    expect(res?.id).toBe('set-1');
   });
 
   it('debe actualizar la configuración comercial', async () => {
@@ -129,6 +130,92 @@ describe('CommercialSettingsController', () => {
     await controller.updateDistributionRecipients({ recipients: [] }, mockReq);
     expect(mockService.updateDistributionRecipients).toHaveBeenCalledWith(
       { recipients: [] },
+      mockReq.user,
+    );
+  });
+
+  it('debe invocar eliminación de registro de matriz salarial y operaciones de matriz', async () => {
+    await controller.getSalaryMatrix(mockReq);
+    expect(mockService.getSalaryMatrix).toHaveBeenCalledWith(mockReq.user);
+
+    await controller.upsertSalaryMatrix({ items: [] } as any, mockReq);
+    expect(mockService.upsertSalaryMatrix).toHaveBeenCalledWith(
+      { items: [] },
+      mockReq.user,
+    );
+
+    await controller.deleteSalaryMatrix('sm-1', mockReq);
+    expect(mockService.deleteSalaryMatrix).toHaveBeenCalledWith(
+      'sm-1',
+      mockReq.user,
+    );
+  });
+
+  it('debe invocar operaciones de tramos tarifarios', async () => {
+    await controller.createTariffPeriod({ year: 2026 } as any, mockReq);
+    expect(mockService.createTariffPeriod).toHaveBeenCalledWith(
+      { year: 2026 },
+      mockReq.user,
+    );
+
+    await controller.updateTariffPeriod('tp-1', { year: 2027 } as any, mockReq);
+    expect(mockService.updateTariffPeriod).toHaveBeenCalledWith(
+      'tp-1',
+      { year: 2027 },
+      mockReq.user,
+    );
+
+    await controller.deleteTariffPeriod('tp-1', mockReq);
+    expect(mockService.deleteTariffPeriod).toHaveBeenCalledWith(
+      'tp-1',
+      mockReq.user,
+    );
+  });
+
+  it('debe invocar operaciones de valores agregados', async () => {
+    await controller.getValueAddedCatalog(mockReq);
+    expect(mockService.getValueAddedCatalog).toHaveBeenCalledWith(mockReq.user);
+
+    await controller.createValueAdded({ name: 'V' } as any, mockReq);
+    expect(mockService.createValueAdded).toHaveBeenCalledWith(
+      { name: 'V' },
+      mockReq.user,
+    );
+
+    await controller.updateValueAdded('v-1', { name: 'V2' } as any, mockReq);
+    expect(mockService.updateValueAdded).toHaveBeenCalledWith(
+      'v-1',
+      { name: 'V2' },
+      mockReq.user,
+    );
+
+    await controller.deleteValueAdded('v-1', mockReq);
+    expect(mockService.deleteValueAdded).toHaveBeenCalledWith(
+      'v-1',
+      mockReq.user,
+    );
+  });
+
+  it('debe invocar operaciones de fragmentos de texto', async () => {
+    await controller.getTextSnippets(mockReq);
+    expect(mockService.getTextSnippets).toHaveBeenCalledWith(mockReq.user);
+
+    await controller.createTextSnippet({ key: 'K' } as any, mockReq);
+    expect(mockService.createTextSnippet).toHaveBeenCalledWith(
+      { key: 'K' },
+      mockReq.user,
+    );
+
+    await controller.updateTextSnippet('s-1', { key: 'K2' } as any, mockReq);
+    expect(mockService.updateTextSnippet).toHaveBeenCalledWith(
+      's-1',
+      { key: 'K2' },
+      mockReq.user,
+    );
+
+    await controller.deleteTextSnippet('s-1', mockReq);
+    expect(mockService.deleteTextSnippet).toHaveBeenCalledWith(
+      's-1',
       mockReq.user,
     );
   });

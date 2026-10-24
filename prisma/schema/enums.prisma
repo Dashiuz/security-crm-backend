@@ -202,3 +202,28 @@ enum InternalDepartment {
   ACCOUNTING
   TREASURY
 }
+
+enum DocumentHeaderLayout {
+  CLASSIC_MEMBRETE       // Logo izquierda, datos normativos derecha
+  BANNER_CINTILLO        // Barra superior sólida en color primario
+  MINIMALIST_TECH        // Tipografía compacta y logo reducido
+  MODERN_SPLIT           // Doble columna asimétrica ejecutiva
+}
+
+enum SignerRoleScope {
+  COMMERCIAL_DIRECTOR    // Firma director comercial
+  LEGAL_REPRESENTATIVE   // Firma representante legal / gerencia general
+  OPERATIONS_DIRECTOR    // Firma director de operaciones
+  HUMAN_RESOURCES_HEAD   // Firma director de talento humano
+  QUALITY_OFFICER        // Firma oficial de cumplimiento / SIG
+  CUSTOM                 // Rol configurado a medida
+}
+
+enum SnippetCategory {
+  COMMERCIAL_PROPOSAL    // Cartas de presentación, notas de vigencia
+  LEGAL_CLAUSES          // Cláusulas de exoneración, confidencialidad, SARLAFT
+  OPERATIONAL_ORDERS     // Consignas de puesto, protocolos
+  HUMAN_RESOURCES        // Términos de contratación, acuerdos de confidencialidad
+  QUALITY_BASC           // Acuerdos de seguridad BASC, políticas de SG-SST
+}
+

@@ -48,6 +48,7 @@ model Tenant {
   valueAddedCatalogItems         ValueAddedCatalogItem[]
   tenantDocumentSkin             TenantDocumentSkin?
   documentTextSnippets           DocumentTextSnippet[]
+  authorizedSigners              AuthorizedSigner[]
   serviceOrderDistributionRecipients ServiceOrderDistributionRecipient[]
 
   @@map("tenant")

@@ -37,33 +37,32 @@ import {
   ServiceOrderDistributionRecipient,
   Prisma,
 } from '@prisma/client';
+import { CommercialSettingsRepository } from '../../repositories/commercial-settings.repository';
 
 @Injectable()
 export class CommercialSettingsService {
   private readonly logger = new Logger(CommercialSettingsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly commercialRepo: CommercialSettingsRepository,
+  ) {}
 
   /**
    * Obtiene o auto-inicializa la configuración comercial del tenant con todas sus relaciones
    */
   async getSettings(user: UserContext) {
     try {
-      let settings = await this.prisma.commercialSettings.findFirst({
-        where: { tenantId: user.tenantId },
-        include: {
-          tariffPeriods: { orderBy: { startDate: 'desc' } },
-          serviceCatalog: { orderBy: { serviceCode: 'asc' } },
-          salaryMatrix: { orderBy: { positionTitle: 'asc' } },
-          valueAddedCatalog: { orderBy: { name: 'asc' } },
-          documentSkin: true,
-          distributionRecipients: { orderBy: { department: 'asc' } },
-          textSnippets: { orderBy: { key: 'asc' } },
-        },
-      });
+      let settings = await this.commercialRepo.findByTenantId(user.tenantId);
 
       if (!settings) {
         settings = await this.initDefaultSettings(user.tenantId, user.sub);
+      }
+
+      if (!settings) {
+        throw new NotFoundException(
+          `No se pudo inicializar la configuración comercial para el tenant ${user.tenantId}`,
+        );
       }
 
       return settings;
@@ -83,24 +82,12 @@ export class CommercialSettingsService {
     try {
       const current = await this.getSettings(user);
 
-      const updated = await this.prisma.commercialSettings.update({
-        where: { id: current.id },
-        data: {
-          ...dto,
-          qualityDocRevisionDate: dto.qualityDocRevisionDate
-            ? new Date(dto.qualityDocRevisionDate)
-            : undefined,
-          updatedById: user.sub,
-        },
-        include: {
-          tariffPeriods: { orderBy: { startDate: 'desc' } },
-          serviceCatalog: { orderBy: { serviceCode: 'asc' } },
-          salaryMatrix: { orderBy: { positionTitle: 'asc' } },
-          valueAddedCatalog: { orderBy: { name: 'asc' } },
-          documentSkin: true,
-          distributionRecipients: { orderBy: { department: 'asc' } },
-          textSnippets: { orderBy: { key: 'asc' } },
-        },
+      const updated = await this.commercialRepo.updateSettings(current.id, {
+        ...dto,
+        qualityDocRevisionDate: dto.qualityDocRevisionDate
+          ? new Date(dto.qualityDocRevisionDate)
+          : undefined,
+        updatedById: user.sub,
       });
 
       return updated;
@@ -626,6 +613,35 @@ export class CommercialSettingsService {
     } catch (error) {
       this.logger.error(
         `Error al actualizar matriz salarial: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async deleteSalaryMatrix(id: string, user: UserContext) {
+    try {
+      const existing = await this.prisma.positionSalaryMatrix.findFirst({
+        where: { id, tenantId: user.tenantId },
+      });
+
+      if (!existing) {
+        throw new NotFoundException(
+          `Registro de matriz salarial con id ${id} no encontrado`,
+        );
+      }
+
+      await this.prisma.positionSalaryMatrix.delete({
+        where: { id },
+      });
+
+      return {
+        success: true,
+        message: 'Registro de matriz salarial eliminado correctamente',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error al eliminar registro de matriz salarial ${id}: ${error.message}`,
         error.stack,
       );
       throw error;

@@ -80,8 +80,13 @@ export * from './signatures/services/signature-audit.service';
 export * from './signatures/services/signature-generator.service';
 export * from './signatures/services/signature-request.service';
 
-// Administrative: Commercial Settings & SVSP Tariff Engine (SPEC-ADM-018)
-export * from './administrative/commercial-settings/commercial-settings.module';
-export * from './administrative/commercial-settings/services/commercial-settings.service';
-export * from './administrative/commercial-settings/services/tariff-calculation.service';
-export * from './administrative/commercial-settings/services/guard-salary-calculation.service';
+// Commercial: Settings, SVSP Tariff Engine & Chameleon Document Engine (SPEC-ADM-018 & SPEC-ADM-019)
+export * from './commercial/commercial.module';
+export * from './commercial/settings/services/commercial-settings.service';
+export * from './commercial/settings/services/tariff-calculation.service';
+export * from './commercial/settings/services/guard-salary-calculation.service';
+export * from './commercial/document-engine/services/chameleon-document.service';
+export * from './commercial/document-engine/services/asset-optimization.service';
+export * from './commercial/document-engine/services/snippet-interpolation.service';
+export * from './commercial/repositories/commercial-settings.repository';
+export * from './commercial/repositories/document-engine.repository';

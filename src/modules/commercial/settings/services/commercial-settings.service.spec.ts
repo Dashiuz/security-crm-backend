@@ -61,8 +61,10 @@ describe('CommercialSettingsService', () => {
       },
       positionSalaryMatrix: {
         findMany: jest.fn().mockResolvedValue([]),
+        findFirst: jest.fn(),
         upsert: jest.fn(),
         create: jest.fn(),
+        delete: jest.fn(),
       },
       valueAddedCatalogItem: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -74,6 +76,7 @@ describe('CommercialSettingsService', () => {
       tenantDocumentSkin: {
         upsert: jest.fn(),
         create: jest.fn(),
+        update: jest.fn(),
       },
       serviceOrderDistributionRecipient: {
         upsert: jest.fn(),
@@ -93,20 +96,27 @@ describe('CommercialSettingsService', () => {
       },
     };
 
-    service = new CommercialSettingsService(mockPrisma);
+    const mockRepo: any = {
+      findByTenantId: jest.fn().mockImplementation(() => mockPrisma.commercialSettings.findFirst()),
+      updateSettings: jest.fn().mockImplementation((id: string, data: any) =>
+        mockPrisma.commercialSettings.update({ where: { id }, data }),
+      ),
+      createSettings: jest.fn().mockImplementation((data: any) =>
+        mockPrisma.commercialSettings.create({ data }),
+      ),
+    };
+
+    service = new CommercialSettingsService(mockPrisma, mockRepo);
   });
 
   describe('getSettings', () => {
     it('debe retornar las configuraciones del tenant si existen', async () => {
       const res = await service.getSettings(mockUser);
-      expect(mockPrisma.commercialSettings.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tenantId: 'tenant-abc' } }),
-      );
       expect(res.id).toBe('comm-set-1');
     });
 
     it('debe auto-inicializar las configuraciones por defecto si no existen', async () => {
-      mockPrisma.commercialSettings.findFirst.mockResolvedValueOnce(null);
+      mockPrisma.commercialSettings.findFirst.mockResolvedValue(null);
       const res = await service.getSettings(mockUser);
       expect(mockPrisma.commercialSettings.create).toHaveBeenCalled();
       expect(mockPrisma.tariffPeriodConfig.create).toHaveBeenCalled();
@@ -309,7 +319,45 @@ describe('CommercialSettingsService', () => {
     });
   });
 
-  describe('ValueAdded and Snippets', () => {
+  describe('Simulations', () => {
+    it('debe simular tarifas usando el período especificado', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce({
+        smmlv: 1750905,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 8.6,
+        strata13Multiplier: 7.66,
+        dayProportionFactor: 0.5597,
+        nightProportionFactor: 0.4403,
+      });
+
+      const res = await service.simulateTariff(
+        {
+          tariffPeriodId: 'tp-1',
+          sector: CommercialSector.COMMERCIAL_PUBLIC,
+          weaponModality: WeaponModality.NO_WEAPON,
+          dayHours: 15,
+          nightHours: 9,
+          billableDays: 30,
+        },
+        mockUser,
+      );
+
+      expect(res.subtotalBeforeTax).toBeGreaterThan(0);
+    });
+
+    it('debe simular salario de guarda', async () => {
+      const res = await service.simulateSalary({
+        smmlv: 1750905,
+        transportAllowance: 249095,
+        scheduleType: ShiftScheduleType.SCHEDULE_2X2X2,
+      });
+
+      expect(res.grossSalaryTotal).toBeGreaterThan(0);
+      expect(res.netTakeHomePay).toBeGreaterThan(0);
+    });
+  });
+
+  describe('ValueAdded and Snippets CRUD', () => {
     it('debe gestionar catálogo de valores agregados', async () => {
       mockPrisma.valueAddedCatalogItem.create.mockResolvedValue({
         id: 'vag-1',
@@ -324,6 +372,22 @@ describe('CommercialSettingsService', () => {
         mockUser,
       );
       expect(created.id).toBe('vag-1');
+    });
+
+    it('debe actualizar valor agregado', async () => {
+      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue({ id: 'vag-1' });
+      mockPrisma.valueAddedCatalogItem.update.mockResolvedValue({ id: 'vag-1', name: 'Locker 6P' });
+
+      const updated = await service.updateValueAdded('vag-1', { name: 'Locker 6P' }, mockUser);
+      expect(updated.name).toBe('Locker 6P');
+    });
+
+    it('debe eliminar valor agregado', async () => {
+      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue({ id: 'vag-1' });
+      mockPrisma.valueAddedCatalogItem.delete.mockResolvedValue({ id: 'vag-1' });
+
+      const res = await service.deleteValueAdded('vag-1', mockUser);
+      expect(res.success).toBe(true);
     });
 
     it('debe gestionar plantillas de texto', async () => {
@@ -341,6 +405,139 @@ describe('CommercialSettingsService', () => {
         mockUser,
       );
       expect(created.id).toBe('snp-1');
+    });
+
+    it('debe actualizar plantilla de texto', async () => {
+      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue({ id: 'snp-1' });
+      mockPrisma.documentTextSnippet.update.mockResolvedValue({ id: 'snp-1', title: 'Carta Nueva' });
+
+      const updated = await service.updateTextSnippet('snp-1', { title: 'Carta Nueva' }, mockUser);
+      expect(updated.title).toBe('Carta Nueva');
+    });
+
+    it('debe eliminar plantilla de texto', async () => {
+      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue({ id: 'snp-1' });
+      mockPrisma.documentTextSnippet.delete.mockResolvedValue({ id: 'snp-1' });
+
+      const res = await service.deleteTextSnippet('snp-1', mockUser);
+      expect(res.success).toBe(true);
+    });
+  });
+
+  describe('ServiceCatalog and TariffPeriods Deletes & Updates', () => {
+    it('debe actualizar servicio en catálogo', async () => {
+      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue({ id: 'sc-1' });
+      mockPrisma.securityServiceCatalog.update.mockResolvedValue({ id: 'sc-1', name: 'Actualizado' });
+
+      const res = await service.updateServiceCatalog('sc-1', { name: 'Actualizado' }, mockUser);
+      expect(res.name).toBe('Actualizado');
+    });
+
+    it('debe eliminar servicio en catálogo', async () => {
+      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue({ id: 'sc-1' });
+      mockPrisma.securityServiceCatalog.delete.mockResolvedValue({ id: 'sc-1' });
+
+      const res = await service.deleteServiceCatalog('sc-1', mockUser);
+      expect(res.success).toBe(true);
+    });
+
+    it('debe eliminar tramo tarifario', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValue({ id: 'tp-1' });
+      mockPrisma.tariffPeriodConfig.delete.mockResolvedValue({ id: 'tp-1' });
+
+      const res = await service.deleteTariffPeriod('tp-1', mockUser);
+      expect(res.success).toBe(true);
+    });
+
+    it('debe eliminar entrada de matriz salarial', async () => {
+      mockPrisma.positionSalaryMatrix.findFirst.mockResolvedValue({ id: 'sm-1' });
+      mockPrisma.positionSalaryMatrix.delete.mockResolvedValue({ id: 'sm-1' });
+
+      const res = await service.deleteSalaryMatrix('sm-1', mockUser);
+      expect(res.success).toBe(true);
+    });
+
+    it('debe actualizar document skin', async () => {
+      mockPrisma.commercialSettings.findFirst.mockResolvedValue({
+        id: 'comm-1',
+        documentSkin: { id: 'skin-1' },
+      });
+      mockPrisma.tenantDocumentSkin.upsert.mockResolvedValue({
+        id: 'skin-1',
+        primaryBrandColorHex: '#123456',
+      });
+
+      const res = await service.updateDocumentSkin({ primaryBrandColorHex: '#123456' }, mockUser);
+      expect(res.id).toBe('skin-1');
+    });
+
+    it('debe listar matriz salarial, valores agregados y snippets', async () => {
+      mockPrisma.positionSalaryMatrix.findMany.mockResolvedValue([{ id: 'psm-1' }]);
+      mockPrisma.valueAddedCatalogItem.findMany.mockResolvedValue([{ id: 'vac-1' }]);
+      mockPrisma.documentTextSnippet.findMany.mockResolvedValue([{ id: 'dts-1' }]);
+
+      const salaries = await service.getSalaryMatrix(mockUser);
+      const values = await service.getValueAddedCatalog(mockUser);
+      const snippets = await service.getTextSnippets(mockUser);
+
+      expect(salaries).toHaveLength(1);
+      expect(values).toHaveLength(1);
+      expect(snippets).toHaveLength(1);
+    });
+
+    it('debe simular tarifas usando el periodo activo cuando no se proporciona tariffPeriodId', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce({
+        smmlv: 1750905,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 8.6,
+        strata13Multiplier: 7.66,
+        dayProportionFactor: 0.5597,
+        nightProportionFactor: 0.4403,
+      });
+
+      const res = await service.simulateTariff(
+        {
+          sector: CommercialSector.COMMERCIAL_PUBLIC,
+          weaponModality: WeaponModality.NO_WEAPON,
+          dayHours: 15,
+          nightHours: 9,
+          billableDays: 30,
+        },
+        mockUser,
+      );
+
+      expect(res.subtotalBeforeTax).toBeGreaterThan(0);
+    });
+
+    it('debe lanzar NotFoundException al actualizar o eliminar elementos inexistentes', async () => {
+      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue(null);
+      await expect(
+        service.updateServiceCatalog('none', {}, mockUser),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.deleteServiceCatalog('none', mockUser),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue(null);
+      await expect(
+        service.updateValueAdded('none', {}, mockUser),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.deleteValueAdded('none', mockUser),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue(null);
+      await expect(
+        service.updateTextSnippet('none', {}, mockUser),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.deleteTextSnippet('none', mockUser),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.positionSalaryMatrix.findFirst.mockResolvedValue(null);
+      await expect(
+        service.deleteSalaryMatrix('none', mockUser),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

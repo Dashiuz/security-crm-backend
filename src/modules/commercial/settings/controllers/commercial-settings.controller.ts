@@ -189,6 +189,15 @@ export class CommercialSettingsController {
     return this.commercialSettingsService.upsertSalaryMatrix(dto, req.user);
   }
 
+  @Delete('salary-matrix/:id')
+  @RequirePermissions('commercial:settings:manage')
+  @ApiOperation({
+    summary: 'Eliminar un registro de la matriz salarial por ID',
+  })
+  deleteSalaryMatrix(@Param('id') id: string, @Request() req: any) {
+    return this.commercialSettingsService.deleteSalaryMatrix(id, req.user);
+  }
+
   // ==========================================
   // Catálogo de Valores Agregados (ValueAddedCatalogItem)
   // ==========================================

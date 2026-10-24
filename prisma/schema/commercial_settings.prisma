@@ -200,11 +200,18 @@ model TenantDocumentSkin {
   commercialSettingsId String             @unique
   commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
 
-  // Identidad Visual de Marca
-  primaryBrandColorHex String  @default("#1E1B4B")
-  accentBrandColorHex  String  @default("#7C3AED")
-  logoS3Key            String? // S3 Key en MediaAttachment
-  secondaryLogoS3Key   String? // Logo alternativo / fondo oscuro
+  // Identidad Visual de Marca (Compatibilidad + Nuevos Acentos)
+  primaryBrandColorHex String               @default("#1E1B4B")
+  accentBrandColorHex  String               @default("#7C3AED")
+  secondaryColorHex    String?              @default("#F59E0B") // Alertas y badges
+  neutralDarkHex       String?              @default("#0F172A") // Textos principales
+  neutralLightHex      String?              @default("#F8FAFC") // Fondos de tablas
+  headerLayout         DocumentHeaderLayout @default(CLASSIC_MEMBRETE)
+  watermarkEnabled     Boolean              @default(false)
+  watermarkOpacity     Decimal              @default(0.06) @db.Decimal(3, 2)
+  watermarkS3Key       String?
+  logoS3Key            String?              // S3 Key en MediaAttachment
+  secondaryLogoS3Key   String?              // Logo alternativo / fondo oscuro
 
   // Credenciales Legales y Resoluciones SVSP
   companyLegalName         String
@@ -224,7 +231,11 @@ model TenantDocumentSkin {
   hasPoliceSupportNetwork Boolean @default(true)
   hasDijinEnterpriseFront Boolean @default(true)
 
-  // Firmantes Autorizados
+  // Configuración de Calidad ISO / BASC
+  isoDocumentCodePrefix   String? @default("CM-F")
+  defaultFooterDisclaimer String? @db.Text
+
+  // Firmantes Autorizados (Compatibilidad Fase 1)
   commercialDirectorName  String?
   commercialDirectorTitle String? @default("Director Comercial")
   commercialDirectorEmail String?
@@ -237,6 +248,10 @@ model TenantDocumentSkin {
   legalRepPhone String?
   legalRepSigS3 String?
 
+  // Relaciones Dinámicas Fase 2
+  signers      AuthorizedSigner[]
+  textSnippets DocumentTextSnippet[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdById String?
@@ -246,20 +261,55 @@ model TenantDocumentSkin {
   @@map("tenant_document_skins")
 }
 
+/// Firmantes Autorizados de la Empresa / Tenant
+model AuthorizedSigner {
+  id                  String             @id @default(cuid(2))
+  tenantId            String
+  tenant              Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documentSkinId      String
+  documentSkin        TenantDocumentSkin @relation(fields: [documentSkinId], references: [id], onDelete: Cascade)
+
+  fullName            String             @db.VarChar(150)
+  idNumber            String             @db.VarChar(50)  // Cédula o identificación
+  corporateTitle      String             @db.VarChar(120) // Ej: "Director Comercial"
+  email               String             @db.VarChar(150)
+  phone               String?            @db.VarChar(50)
+  roleScope           SignerRoleScope    @default(CUSTOM)
+
+  // Archivo de Firma Digitalizada Optimizado con sharp (< 18KB)
+  signatureImageS3Key String?
+  signatureUrl        String?            @db.Text
+  isDefaultCommercial Boolean            @default(false)
+  isDefaultLegal      Boolean            @default(false)
+  isActive            Boolean            @default(true)
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  createdById         String?
+  updatedById         String?
+
+  @@unique([tenantId, email])
+  @@index([tenantId, isActive])
+  @@map("authorized_signers")
+}
+
 /// Cláusulas y fragmentos de texto dinámico con variables
 model DocumentTextSnippet {
-  id                   String             @id @default(cuid(2))
+  id                   String              @id @default(cuid(2))
   tenantId             String
-  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  commercialSettingsId String
-  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String?
+  commercialSettings   CommercialSettings? @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+  documentSkinId       String?
+  documentSkin         TenantDocumentSkin? @relation(fields: [documentSkinId], references: [id], onDelete: Cascade)
 
-  key          String // "COVER_LETTER_RESIDENTIAL", "LABOR_WELFARE_PARAGRAPH"
-  title        String // "Carta de Presentación - Sector Residencial"
-  bodyTemplate String  @db.Text // Variables: {{client_name}}, {{nit}}, etc.
-  category     String // "LETTERS", "LEGAL_NOTES", "WELFARE", "SLA"
-  isDefault    Boolean @default(false)
-  isActive     Boolean @default(true)
+  key                String              // "COVER_LETTER_RESIDENTIAL", "LABOR_WELFARE_PARAGRAPH"
+  title              String              // "Carta de Presentación - Sector Residencial"
+  bodyTemplate       String              @db.Text // Variables: {{client_name}}, {{nit}}, etc.
+  category           String              // "LETTERS", "LEGAL_NOTES", "WELFARE", "SLA"
+  availableVariables Json                @default("[]") @db.JsonB
+  isDefault          Boolean             @default(false)
+  isActive           Boolean             @default(true)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
