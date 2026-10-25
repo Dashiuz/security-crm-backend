@@ -90,7 +90,8 @@ export class UpdateTenantDocumentSkinDto {
   isoDocumentCodePrefix?: string;
 
   @ApiPropertyOptional({
-    description: 'Descargo de responsabilidad y pie de página legal predeterminado',
+    description:
+      'Descargo de responsabilidad y pie de página legal predeterminado',
     example: 'Vigilado SuperVigilancia | Certificación BASC COLBOG00123',
   })
   @IsOptional()
@@ -98,42 +99,60 @@ export class UpdateTenantDocumentSkinDto {
   defaultFooterDisclaimer?: string;
 
   // Credenciales Legales
-  @ApiPropertyOptional({ description: 'Razón social legal', example: 'SEGURIDAD NOXIA LTDA' })
+  @ApiPropertyOptional({
+    description: 'Razón social legal',
+    example: 'SEGURIDAD NOXIA LTDA',
+  })
   @IsOptional()
   @IsString()
   companyLegalName?: string;
 
-  @ApiPropertyOptional({ description: 'NIT de la empresa con dígito de verificación', example: '900.123.456-7' })
+  @ApiPropertyOptional({
+    description: 'NIT de la empresa con dígito de verificación',
+    example: '900.123.456-7',
+  })
   @IsOptional()
   @IsString()
   companyNit?: string;
 
-  @ApiPropertyOptional({ description: 'Matrícula mercantil de la Cámara de Comercio' })
+  @ApiPropertyOptional({
+    description: 'Matrícula mercantil de la Cámara de Comercio',
+  })
   @IsOptional()
   @IsString()
   commercialRegisterNum?: string;
 
-  @ApiPropertyOptional({ description: 'Número de resolución de licencia SuperVigilancia' })
+  @ApiPropertyOptional({
+    description: 'Número de resolución de licencia SuperVigilancia',
+  })
   @IsOptional()
   @IsString()
   supervigilanciaLicense?: string;
 
-  @ApiPropertyOptional({ description: 'Fecha de expedición de la licencia SVSP (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Fecha de expedición de la licencia SVSP (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsString()
   supervigilanciaLicDate?: string;
 
-  @ApiPropertyOptional({ description: 'Fecha de vencimiento de la licencia SVSP (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Fecha de vencimiento de la licencia SVSP (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsString()
   supervigilanciaLicExpiry?: string;
 
-  @ApiPropertyOptional({ description: 'Resolución de red de telecomunicaciones MinTIC' })
+  @ApiPropertyOptional({
+    description: 'Resolución de red de telecomunicaciones MinTIC',
+  })
   @IsOptional()
   @IsString()
   minTicLicenseNum?: string;
 
-  @ApiPropertyOptional({ description: 'Resolución de aprobación de uniformes SVSP' })
+  @ApiPropertyOptional({
+    description: 'Resolución de aprobación de uniformes SVSP',
+  })
   @IsOptional()
   @IsString()
   uniformsResolutionNum?: string;
@@ -143,7 +162,10 @@ export class UpdateTenantDocumentSkinDto {
   @IsString()
   overtimeResolutionNum?: string;
 
-  @ApiPropertyOptional({ description: 'Porcentaje de implementación de SG-SST (0 - 100)', example: 99.5 })
+  @ApiPropertyOptional({
+    description: 'Porcentaje de implementación de SG-SST (0 - 100)',
+    example: 99.5,
+  })
   @IsOptional()
   @IsNumber()
   sstImplementationPct?: number;
@@ -159,12 +181,16 @@ export class UpdateTenantDocumentSkinDto {
   @IsBoolean()
   hasBascCertified?: boolean;
 
-  @ApiPropertyOptional({ description: 'Vinculado a Red de Apoyo de la Policía Nacional' })
+  @ApiPropertyOptional({
+    description: 'Vinculado a Red de Apoyo de la Policía Nacional',
+  })
   @IsOptional()
   @IsBoolean()
   hasPoliceSupportNetwork?: boolean;
 
-  @ApiPropertyOptional({ description: 'Afiliado a Frente de Seguridad Empresarial DIJIN' })
+  @ApiPropertyOptional({
+    description: 'Afiliado a Frente de Seguridad Empresarial DIJIN',
+  })
   @IsOptional()
   @IsBoolean()
   hasDijinEnterpriseFront?: boolean;

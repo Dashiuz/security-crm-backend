@@ -31,6 +31,12 @@
       "skillPath": "skills/nestjs-expert/SKILL.md",
       "computedHash": "7b83be17282c0125e7cf9249524f6da6d3072ccdea42e08e5e80cb3a4bfaa764"
     },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "9feedbe220d039ba30720217b3fce16214817063fb54a48843d89368c86554e9"
+    },
     "prisma-expert": {
       "source": "sickn33/agentic-awesome-skills",
       "sourceType": "github",

@@ -97,13 +97,19 @@ describe('CommercialSettingsService', () => {
     };
 
     const mockRepo: any = {
-      findByTenantId: jest.fn().mockImplementation(() => mockPrisma.commercialSettings.findFirst()),
-      updateSettings: jest.fn().mockImplementation((id: string, data: any) =>
-        mockPrisma.commercialSettings.update({ where: { id }, data }),
-      ),
-      createSettings: jest.fn().mockImplementation((data: any) =>
-        mockPrisma.commercialSettings.create({ data }),
-      ),
+      findByTenantId: jest
+        .fn()
+        .mockImplementation(() => mockPrisma.commercialSettings.findFirst()),
+      updateSettings: jest
+        .fn()
+        .mockImplementation((id: string, data: any) =>
+          mockPrisma.commercialSettings.update({ where: { id }, data }),
+        ),
+      createSettings: jest
+        .fn()
+        .mockImplementation((data: any) =>
+          mockPrisma.commercialSettings.create({ data }),
+        ),
     };
 
     service = new CommercialSettingsService(mockPrisma, mockRepo);
@@ -375,16 +381,29 @@ describe('CommercialSettingsService', () => {
     });
 
     it('debe actualizar valor agregado', async () => {
-      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue({ id: 'vag-1' });
-      mockPrisma.valueAddedCatalogItem.update.mockResolvedValue({ id: 'vag-1', name: 'Locker 6P' });
+      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue({
+        id: 'vag-1',
+      });
+      mockPrisma.valueAddedCatalogItem.update.mockResolvedValue({
+        id: 'vag-1',
+        name: 'Locker 6P',
+      });
 
-      const updated = await service.updateValueAdded('vag-1', { name: 'Locker 6P' }, mockUser);
+      const updated = await service.updateValueAdded(
+        'vag-1',
+        { name: 'Locker 6P' },
+        mockUser,
+      );
       expect(updated.name).toBe('Locker 6P');
     });
 
     it('debe eliminar valor agregado', async () => {
-      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue({ id: 'vag-1' });
-      mockPrisma.valueAddedCatalogItem.delete.mockResolvedValue({ id: 'vag-1' });
+      mockPrisma.valueAddedCatalogItem.findFirst.mockResolvedValue({
+        id: 'vag-1',
+      });
+      mockPrisma.valueAddedCatalogItem.delete.mockResolvedValue({
+        id: 'vag-1',
+      });
 
       const res = await service.deleteValueAdded('vag-1', mockUser);
       expect(res.success).toBe(true);
@@ -408,15 +427,26 @@ describe('CommercialSettingsService', () => {
     });
 
     it('debe actualizar plantilla de texto', async () => {
-      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue({ id: 'snp-1' });
-      mockPrisma.documentTextSnippet.update.mockResolvedValue({ id: 'snp-1', title: 'Carta Nueva' });
+      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue({
+        id: 'snp-1',
+      });
+      mockPrisma.documentTextSnippet.update.mockResolvedValue({
+        id: 'snp-1',
+        title: 'Carta Nueva',
+      });
 
-      const updated = await service.updateTextSnippet('snp-1', { title: 'Carta Nueva' }, mockUser);
+      const updated = await service.updateTextSnippet(
+        'snp-1',
+        { title: 'Carta Nueva' },
+        mockUser,
+      );
       expect(updated.title).toBe('Carta Nueva');
     });
 
     it('debe eliminar plantilla de texto', async () => {
-      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue({ id: 'snp-1' });
+      mockPrisma.documentTextSnippet.findFirst.mockResolvedValue({
+        id: 'snp-1',
+      });
       mockPrisma.documentTextSnippet.delete.mockResolvedValue({ id: 'snp-1' });
 
       const res = await service.deleteTextSnippet('snp-1', mockUser);
@@ -426,16 +456,29 @@ describe('CommercialSettingsService', () => {
 
   describe('ServiceCatalog and TariffPeriods Deletes & Updates', () => {
     it('debe actualizar servicio en catálogo', async () => {
-      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue({ id: 'sc-1' });
-      mockPrisma.securityServiceCatalog.update.mockResolvedValue({ id: 'sc-1', name: 'Actualizado' });
+      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue({
+        id: 'sc-1',
+      });
+      mockPrisma.securityServiceCatalog.update.mockResolvedValue({
+        id: 'sc-1',
+        name: 'Actualizado',
+      });
 
-      const res = await service.updateServiceCatalog('sc-1', { name: 'Actualizado' }, mockUser);
+      const res = await service.updateServiceCatalog(
+        'sc-1',
+        { name: 'Actualizado' },
+        mockUser,
+      );
       expect(res.name).toBe('Actualizado');
     });
 
     it('debe eliminar servicio en catálogo', async () => {
-      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue({ id: 'sc-1' });
-      mockPrisma.securityServiceCatalog.delete.mockResolvedValue({ id: 'sc-1' });
+      mockPrisma.securityServiceCatalog.findFirst.mockResolvedValue({
+        id: 'sc-1',
+      });
+      mockPrisma.securityServiceCatalog.delete.mockResolvedValue({
+        id: 'sc-1',
+      });
 
       const res = await service.deleteServiceCatalog('sc-1', mockUser);
       expect(res.success).toBe(true);
@@ -450,7 +493,9 @@ describe('CommercialSettingsService', () => {
     });
 
     it('debe eliminar entrada de matriz salarial', async () => {
-      mockPrisma.positionSalaryMatrix.findFirst.mockResolvedValue({ id: 'sm-1' });
+      mockPrisma.positionSalaryMatrix.findFirst.mockResolvedValue({
+        id: 'sm-1',
+      });
       mockPrisma.positionSalaryMatrix.delete.mockResolvedValue({ id: 'sm-1' });
 
       const res = await service.deleteSalaryMatrix('sm-1', mockUser);
@@ -467,14 +512,23 @@ describe('CommercialSettingsService', () => {
         primaryBrandColorHex: '#123456',
       });
 
-      const res = await service.updateDocumentSkin({ primaryBrandColorHex: '#123456' }, mockUser);
+      const res = await service.updateDocumentSkin(
+        { primaryBrandColorHex: '#123456' },
+        mockUser,
+      );
       expect(res.id).toBe('skin-1');
     });
 
     it('debe listar matriz salarial, valores agregados y snippets', async () => {
-      mockPrisma.positionSalaryMatrix.findMany.mockResolvedValue([{ id: 'psm-1' }]);
-      mockPrisma.valueAddedCatalogItem.findMany.mockResolvedValue([{ id: 'vac-1' }]);
-      mockPrisma.documentTextSnippet.findMany.mockResolvedValue([{ id: 'dts-1' }]);
+      mockPrisma.positionSalaryMatrix.findMany.mockResolvedValue([
+        { id: 'psm-1' },
+      ]);
+      mockPrisma.valueAddedCatalogItem.findMany.mockResolvedValue([
+        { id: 'vac-1' },
+      ]);
+      mockPrisma.documentTextSnippet.findMany.mockResolvedValue([
+        { id: 'dts-1' },
+      ]);
 
       const salaries = await service.getSalaryMatrix(mockUser);
       const values = await service.getValueAddedCatalog(mockUser);
@@ -522,17 +576,17 @@ describe('CommercialSettingsService', () => {
       await expect(
         service.updateValueAdded('none', {}, mockUser),
       ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.deleteValueAdded('none', mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.deleteValueAdded('none', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
 
       mockPrisma.documentTextSnippet.findFirst.mockResolvedValue(null);
       await expect(
         service.updateTextSnippet('none', {}, mockUser),
       ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.deleteTextSnippet('none', mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.deleteTextSnippet('none', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
 
       mockPrisma.positionSalaryMatrix.findFirst.mockResolvedValue(null);
       await expect(

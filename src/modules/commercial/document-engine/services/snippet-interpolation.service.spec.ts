@@ -22,7 +22,8 @@ describe('SnippetInterpolationService', () => {
     });
 
     it('debe ignorar espacios en blanco dentro de los corchetes {{  var  }}', () => {
-      const template = 'Estimado {{  cliente  }}, código {{  codigo_servicio  }}';
+      const template =
+        'Estimado {{  cliente  }}, código {{  codigo_servicio  }}';
       const variables = service.extractVariables(template);
 
       expect(variables).toEqual(['cliente', 'codigo_servicio']);
@@ -44,7 +45,8 @@ describe('SnippetInterpolationService', () => {
     });
 
     it('debe reportar variables faltantes cuando no se encuentran en el diccionario', () => {
-      const template = 'Contrato con {{cliente}}, NIT {{nit}}, teléfono {{telefono}}';
+      const template =
+        'Contrato con {{cliente}}, NIT {{nit}}, teléfono {{telefono}}';
       const values = { cliente: 'ACME Corp' };
 
       const result = service.interpolate(template, values);

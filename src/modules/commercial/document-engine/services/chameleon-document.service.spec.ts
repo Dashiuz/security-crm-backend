@@ -73,7 +73,9 @@ describe('ChameleonDocumentService', () => {
       findSignerByEmail: jest.fn().mockResolvedValue(null),
       createSigner: jest.fn().mockResolvedValue(sampleSigner),
       updateSigner: jest.fn().mockResolvedValue(sampleSigner),
-      softDeleteSigner: jest.fn().mockResolvedValue({ ...sampleSigner, isActive: false }),
+      softDeleteSigner: jest
+        .fn()
+        .mockResolvedValue({ ...sampleSigner, isActive: false }),
       findSnippets: jest.fn().mockResolvedValue([sampleSnippet]),
       findSnippetById: jest.fn().mockResolvedValue(sampleSnippet),
       findSnippetByKey: jest.fn().mockResolvedValue(null),
@@ -83,7 +85,9 @@ describe('ChameleonDocumentService', () => {
     };
 
     mockCommercialSettingsRepo = {
-      findByTenantId: jest.fn().mockResolvedValue({ id: 'comm-1', tenantId: 'tenant-abc' }),
+      findByTenantId: jest
+        .fn()
+        .mockResolvedValue({ id: 'comm-1', tenantId: 'tenant-abc' }),
     };
 
     mockAssetOptimizationService = {
@@ -115,7 +119,9 @@ describe('ChameleonDocumentService', () => {
     };
 
     mockS3Service = {
-      generateS3Key: jest.fn().mockReturnValue('tenants/tenant-abc/test-key.webp'),
+      generateS3Key: jest
+        .fn()
+        .mockReturnValue('tenants/tenant-abc/test-key.webp'),
       uploadBuffer: jest.fn().mockResolvedValue({
         url: 'https://s3.amazonaws.com/test-key.webp',
         s3Key: 'tenants/tenant-abc/test-key.webp',
@@ -135,14 +141,18 @@ describe('ChameleonDocumentService', () => {
   describe('Skin Management', () => {
     it('debe obtener la piel existente del tenant', async () => {
       const skin = await service.getSkin(mockUser);
-      expect(mockDocEngineRepo.findSkinByTenantId).toHaveBeenCalledWith('tenant-abc');
+      expect(mockDocEngineRepo.findSkinByTenantId).toHaveBeenCalledWith(
+        'tenant-abc',
+      );
       expect(skin.id).toBe('skin-1');
     });
 
     it('debe inicializar la piel por defecto si no existe', async () => {
       mockDocEngineRepo.findSkinByTenantId.mockResolvedValueOnce(null);
       const skin = await service.getSkin(mockUser);
-      expect(mockCommercialSettingsRepo.findByTenantId).toHaveBeenCalledWith('tenant-abc');
+      expect(mockCommercialSettingsRepo.findByTenantId).toHaveBeenCalledWith(
+        'tenant-abc',
+      );
       expect(mockDocEngineRepo.upsertSkin).toHaveBeenCalled();
       expect(skin.id).toBe('skin-1');
     });
@@ -151,7 +161,9 @@ describe('ChameleonDocumentService', () => {
       mockDocEngineRepo.findSkinByTenantId.mockResolvedValueOnce(null);
       mockCommercialSettingsRepo.findByTenantId.mockResolvedValueOnce(null);
 
-      await expect(service.getSkin(mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.getSkin(mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('debe actualizar la piel de marca del tenant', async () => {
@@ -171,7 +183,9 @@ describe('ChameleonDocumentService', () => {
 
       const result = await service.uploadLogo(mockFile, mockUser);
 
-      expect(mockAssetOptimizationService.processLogo).toHaveBeenCalledWith(mockFile.buffer);
+      expect(mockAssetOptimizationService.processLogo).toHaveBeenCalledWith(
+        mockFile.buffer,
+      );
       expect(mockS3Service.uploadBuffer).toHaveBeenCalled();
       expect(mockDocEngineRepo.updateSkinLogo).toHaveBeenCalled();
       expect(result.s3Key).toBeDefined();
@@ -198,9 +212,9 @@ describe('ChameleonDocumentService', () => {
 
     it('debe lanzar NotFoundException si el firmante no existe', async () => {
       mockDocEngineRepo.findSignerById.mockResolvedValueOnce(null);
-      await expect(service.getSignerById('not-found', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getSignerById('not-found', mockUser),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('debe crear un firmante autorizado', async () => {
@@ -239,7 +253,8 @@ describe('ChameleonDocumentService', () => {
           idNumber: '987654',
           corporateTitle: 'Gerente General',
           email: 'juan.new@noxia.com',
-          signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+          signatureDataUrl:
+            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
         },
         mockUser,
       );
@@ -248,14 +263,24 @@ describe('ChameleonDocumentService', () => {
     });
 
     it('debe actualizar firmante autorizado', async () => {
-      const res = await service.updateSigner('signer-1', { phone: '+57300123' }, mockUser);
+      const res = await service.updateSigner(
+        'signer-1',
+        { phone: '+57300123' },
+        mockUser,
+      );
       expect(mockDocEngineRepo.updateSigner).toHaveBeenCalled();
       expect(res.id).toBe('signer-1');
     });
 
     it('debe subir y optimizar firma de firmante mediante archivo', async () => {
-      const mockFile = { buffer: Buffer.from('sig-data') } as Express.Multer.File;
-      const res = await service.uploadSignerSignature('signer-1', mockFile, mockUser);
+      const mockFile = {
+        buffer: Buffer.from('sig-data'),
+      } as Express.Multer.File;
+      const res = await service.uploadSignerSignature(
+        'signer-1',
+        mockFile,
+        mockUser,
+      );
 
       expect(mockAssetOptimizationService.processSignature).toHaveBeenCalled();
       expect(mockS3Service.uploadBuffer).toHaveBeenCalled();
@@ -270,7 +295,10 @@ describe('ChameleonDocumentService', () => {
 
     it('debe inhabilitar firmante autorizado (soft-delete)', async () => {
       const res = await service.deleteSigner('signer-1', mockUser);
-      expect(mockDocEngineRepo.softDeleteSigner).toHaveBeenCalledWith('signer-1', 'user-123');
+      expect(mockDocEngineRepo.softDeleteSigner).toHaveBeenCalledWith(
+        'signer-1',
+        'user-123',
+      );
       expect(res.success).toBe(true);
     });
   });
@@ -289,9 +317,9 @@ describe('ChameleonDocumentService', () => {
 
     it('debe lanzar NotFoundException si el fragmento no existe', async () => {
       mockDocEngineRepo.findSnippetById.mockResolvedValueOnce(null);
-      await expect(service.getSnippetById('snp-unknown', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getSnippetById('snp-unknown', mockUser),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('debe crear un nuevo fragmento con extracción asistida de variables', async () => {

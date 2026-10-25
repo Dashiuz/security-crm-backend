@@ -156,7 +156,11 @@ describe('CommercialSettingsRepository', () => {
     });
 
     it('upsertSalaryMatrix debe llamar a upsert', async () => {
-      const res = await repository.upsertSalaryMatrix({} as any, {} as any, {} as any);
+      const res = await repository.upsertSalaryMatrix(
+        {} as any,
+        {} as any,
+        {} as any,
+      );
       expect(mockPrisma.positionSalaryMatrix.upsert).toHaveBeenCalled();
       expect(res.id).toBe('sm-1');
     });
@@ -201,7 +205,9 @@ describe('CommercialSettingsRepository', () => {
 
     it('findDistributionRecipients debe llamar a findMany', async () => {
       const res = await repository.findDistributionRecipients('ten-1');
-      expect(mockPrisma.serviceOrderDistributionRecipient.findMany).toHaveBeenCalled();
+      expect(
+        mockPrisma.serviceOrderDistributionRecipient.findMany,
+      ).toHaveBeenCalled();
       expect(res).toHaveLength(1);
     });
 
@@ -214,7 +220,9 @@ describe('CommercialSettingsRepository', () => {
         'juan@noxia.com',
         'usr-1',
       );
-      expect(mockPrisma.serviceOrderDistributionRecipient.upsert).toHaveBeenCalled();
+      expect(
+        mockPrisma.serviceOrderDistributionRecipient.upsert,
+      ).toHaveBeenCalled();
       expect(res.id).toBe('dist-1');
     });
   });

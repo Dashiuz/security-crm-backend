@@ -305,7 +305,9 @@ export class CommercialSettingsController {
 
   @Get('employees/search')
   @RequirePermissions('commercial:settings:read')
-  @ApiOperation({ summary: 'Buscar empleados para firmantes o notificación de órdenes' })
+  @ApiOperation({
+    summary: 'Buscar empleados para firmantes o notificación de órdenes',
+  })
   searchEmployees(
     @Query('query') query: string,
     @Query('limit') limit: string,

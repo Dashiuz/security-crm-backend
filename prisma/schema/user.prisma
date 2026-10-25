@@ -89,6 +89,12 @@ model User {
   // Signature Requests
   signatureRequestsCreated SignatureRequest[] @relation("SignatureRequestsCreated")
 
+  // Commercial relations
+  commercialProposalsCreated CommercialProposal[] @relation("CommercialProposalCreatedBy")
+  commercialProposalsUpdated CommercialProposal[] @relation("CommercialProposalUpdatedBy")
+  serviceOrdersCommercial    ServiceOrder[]       @relation("ServiceOrderCommercial")
+  followUpsCommercial        CommercialFollowUp[] @relation("FollowUpCommercial")
+
   @@index([tenantId])
   @@index([clientId])
   @@index([document])

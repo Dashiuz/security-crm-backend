@@ -41,7 +41,8 @@ export class CreateSnippetDto {
   category: string;
 
   @ApiPropertyOptional({
-    description: 'Lista de variables dinámicas sugeridas para autocompletar en el editor TipTap',
+    description:
+      'Lista de variables dinámicas sugeridas para autocompletar en el editor TipTap',
     example: ['nombre_cliente', 'nit', 'canon_mensual', 'vigencia_dias'],
   })
   @IsOptional()

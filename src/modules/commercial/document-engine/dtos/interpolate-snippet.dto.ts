@@ -3,7 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class InterpolateSnippetDto {
   @ApiPropertyOptional({
-    description: 'Plantilla explícita para interpolar. Si no se provee, se usa la guardada en BD.',
+    description:
+      'Plantilla explícita para interpolar. Si no se provee, se usa la guardada en BD.',
   })
   @IsOptional()
   @IsString()

@@ -55,7 +55,9 @@ export class DocumentEngineController {
 
   @Patch('skin')
   @RequirePermissions('commercial:settings:manage')
-  @ApiOperation({ summary: 'Actualizar colores de marca, layout y resoluciones SVSP' })
+  @ApiOperation({
+    summary: 'Actualizar colores de marca, layout y resoluciones SVSP',
+  })
   @ApiOkResponse({ description: 'Piel documental actualizada' })
   async updateSkin(
     @Body() dto: UpdateTenantDocumentSkinDto,
@@ -71,7 +73,9 @@ export class DocumentEngineController {
   @ApiOperation({
     summary: 'Subir y optimizar logotipo corporativo con sharp (WebP < 25KB)',
   })
-  @ApiCreatedResponse({ description: 'Logotipo optimizado y vinculado al skin' })
+  @ApiCreatedResponse({
+    description: 'Logotipo optimizado y vinculado al skin',
+  })
   async uploadLogo(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
@@ -129,7 +133,9 @@ export class DocumentEngineController {
 
   @Post('snippets/:id/interpolate')
   @RequirePermissions('commercial:settings:read')
-  @ApiOperation({ summary: 'Probar interpolación de tokens variables en tiempo real' })
+  @ApiOperation({
+    summary: 'Probar interpolación de tokens variables en tiempo real',
+  })
   @ApiOkResponse({ description: 'Texto renderizado con variables sustituidas' })
   async interpolateSnippet(
     @Param('id') id: string,

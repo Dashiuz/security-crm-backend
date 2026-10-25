@@ -75,7 +75,10 @@ export class CommercialSettingsRepository {
     return this.prisma.tariffPeriodConfig.create({ data });
   }
 
-  async updateTariffPeriod(id: string, data: Prisma.TariffPeriodConfigUpdateInput) {
+  async updateTariffPeriod(
+    id: string,
+    data: Prisma.TariffPeriodConfigUpdateInput,
+  ) {
     return this.prisma.tariffPeriodConfig.update({
       where: { id },
       data,
@@ -111,7 +114,9 @@ export class CommercialSettingsRepository {
     });
   }
 
-  async createServiceCatalogItem(data: Prisma.SecurityServiceCatalogCreateInput) {
+  async createServiceCatalogItem(
+    data: Prisma.SecurityServiceCatalogCreateInput,
+  ) {
     return this.prisma.securityServiceCatalog.create({ data });
   }
 

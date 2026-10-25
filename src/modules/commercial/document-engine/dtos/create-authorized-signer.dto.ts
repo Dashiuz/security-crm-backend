@@ -67,7 +67,8 @@ export class CreateAuthorizedSignerDto {
   roleScope?: SignerRoleScope;
 
   @ApiPropertyOptional({
-    description: 'Firma digital en Base64 Data URL (si proviene del visor de dibujo)',
+    description:
+      'Firma digital en Base64 Data URL (si proviene del visor de dibujo)',
   })
   @IsOptional()
   @IsString()

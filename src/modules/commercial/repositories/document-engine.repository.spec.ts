@@ -39,13 +39,22 @@ describe('DocumentEngineRepository', () => {
     });
 
     it('upsertSkin debe llamar a upsert', async () => {
-      const res = await repository.upsertSkin('ten-1', 'comm-1', {} as any, 'usr-1');
+      const res = await repository.upsertSkin(
+        'ten-1',
+        'comm-1',
+        {} as any,
+        'usr-1',
+      );
       expect(mockPrisma.tenantDocumentSkin.upsert).toHaveBeenCalled();
       expect(res.id).toBe('skin-1');
     });
 
     it('updateSkinLogo debe llamar a update', async () => {
-      const res = await repository.updateSkinLogo('skin-1', 'key.webp', 'usr-1');
+      const res = await repository.updateSkinLogo(
+        'skin-1',
+        'key.webp',
+        'usr-1',
+      );
       expect(mockPrisma.tenantDocumentSkin.update).toHaveBeenCalled();
       expect(res.id).toBe('skin-1');
     });
@@ -65,7 +74,10 @@ describe('DocumentEngineRepository', () => {
     });
 
     it('findSignerByEmail debe llamar a findUnique con clave compuesta', async () => {
-      const res = await repository.findSignerByEmail('carlos@noxia.com', 'ten-1');
+      const res = await repository.findSignerByEmail(
+        'carlos@noxia.com',
+        'ten-1',
+      );
       expect(mockPrisma.authorizedSigner.findUnique).toHaveBeenCalled();
       expect(res?.id).toBe('sig-1');
     });

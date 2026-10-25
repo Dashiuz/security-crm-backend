@@ -39,9 +39,11 @@ export class DocumentEngineRepository {
       create: {
         tenant: { connect: { id: tenantId } },
         commercialSettings: { connect: { id: commercialSettingsId } },
-        companyLegalName: (data.companyLegalName as string) || 'EMPRESA DE SEGURIDAD',
+        companyLegalName:
+          (data.companyLegalName as string) || 'EMPRESA DE SEGURIDAD',
         companyNit: (data.companyNit as string) || '900.000.000-1',
-        primaryBrandColorHex: (data.primaryBrandColorHex as string) || '#1E1B4B',
+        primaryBrandColorHex:
+          (data.primaryBrandColorHex as string) || '#1E1B4B',
         accentBrandColorHex: (data.accentBrandColorHex as string) || '#7C3AED',
         secondaryColorHex: (data.secondaryColorHex as string) || '#F59E0B',
         neutralDarkHex: (data.neutralDarkHex as string) || '#0F172A',
@@ -84,7 +86,11 @@ export class DocumentEngineRepository {
   async findSigners(tenantId: string) {
     return this.prisma.authorizedSigner.findMany({
       where: { tenantId, isActive: true },
-      orderBy: [{ isDefaultCommercial: 'desc' }, { isDefaultLegal: 'desc' }, { fullName: 'asc' }],
+      orderBy: [
+        { isDefaultCommercial: 'desc' },
+        { isDefaultLegal: 'desc' },
+        { fullName: 'asc' },
+      ],
     });
   }
 

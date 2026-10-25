@@ -77,6 +77,8 @@ model TariffPeriodConfig {
   createdById String?
   updatedById String?
 
+  proposals   CommercialProposal[]
+
   @@unique([tenantId, year, label])
   @@index([tenantId, isActive])
   @@map("tariff_period_configs")
@@ -112,6 +114,8 @@ model SecurityServiceCatalog {
   updatedAt   DateTime @updatedAt
   createdById String?
   updatedById String?
+
+  proposalServiceItems ProposalServiceItem[]
 
   @@unique([tenantId, serviceCode])
   @@index([tenantId, sector, weaponModality])
@@ -186,6 +190,8 @@ model ValueAddedCatalogItem {
   updatedAt   DateTime @updatedAt
   createdById String?
   updatedById String?
+
+  proposalValueAddedItems ProposalValueAddedItem[]
 
   @@unique([tenantId, name])
   @@index([tenantId, category])

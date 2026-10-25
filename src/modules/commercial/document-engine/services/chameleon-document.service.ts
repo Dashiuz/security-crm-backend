@@ -42,7 +42,9 @@ export class ChameleonDocumentService {
 
     if (!skin) {
       // Si no existe, inicializamos con los valores de la configuración comercial
-      const settings = await this.commercialSettingsRepo.findByTenantId(user.tenantId);
+      const settings = await this.commercialSettingsRepo.findByTenantId(
+        user.tenantId,
+      );
       if (!settings) {
         throw new NotFoundException(
           'Configuración comercial no encontrada para este tenant.',
@@ -67,7 +69,9 @@ export class ChameleonDocumentService {
     }
 
     if (!skin) {
-      throw new NotFoundException('No se pudo obtener la configuración de marca del documento.');
+      throw new NotFoundException(
+        'No se pudo obtener la configuración de marca del documento.',
+      );
     }
 
     return skin;
@@ -94,13 +98,17 @@ export class ChameleonDocumentService {
 
   async uploadLogo(file: Express.Multer.File, user: UserContext) {
     if (!file || !file.buffer) {
-      throw new BadRequestException('Se requiere un archivo de imagen para el logotipo.');
+      throw new BadRequestException(
+        'Se requiere un archivo de imagen para el logotipo.',
+      );
     }
 
     const skin = await this.getSkin(user);
 
     // 1. Optimizar con sharp a WebP < 25KB
-    const processed = await this.assetOptimizationService.processLogo(file.buffer);
+    const processed = await this.assetOptimizationService.processLogo(
+      file.buffer,
+    );
 
     // 2. Generar S3 key canónica
     const s3Key = this.s3Service.generateS3Key({
@@ -118,7 +126,11 @@ export class ChameleonDocumentService {
     );
 
     // 4. Actualizar skin en base de datos
-    await this.docEngineRepo.updateSkinLogo(skin.id, uploadResult.s3Key, user.sub);
+    await this.docEngineRepo.updateSkinLogo(
+      skin.id,
+      uploadResult.s3Key,
+      user.sub,
+    );
 
     return {
       message: 'Logotipo optimizado y actualizado exitosamente',
@@ -162,9 +174,13 @@ export class ChameleonDocumentService {
 
     // Si viene firma en base64 en la creación, procesar y optimizar con sharp
     if (dto.signatureDataUrl) {
-      const base64Data = dto.signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
+      const base64Data = dto.signatureDataUrl.replace(
+        /^data:image\/\w+;base64,/,
+        '',
+      );
       const rawBuffer = Buffer.from(base64Data, 'base64');
-      const processed = await this.assetOptimizationService.processSignature(rawBuffer);
+      const processed =
+        await this.assetOptimizationService.processSignature(rawBuffer);
 
       const s3Key = this.s3Service.generateS3Key({
         tenantId: user.tenantId,
@@ -209,9 +225,13 @@ export class ChameleonDocumentService {
     let signatureImageS3Key: string | undefined;
 
     if (dto.signatureDataUrl) {
-      const base64Data = dto.signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
+      const base64Data = dto.signatureDataUrl.replace(
+        /^data:image\/\w+;base64,/,
+        '',
+      );
       const rawBuffer = Buffer.from(base64Data, 'base64');
-      const processed = await this.assetOptimizationService.processSignature(rawBuffer);
+      const processed =
+        await this.assetOptimizationService.processSignature(rawBuffer);
 
       const s3Key = this.s3Service.generateS3Key({
         tenantId: user.tenantId,
@@ -242,13 +262,17 @@ export class ChameleonDocumentService {
     user: UserContext,
   ) {
     if (!file || !file.buffer) {
-      throw new BadRequestException('Se requiere el archivo de imagen de la firma.');
+      throw new BadRequestException(
+        'Se requiere el archivo de imagen de la firma.',
+      );
     }
 
     const signer = await this.getSignerById(id, user);
 
     // 1. Optimizar con sharp: trim de márgenes transparentes + compresión PNG < 18KB
-    const processed = await this.assetOptimizationService.processSignature(file.buffer);
+    const processed = await this.assetOptimizationService.processSignature(
+      file.buffer,
+    );
 
     // 2. Generar S3 key canónica
     const s3Key = this.s3Service.generateS3Key({
@@ -345,7 +369,9 @@ export class ChameleonDocumentService {
 
     let variables = dto.availableVariables;
     if (dto.bodyTemplate && (!variables || variables.length === 0)) {
-      variables = this.snippetInterpolationService.extractVariables(dto.bodyTemplate);
+      variables = this.snippetInterpolationService.extractVariables(
+        dto.bodyTemplate,
+      );
     }
 
     return this.docEngineRepo.updateSnippet(snippet.id, {

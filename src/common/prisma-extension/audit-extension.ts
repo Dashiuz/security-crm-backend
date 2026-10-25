@@ -42,6 +42,17 @@ export const auditExtension = (contextService: RequestContextService) => {
               'TenantDocumentSkin',
               'DocumentTextSnippet',
               'ServiceOrderDistributionRecipient',
+              'CommercialProposal',
+              'ProposalServiceItem',
+              'ProposalValueAddedItem',
+              'ServiceOrder',
+              'ServiceOrderPosition',
+              'ServiceOrderEquipmentItem',
+              'ServiceOrderDispatchLog',
+              'CommercialFollowUp',
+              'ClientInsurancePolicy',
+              'ContractAddendum',
+              'ClientAnsCommitment',
             ];
             const multiTenantModels = [
               'User',
@@ -78,6 +89,17 @@ export const auditExtension = (contextService: RequestContextService) => {
               'TenantDocumentSkin',
               'DocumentTextSnippet',
               'ServiceOrderDistributionRecipient',
+              'CommercialProposal',
+              'ProposalServiceItem',
+              'ProposalValueAddedItem',
+              'ServiceOrder',
+              'ServiceOrderPosition',
+              'ServiceOrderEquipmentItem',
+              'ServiceOrderDispatchLog',
+              'CommercialFollowUp',
+              'ClientInsurancePolicy',
+              'ContractAddendum',
+              'ClientAnsCommitment',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);

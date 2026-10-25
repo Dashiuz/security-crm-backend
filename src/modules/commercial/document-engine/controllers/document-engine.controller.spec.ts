@@ -65,7 +65,10 @@ describe('DocumentEngineController', () => {
 
     it('debe consultar fragmento por id', async () => {
       const res = await controller.getSnippetById('snp-1', mockReq);
-      expect(mockService.getSnippetById).toHaveBeenCalledWith('snp-1', mockReq.user);
+      expect(mockService.getSnippetById).toHaveBeenCalledWith(
+        'snp-1',
+        mockReq.user,
+      );
       expect(res.id).toBe('snp-1');
     });
 
@@ -82,21 +85,36 @@ describe('DocumentEngineController', () => {
     });
 
     it('debe actualizar un fragmento', async () => {
-      const res = await controller.updateSnippet('snp-1', { title: 'Updated' }, mockReq);
-      expect(mockService.updateSnippet).toHaveBeenCalledWith('snp-1', { title: 'Updated' }, mockReq.user);
+      const res = await controller.updateSnippet(
+        'snp-1',
+        { title: 'Updated' },
+        mockReq,
+      );
+      expect(mockService.updateSnippet).toHaveBeenCalledWith(
+        'snp-1',
+        { title: 'Updated' },
+        mockReq.user,
+      );
       expect(res.id).toBe('snp-1');
     });
 
     it('debe eliminar un fragmento', async () => {
       const res = await controller.deleteSnippet('snp-1', mockReq);
-      expect(mockService.deleteSnippet).toHaveBeenCalledWith('snp-1', mockReq.user);
+      expect(mockService.deleteSnippet).toHaveBeenCalledWith(
+        'snp-1',
+        mockReq.user,
+      );
       expect(res.success).toBe(true);
     });
 
     it('debe probar la interpolación de fragmento', async () => {
       const dto = { variables: { test: 'val' } };
       const res = await controller.interpolateSnippet('snp-1', dto, mockReq);
-      expect(mockService.interpolateSnippet).toHaveBeenCalledWith('snp-1', dto, mockReq.user);
+      expect(mockService.interpolateSnippet).toHaveBeenCalledWith(
+        'snp-1',
+        dto,
+        mockReq.user,
+      );
       expect(res.interpolatedContent).toBe('Rendered text');
     });
   });

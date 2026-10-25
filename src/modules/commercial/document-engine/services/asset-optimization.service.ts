@@ -23,7 +23,9 @@ export class AssetOptimizationService {
   async processLogo(rawBuffer: Buffer): Promise<ProcessedAsset> {
     try {
       if (!rawBuffer || rawBuffer.length === 0) {
-        throw new BadRequestException('El buffer de imagen del logotipo no puede estar vacío.');
+        throw new BadRequestException(
+          'El buffer de imagen del logotipo no puede estar vacío.',
+        );
       }
 
       const pipeline = sharp(rawBuffer)
@@ -43,7 +45,10 @@ export class AssetOptimizationService {
         sizeBytes: buffer.length,
       };
     } catch (error: any) {
-      this.logger.error(`Error optimizando logotipo corporativo: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error optimizando logotipo corporativo: ${error.message}`,
+        error.stack,
+      );
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(
         'El archivo de imagen del logotipo es inválido o no tiene un formato compatible (PNG/JPG/WEBP).',
@@ -61,7 +66,9 @@ export class AssetOptimizationService {
   async processSignature(rawBuffer: Buffer): Promise<ProcessedAsset> {
     try {
       if (!rawBuffer || rawBuffer.length === 0) {
-        throw new BadRequestException('El buffer de la firma no puede estar vacío.');
+        throw new BadRequestException(
+          'El buffer de la firma no puede estar vacío.',
+        );
       }
 
       const pipeline = sharp(rawBuffer)
@@ -82,7 +89,10 @@ export class AssetOptimizationService {
         sizeBytes: buffer.length,
       };
     } catch (error: any) {
-      this.logger.error(`Error optimizando firma digitalizada: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error optimizando firma digitalizada: ${error.message}`,
+        error.stack,
+      );
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(
         'El archivo de firma debe ser una imagen válida con fondo transparente o neutro (PNG/JPG).',

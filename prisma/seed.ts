@@ -494,6 +494,69 @@ async function main() {
       key: 'commercial:settings:manage',
       desc: 'Administrar vigencias tarifarias, salarios, valores agregados y skins',
     },
+    // Commercial Proposals & P&L (SPEC-ADM-020)
+    {
+      id: 'commercial_proposals_read_perm_id',
+      key: 'commercial:proposals:read',
+      desc: 'Consultar propuestas comerciales y cotizaciones',
+    },
+    {
+      id: 'commercial_proposals_create_perm_id',
+      key: 'commercial:proposals:create',
+      desc: 'Crear cotizaciones y ofertas comerciales',
+    },
+    {
+      id: 'commercial_proposals_update_perm_id',
+      key: 'commercial:proposals:update',
+      desc: 'Modificar líneas y borradores de propuestas',
+    },
+    {
+      id: 'commercial_proposals_issue_perm_id',
+      key: 'commercial:proposals:issue',
+      desc: 'Emitir oficialmente propuestas congelando PDF en S3',
+    },
+    {
+      id: 'commercial_proposals_approve_pnl_perm_id',
+      key: 'commercial:proposals:approve_pnl',
+      desc: 'Aprobar propuestas con margen P&L en alerta ámbar',
+    },
+    // Commercial Service Orders (SPEC-ADM-021)
+    {
+      id: 'commercial_orders_read_perm_id',
+      key: 'commercial:orders:read',
+      desc: 'Consultar órdenes de servicio e histórico',
+    },
+    {
+      id: 'commercial_orders_create_perm_id',
+      key: 'commercial:orders:create',
+      desc: 'Crear órdenes de servicio, asignar código OMEGA y disparar despacho',
+    },
+    {
+      id: 'commercial_orders_manage_perm_id',
+      key: 'commercial:orders:manage',
+      desc: 'Control total y reintentos de despacho de órdenes de servicio',
+    },
+    // Commercial CRM & Legal (SPEC-ADM-022)
+    {
+      id: 'commercial_crm_read_perm_id',
+      key: 'commercial:crm:read',
+      desc: 'Consultar prospectos, pipeline y bitácora de seguimiento',
+    },
+    {
+      id: 'commercial_crm_followup_perm_id',
+      key: 'commercial:crm:followup',
+      desc: 'Registrar gestiones de contacto y cierres por pérdida',
+    },
+    {
+      id: 'commercial_legal_read_perm_id',
+      key: 'commercial:legal:read',
+      desc: 'Consultar cartera legal 360, pólizas, otrosíes y compromisos ANS',
+    },
+    {
+      id: 'commercial_legal_manage_perm_id',
+      key: 'commercial:legal:manage',
+      desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
+    },
   ];
 
   // 5. Departments
