@@ -11,7 +11,7 @@ export interface ParseResult {
 @Injectable()
 export class DocumentParserService {
   private readonly logger = new Logger(DocumentParserService.name);
-  private readonly variableRegex = /\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}/g;
+  private readonly variableRegex = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
 
   /**
    * Procesa un archivo en memoria (.docx o .xlsx) y lo convierte a HTML semántico compatible con TipTap.
@@ -58,7 +58,7 @@ export class DocumentParserService {
           "p[style-name='Heading 1'] => h1:fresh",
           "p[style-name='Heading 2'] => h2:fresh",
           "p[style-name='Heading 3'] => h3:fresh",
-          "table => table.noxia-table:fresh",
+          'table => table.noxia-table:fresh',
         ],
       };
 
@@ -104,24 +104,41 @@ export class DocumentParserService {
         worksheet.eachRow({ includeEmpty: false }, (row) => {
           sheetHtml += '<tr>';
           row.eachCell({ includeEmpty: true }, (cell) => {
-            let cellValue = cell.value;
-            // Si la celda tiene fórmula o enriquecimiento
-            if (cellValue && typeof cellValue === 'object') {
-              if ('result' in cellValue) {
-                cellValue = (cellValue as any).result;
-              } else if ('text' in cellValue) {
-                cellValue = (cellValue as any).text;
+            const cellValue = cell.value;
+            let strVal = '';
+            if (cellValue !== null && cellValue !== undefined) {
+              if (typeof cellValue === 'object') {
+                if (cellValue instanceof Date) {
+                  strVal = cellValue.toISOString();
+                } else if ('result' in (cellValue as any)) {
+                  const res = (cellValue as any).result;
+                  strVal = res !== null && res !== undefined ? String(res) : '';
+                } else if ('text' in (cellValue as any)) {
+                  const txt = (cellValue as any).text;
+                  strVal = txt !== null && txt !== undefined ? String(txt) : '';
+                } else if (
+                  'richText' in (cellValue as any) &&
+                  Array.isArray((cellValue as any).richText)
+                ) {
+                  strVal = (cellValue as any).richText
+                    .map((rt: any) => rt.text || '')
+                    .join('');
+                } else {
+                  strVal = JSON.stringify(cellValue);
+                }
               } else {
-                cellValue = String(cellValue);
+                strVal = String(cellValue);
               }
             }
 
-            const strVal = cellValue !== null && cellValue !== undefined ? String(cellValue) : '';
             const normalized = this.normalizeTagsToMustache(strVal);
 
             const isHeader = cell.font?.bold || row.number === 1;
             const tag = isHeader ? 'th' : 'td';
-            const bg = cell.fill && 'fgColor' in (cell.fill as any) ? '#f8fafc' : 'inherit';
+            const bg =
+              cell.fill && 'fgColor' in (cell.fill as any)
+                ? '#f8fafc'
+                : 'inherit';
 
             sheetHtml += `<${tag} style="padding: 6px 10px; border: 1px solid #cbd5e1; background-color: ${bg};">${normalized || '&nbsp;'}</${tag}>`;
           });
@@ -157,9 +174,9 @@ export class DocumentParserService {
   private normalizeTagsToMustache(text: string): string {
     if (!text) return '';
     // Reemplaza {variable} con {{variable}} si no tiene ya doble llave
-    let res = text.replace(/(?<!\{)\{([a-zA-Z0-9_\.]+)\}(?!\})/g, '{{$1}}');
+    let res = text.replace(/(?<!\{)\{([a-zA-Z0-9_.]+)\}(?!\})/g, '{{$1}}');
     // Reemplaza [variable] con {{variable}}
-    res = res.replace(/\[([a-zA-Z0-9_\.]+)\]/g, '{{$1}}');
+    res = res.replace(/\[([a-zA-Z0-9_.]+)\]/g, '{{$1}}');
     return res;
   }
 

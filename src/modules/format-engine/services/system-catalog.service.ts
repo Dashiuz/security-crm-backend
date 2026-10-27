@@ -275,7 +275,8 @@ export class SystemCatalogService {
             label: 'Monto Total en Letras (Legal Colombia)',
             token: 'monto_en_letras',
             dataType: 'TEXT',
-            example: 'QUINCE MILLONES DOSCIENTOS OCHENTA Y CINCO MIL PESOS M/CTE',
+            example:
+              'QUINCE MILLONES DOSCIENTOS OCHENTA Y CINCO MIL PESOS M/CTE',
           },
           {
             systemPath: 'proposal.omegaCode',
@@ -373,7 +374,8 @@ export class SystemCatalogService {
       'noviembre',
       'diciembre',
     ];
-    values['fecha_hoy_formal'] = `${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+    values['fecha_hoy_formal'] =
+      `${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
     values['año_actual'] = String(now.getFullYear());
     values['hora_actual'] = now.toLocaleTimeString('es-CO', {
       hour: '2-digit',
@@ -396,13 +398,15 @@ export class SystemCatalogService {
       }
 
       if (profile) {
-        values['empresa_razon_social'] = profile.legalName || 'EMPRESA DE SEGURIDAD';
+        values['empresa_razon_social'] =
+          profile.legalName || 'EMPRESA DE SEGURIDAD';
         values['empresa_nit'] = profile.taxId || '';
         values['empresa_representante'] = profile.legalRepresentative || '';
         values['empresa_ciudad'] = profile.city || 'Bogotá D.C.';
         values['empresa_direccion'] = profile.address || '';
         values['empresa_telefono'] = profile.contactPhone || '';
-        values['empresa_ciudad_direccion'] = `${profile.address || ''}, ${profile.city || ''}`;
+        values['empresa_ciudad_direccion'] =
+          `${profile.address || ''}, ${profile.city || ''}`;
       }
 
       if (skin) {
@@ -432,7 +436,8 @@ export class SystemCatalogService {
           values['cliente_administrador'] = client.administrator || '';
           values['cliente_direccion'] = client.address || '';
           values['cliente_ciudad'] = client.city || '';
-          values['cliente_estrato'] = client.stratum !== null ? String(client.stratum) : '';
+          values['cliente_estrato'] =
+            client.stratum !== null ? String(client.stratum) : '';
           values['cliente_email'] = client.email || '';
           if (client.mapboxBaseImageS3Key) {
             values['estudio_plano_cad'] = client.mapboxBaseImageS3Key;
@@ -452,25 +457,31 @@ export class SystemCatalogService {
         });
         if (employee) {
           values['empleado_nombre'] =
-            employee.fullName || `${employee.firstName} ${employee.lastName}`.trim();
-          if (employee.mediaAttachments && employee.mediaAttachments.length > 0) {
+            employee.fullName ||
+            `${employee.firstName} ${employee.lastName}`.trim();
+          if (
+            employee.mediaAttachments &&
+            employee.mediaAttachments.length > 0
+          ) {
             values['empleado_foto'] = employee.mediaAttachments[0].s3Key;
           }
           if (employee.signatureUrl) {
             values['usuario_firma'] = employee.signatureUrl;
           }
           values['empleado_cedula'] = employee.document;
-          values['empleado_cargo'] = employee.positionRef?.name || 'Vigilante de Seguridad';
+          values['empleado_cargo'] =
+            employee.positionRef?.name || 'Vigilante de Seguridad';
           values['empleado_salario'] = `$ 2.000.000 COP`;
           values['empleado_fecha_ingreso'] = employee.entryDate
             ? new Date(employee.entryDate).toLocaleDateString('es-CO')
             : '';
         }
       } catch (err: any) {
-        this.logger.error(`Error resolviendo datos de empleado: ${err.message}`);
+        this.logger.error(
+          `Error resolviendo datos de empleado: ${err.message}`,
+        );
       }
     }
-
 
     // 5. Datos de Propuesta / Financiero (si se proporcionó proposalId)
     if (context?.proposalId) {
@@ -480,13 +491,18 @@ export class SystemCatalogService {
         });
         if (proposal) {
           const total = Number(proposal.totalMonthlyWithTax || 0);
-          values['propuesta_total_mensual'] = `$ ${total.toLocaleString('es-CO')} COP`;
+          values['propuesta_total_mensual'] =
+            `$ ${total.toLocaleString('es-CO')} COP`;
           values['monto_en_letras'] = this.numberToColombianWords(total);
           values['propuesta_codigo_omega'] = proposal.proposalFolioCode || '';
-          values['propuesta_meses'] = String(proposal.contractDurationMonths || 12);
+          values['propuesta_meses'] = String(
+            proposal.contractDurationMonths || 12,
+          );
         }
       } catch (err: any) {
-        this.logger.error(`Error resolviendo datos de propuesta: ${err.message}`);
+        this.logger.error(
+          `Error resolviendo datos de propuesta: ${err.message}`,
+        );
       }
     }
 

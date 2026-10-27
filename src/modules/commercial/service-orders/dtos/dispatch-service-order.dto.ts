@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsArray, ValidateNested, IsEnum, IsEmail } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsEmail,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { InternalDepartment } from '@prisma/client';
@@ -14,7 +21,9 @@ export class DepartmentOverrideDto {
 }
 
 export class DispatchServiceOrderDto {
-  @ApiPropertyOptional({ example: 'Despacho urgente por inicio anticipado pactado con cliente.' })
+  @ApiPropertyOptional({
+    example: 'Despacho urgente por inicio anticipado pactado con cliente.',
+  })
   @IsOptional()
   @IsString()
   dispatchNotes?: string;

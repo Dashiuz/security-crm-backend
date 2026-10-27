@@ -29,7 +29,9 @@ describe('FormatEngineController', () => {
       deleteVariable: jest.fn().mockResolvedValue({ id: 'var-1' }),
       getSystemCatalog: jest.fn().mockReturnValue([]),
       parseUploadedFile: jest.fn().mockResolvedValue({ html: '<p>parsed</p>' }),
-      renderFormat: jest.fn().mockResolvedValue({ interpolatedContent: 'rendered' }),
+      renderFormat: jest
+        .fn()
+        .mockResolvedValue({ interpolatedContent: 'rendered' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,10 +62,12 @@ describe('FormatEngineController', () => {
       });
     });
 
-
     it('getFormatById should delegate to service.getFormatById', async () => {
       await controller.getFormatById(mockReq, 'fmt-1');
-      expect(serviceMock.getFormatById).toHaveBeenCalledWith('fmt-1', mockReq.user);
+      expect(serviceMock.getFormatById).toHaveBeenCalledWith(
+        'fmt-1',
+        mockReq.user,
+      );
     });
 
     it('createFormat should delegate to service.createFormat', async () => {
@@ -75,36 +79,56 @@ describe('FormatEngineController', () => {
     it('updateFormat should delegate to service.updateFormat', async () => {
       const dto = { title: 'Updated' };
       await controller.updateFormat(mockReq, 'fmt-1', dto as any);
-      expect(serviceMock.updateFormat).toHaveBeenCalledWith('fmt-1', dto, mockReq.user);
+      expect(serviceMock.updateFormat).toHaveBeenCalledWith(
+        'fmt-1',
+        dto,
+        mockReq.user,
+      );
     });
 
     it('deleteFormat should delegate to service.deleteFormat', async () => {
       await controller.deleteFormat(mockReq, 'fmt-1');
-      expect(serviceMock.deleteFormat).toHaveBeenCalledWith('fmt-1', mockReq.user);
+      expect(serviceMock.deleteFormat).toHaveBeenCalledWith(
+        'fmt-1',
+        mockReq.user,
+      );
     });
   });
 
   describe('Variables Endpoints', () => {
     it('getVariables should delegate to service.getVariables', async () => {
       await controller.getVariables(mockReq, 'filtro');
-      expect(serviceMock.getVariables).toHaveBeenCalledWith(mockReq.user, 'filtro');
+      expect(serviceMock.getVariables).toHaveBeenCalledWith(
+        mockReq.user,
+        'filtro',
+      );
     });
 
     it('createVariable should delegate to service.createVariable', async () => {
       const dto = { key: 'TEST', label: 'Test' };
       await controller.createVariable(mockReq, dto as any);
-      expect(serviceMock.createVariable).toHaveBeenCalledWith(dto, mockReq.user);
+      expect(serviceMock.createVariable).toHaveBeenCalledWith(
+        dto,
+        mockReq.user,
+      );
     });
 
     it('updateVariable should delegate to service.updateVariable', async () => {
       const dto = { label: 'Updated' };
       await controller.updateVariable(mockReq, 'var-1', dto as any);
-      expect(serviceMock.updateVariable).toHaveBeenCalledWith('var-1', dto, mockReq.user);
+      expect(serviceMock.updateVariable).toHaveBeenCalledWith(
+        'var-1',
+        dto,
+        mockReq.user,
+      );
     });
 
     it('deleteVariable should delegate to service.deleteVariable', async () => {
       await controller.deleteVariable(mockReq, 'var-1');
-      expect(serviceMock.deleteVariable).toHaveBeenCalledWith('var-1', mockReq.user);
+      expect(serviceMock.deleteVariable).toHaveBeenCalledWith(
+        'var-1',
+        mockReq.user,
+      );
     });
   });
 
@@ -141,13 +165,21 @@ describe('FormatEngineController', () => {
     it('renderCustomHtml should call renderFormat with null formatId', async () => {
       const dto = { customTemplateHtml: '<p>test</p>' };
       await controller.renderCustomHtml(mockReq, dto as any);
-      expect(serviceMock.renderFormat).toHaveBeenCalledWith(null, dto, mockReq.user);
+      expect(serviceMock.renderFormat).toHaveBeenCalledWith(
+        null,
+        dto,
+        mockReq.user,
+      );
     });
 
     it('renderSavedFormat should call renderFormat with formatId', async () => {
       const dto = { entityType: 'CLIENT', entityId: 'c1' };
       await controller.renderSavedFormat(mockReq, 'fmt-1', dto as any);
-      expect(serviceMock.renderFormat).toHaveBeenCalledWith('fmt-1', dto, mockReq.user);
+      expect(serviceMock.renderFormat).toHaveBeenCalledWith(
+        'fmt-1',
+        dto,
+        mockReq.user,
+      );
     });
   });
 });

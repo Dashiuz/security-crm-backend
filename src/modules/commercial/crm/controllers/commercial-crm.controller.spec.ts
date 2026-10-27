@@ -7,7 +7,9 @@ describe('CommercialCrmController', () => {
   beforeEach(() => {
     mockService = {
       createFollowUp: jest.fn().mockResolvedValue({ id: 'fu-1' }),
-      getFollowUpsPaginated: jest.fn().mockResolvedValue({ data: [], meta: {} }),
+      getFollowUpsPaginated: jest
+        .fn()
+        .mockResolvedValue({ data: [], meta: {} }),
       getFollowUpsByClient: jest.fn().mockResolvedValue([{ id: 'fu-1' }]),
       getRecaptationAlerts: jest.fn().mockResolvedValue([{ id: 'c-1' }]),
       getFollowUpById: jest.fn().mockResolvedValue({ id: 'fu-1' }),
@@ -25,20 +27,30 @@ describe('CommercialCrmController', () => {
   it('createFollowUp debe delegar al servicio con tenantId y userId', async () => {
     const dto: any = { clientId: 'c-1' };
     const res = await controller.createFollowUp(mockReq, dto);
-    expect(mockService.createFollowUp).toHaveBeenCalledWith('ten-1', 'usr-1', dto);
+    expect(mockService.createFollowUp).toHaveBeenCalledWith(
+      'ten-1',
+      'usr-1',
+      dto,
+    );
     expect(res).toEqual({ id: 'fu-1' });
   });
 
   it('getFollowUps debe delegar al servicio con filtros', async () => {
     const filter: any = { take: 10 };
     const res = await controller.getFollowUps(mockReq, filter);
-    expect(mockService.getFollowUpsPaginated).toHaveBeenCalledWith('ten-1', filter);
+    expect(mockService.getFollowUpsPaginated).toHaveBeenCalledWith(
+      'ten-1',
+      filter,
+    );
     expect(res.data).toBeDefined();
   });
 
   it('getFollowUpsByClient debe delegar al servicio con clientId', async () => {
     const res = await controller.getFollowUpsByClient(mockReq, 'client-1');
-    expect(mockService.getFollowUpsByClient).toHaveBeenCalledWith('ten-1', 'client-1');
+    expect(mockService.getFollowUpsByClient).toHaveBeenCalledWith(
+      'ten-1',
+      'client-1',
+    );
     expect(res).toHaveLength(1);
   });
 
@@ -57,7 +69,11 @@ describe('CommercialCrmController', () => {
   it('updateFollowUp debe delegar al servicio', async () => {
     const dto: any = { managementSummary: 'Actualizado' };
     const res = await controller.updateFollowUp(mockReq, 'fu-1', dto);
-    expect(mockService.updateFollowUp).toHaveBeenCalledWith('ten-1', 'fu-1', dto);
+    expect(mockService.updateFollowUp).toHaveBeenCalledWith(
+      'ten-1',
+      'fu-1',
+      dto,
+    );
     expect(res).toEqual({ id: 'fu-1' });
   });
 

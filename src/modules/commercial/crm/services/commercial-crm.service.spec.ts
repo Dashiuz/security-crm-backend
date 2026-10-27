@@ -30,7 +30,9 @@ describe('CommercialCrmService', () => {
 
     mockPrisma = {
       client: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'client-1', name: 'Edificio Los Pinos' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'client-1', name: 'Edificio Los Pinos' }),
         update: jest.fn().mockResolvedValue({ id: 'client-1' }),
       },
     };
@@ -98,7 +100,10 @@ describe('CommercialCrmService', () => {
   describe('getFollowUpsByClient y getFollowUpsPaginated', () => {
     it('getFollowUpsByClient debe retornar listado', async () => {
       const res = await service.getFollowUpsByClient('ten-1', 'client-1');
-      expect(mockRepository.findByClientId).toHaveBeenCalledWith('ten-1', 'client-1');
+      expect(mockRepository.findByClientId).toHaveBeenCalledWith(
+        'ten-1',
+        'client-1',
+      );
       expect(res).toHaveLength(1);
     });
 

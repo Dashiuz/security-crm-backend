@@ -39,11 +39,15 @@ describe('SignersController', () => {
   });
 
   it('debe listar usuarios del sistema elegibles como firmantes', async () => {
-    mockService.getSystemUsersAsSigners = jest.fn().mockResolvedValue([
-      { id: 'usr-1', fullName: 'Carlos Admin', hasSignature: true },
-    ]);
+    mockService.getSystemUsersAsSigners = jest
+      .fn()
+      .mockResolvedValue([
+        { id: 'usr-1', fullName: 'Carlos Admin', hasSignature: true },
+      ]);
     const res = await controller.getSystemUsersAsSigners(mockReq);
-    expect(mockService.getSystemUsersAsSigners).toHaveBeenCalledWith(mockReq.user);
+    expect(mockService.getSystemUsersAsSigners).toHaveBeenCalledWith(
+      mockReq.user,
+    );
     expect(res).toHaveLength(1);
     expect(res[0].hasSignature).toBe(true);
   });

@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SystemCatalogService } from './system-catalog.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
-
 describe('SystemCatalogService', () => {
   let service: SystemCatalogService;
   let prismaMock: any;
@@ -73,11 +72,15 @@ describe('SystemCatalogService', () => {
     it('should return CERO PESOS M/CTE for 0 or NaN or falsy values', () => {
       expect(service.numberToColombianWords(0)).toBe('CERO PESOS M/CTE');
       expect(service.numberToColombianWords(NaN)).toBe('CERO PESOS M/CTE');
-      expect(service.numberToColombianWords(null as any)).toBe('CERO PESOS M/CTE');
+      expect(service.numberToColombianWords(null as any)).toBe(
+        'CERO PESOS M/CTE',
+      );
     });
 
     it('should convert 1000000 correctly', () => {
-      expect(service.numberToColombianWords(1000000)).toBe('UN MILLÓN PESOS M/CTE');
+      expect(service.numberToColombianWords(1000000)).toBe(
+        'UN MILLÓN PESOS M/CTE',
+      );
     });
 
     it('should convert 100 correctly', () => {
@@ -89,13 +92,19 @@ describe('SystemCatalogService', () => {
     });
 
     it('should convert numbers with tens and units', () => {
-      expect(service.numberToColombianWords(25)).toBe('VEINTICINCO PESOS M/CTE');
-      expect(service.numberToColombianWords(42)).toBe('CUARENTA Y DOS PESOS M/CTE');
+      expect(service.numberToColombianWords(25)).toBe(
+        'VEINTICINCO PESOS M/CTE',
+      );
+      expect(service.numberToColombianWords(42)).toBe(
+        'CUARENTA Y DOS PESOS M/CTE',
+      );
     });
 
     it('should convert complex amount correctly', () => {
       const result = service.numberToColombianWords(15285000);
-      expect(result).toBe('QUINCE MILLONES DOSCIENTOS OCHENTA Y CINCO MIL PESOS M/CTE');
+      expect(result).toBe(
+        'QUINCE MILLONES DOSCIENTOS OCHENTA Y CINCO MIL PESOS M/CTE',
+      );
     });
   });
 
@@ -142,7 +151,9 @@ describe('SystemCatalogService', () => {
         email: 'losrosales@gmail.com',
       });
 
-      const values = await service.resolveContextValues(tenantId, { clientId: 'client-1' });
+      const values = await service.resolveContextValues(tenantId, {
+        clientId: 'client-1',
+      });
 
       expect(values['cliente_nombre']).toBe('Edificio Los Rosales');
       expect(values['cliente_nit']).toBe('800.999.111-2');
@@ -161,14 +172,15 @@ describe('SystemCatalogService', () => {
         positionRef: { name: 'Supervisor Operativo' },
       });
 
-      const values = await service.resolveContextValues(tenantId, { employeeId: 'emp-1' });
+      const values = await service.resolveContextValues(tenantId, {
+        employeeId: 'emp-1',
+      });
 
       expect(values['empleado_nombre']).toBe('Pedro Pérez');
       expect(values['empleado_cedula']).toBe('10203040');
       expect(values['empleado_cargo']).toBe('Supervisor Operativo');
       expect(values['empleado_salario']).toContain('2.000.000');
     });
-
 
     it('should resolve commercial proposal data if proposalId is provided', async () => {
       prismaMock.tenantProfile.findUnique.mockResolvedValue(null);
@@ -180,7 +192,9 @@ describe('SystemCatalogService', () => {
         contractDurationMonths: 24,
       });
 
-      const values = await service.resolveContextValues(tenantId, { proposalId: 'prop-1' });
+      const values = await service.resolveContextValues(tenantId, {
+        proposalId: 'prop-1',
+      });
 
       expect(values['propuesta_total_mensual']).toContain('12.500.000');
       expect(values['propuesta_codigo_omega']).toBe('FOL-2026-001');
@@ -189,8 +203,12 @@ describe('SystemCatalogService', () => {
     });
 
     it('should handle errors gracefully without throwing', async () => {
-      prismaMock.tenantProfile.findUnique.mockRejectedValue(new Error('DB connection lost'));
-      prismaMock.tenantDocumentSkin.findFirst.mockRejectedValue(new Error('DB error'));
+      prismaMock.tenantProfile.findUnique.mockRejectedValue(
+        new Error('DB connection lost'),
+      );
+      prismaMock.tenantDocumentSkin.findFirst.mockRejectedValue(
+        new Error('DB error'),
+      );
 
       const values = await service.resolveContextValues(tenantId);
       expect(values['año_actual']).toBe(String(new Date().getFullYear()));

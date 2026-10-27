@@ -217,7 +217,9 @@ describe('ChameleonDocumentService', () => {
 
     it('debe listar los usuarios del sistema elegibles como firmantes con bandera hasSignature', async () => {
       const users = await service.getSystemUsersAsSigners(mockUser);
-      expect(mockDocEngineRepo.findSystemUsersForSigners).toHaveBeenCalledWith('tenant-abc');
+      expect(mockDocEngineRepo.findSystemUsersForSigners).toHaveBeenCalledWith(
+        'tenant-abc',
+      );
       expect(users).toHaveLength(1);
       expect(users[0].hasSignature).toBe(true);
       expect(users[0].fullName).toBe('Juan Pérez');

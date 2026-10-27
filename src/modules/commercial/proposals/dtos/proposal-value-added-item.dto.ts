@@ -34,12 +34,17 @@ export class ProposalValueAddedItemDto {
   @IsEnum(BenefitPeriodicity, { message: 'Periodicidad de beneficio inválida' })
   periodicity!: BenefitPeriodicity;
 
-  @ApiProperty({ example: 650000.00, description: 'Costo interno unitario para la empresa' })
+  @ApiProperty({
+    example: 650000.0,
+    description: 'Costo interno unitario para la empresa',
+  })
   @IsNumber({}, { message: 'El costo interno debe ser un número válido' })
   @Min(0, { message: 'El costo interno no puede ser negativo' })
   itemInternalCost!: number;
 
-  @ApiPropertyOptional({ example: 'Instalación en la garita principal de entrada' })
+  @ApiPropertyOptional({
+    example: 'Instalación en la garita principal de entrada',
+  })
   @IsOptional()
   @IsString()
   notes?: string;

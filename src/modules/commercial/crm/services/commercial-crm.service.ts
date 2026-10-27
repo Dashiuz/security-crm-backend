@@ -4,12 +4,13 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  FollowUpMilestoneStatus,
-  Prisma,
-} from '@prisma/client';
+import { FollowUpMilestoneStatus, Prisma } from '@prisma/client';
 import { CommercialCrmRepository } from '../../repositories/commercial-crm.repository';
-import { CreateFollowUpDto, UpdateFollowUpDto, FollowUpFilterDto } from '../dtos/follow-up.dto';
+import {
+  CreateFollowUpDto,
+  UpdateFollowUpDto,
+  FollowUpFilterDto,
+} from '../dtos/follow-up.dto';
 import { PrismaService } from '../../../../prisma/prisma.service';
 
 @Injectable()
@@ -74,7 +75,8 @@ export class CommercialCrmService {
         nextContactDate: dto.nextContactDate
           ? new Date(dto.nextContactDate)
           : undefined,
-        statusAfterFollowUp: dto.statusAfterFollowUp || FollowUpMilestoneStatus.PENDING,
+        statusAfterFollowUp:
+          dto.statusAfterFollowUp || FollowUpMilestoneStatus.PENDING,
         lossReasonCategory: dto.lossReasonCategory,
         lossReasonDescription: dto.lossReasonDescription,
         winningCompetitorName: dto.winningCompetitorName,
@@ -137,11 +139,7 @@ export class CommercialCrmService {
     }
   }
 
-  async updateFollowUp(
-    tenantId: string,
-    id: string,
-    dto: UpdateFollowUpDto,
-  ) {
+  async updateFollowUp(tenantId: string, id: string, dto: UpdateFollowUpDto) {
     try {
       const existing = await this.repository.findById(tenantId, id);
       if (!existing) {

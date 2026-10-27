@@ -27,7 +27,10 @@ export class CreateFollowUpDto {
   @IsDateString()
   interactionDate?: string;
 
-  @ApiProperty({ enum: InteractionChannel, example: InteractionChannel.PHONE_CALL })
+  @ApiProperty({
+    enum: InteractionChannel,
+    example: InteractionChannel.PHONE_CALL,
+  })
   @IsEnum(InteractionChannel)
   contactChannel: InteractionChannel;
 
@@ -41,17 +44,25 @@ export class CreateFollowUpDto {
   @IsString()
   contactPersonRole?: string;
 
-  @ApiProperty({ example: 'Se presentó dossier y cotización económica. Manifiestan interés.' })
+  @ApiProperty({
+    example: 'Se presentó dossier y cotización económica. Manifiestan interés.',
+  })
   @IsString()
   @IsNotEmpty()
   managementSummary: string;
 
-  @ApiPropertyOptional({ example: '2026-11-05', description: 'Fecha de próximo contacto agendado' })
+  @ApiPropertyOptional({
+    example: '2026-11-05',
+    description: 'Fecha de próximo contacto agendado',
+  })
   @IsOptional()
   @IsDateString()
   nextContactDate?: string;
 
-  @ApiPropertyOptional({ enum: FollowUpMilestoneStatus, default: FollowUpMilestoneStatus.PENDING })
+  @ApiPropertyOptional({
+    enum: FollowUpMilestoneStatus,
+    default: FollowUpMilestoneStatus.PENDING,
+  })
   @IsOptional()
   @IsEnum(FollowUpMilestoneStatus)
   statusAfterFollowUp?: FollowUpMilestoneStatus;
@@ -62,7 +73,9 @@ export class CreateFollowUpDto {
   @IsEnum(DealLossReasonCategory)
   lossReasonCategory?: DealLossReasonCategory;
 
-  @ApiPropertyOptional({ example: 'El competidor ofertó un 10% por debajo de la tarifa regulada.' })
+  @ApiPropertyOptional({
+    example: 'El competidor ofertó un 10% por debajo de la tarifa regulada.',
+  })
   @IsOptional()
   @IsString()
   lossReasonDescription?: string;

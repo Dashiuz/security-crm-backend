@@ -84,21 +84,16 @@ export class CommercialServiceOrdersController {
       'Devuelve el dossier completo con perfil del guarda ideal, dotación física y bitácora de despacho.',
   })
   @ApiOkResponse({ description: 'Detalle de la orden de servicio' })
-  async getServiceOrderById(
-    @Request() req: any,
-    @Param('id') id: string,
-  ) {
-    return this.serviceOrdersService.getServiceOrderById(
-      req.user.tenantId,
-      id,
-    );
+  async getServiceOrderById(@Request() req: any, @Param('id') id: string) {
+    return this.serviceOrdersService.getServiceOrderById(req.user.tenantId, id);
   }
 
   @Patch(':id')
   @RequirePermissions('commercial:orders:manage', 'commercial:orders:update')
   @ApiOperation({
     summary: 'Actualizar orden de servicio',
-    description: 'Modifica datos de cabecera, puestos o elementos de dotación requeridos.',
+    description:
+      'Modifica datos de cabecera, puestos o elementos de dotación requeridos.',
   })
   @ApiOkResponse({ description: 'Orden de servicio actualizada' })
   async updateServiceOrder(
@@ -126,11 +121,7 @@ export class CommercialServiceOrdersController {
     @Param('id') id: string,
     @Body() dto: DispatchServiceOrderDto,
   ) {
-    return this.serviceOrdersService.dispatchOrder(
-      req.user.tenantId,
-      id,
-      dto,
-    );
+    return this.serviceOrdersService.dispatchOrder(req.user.tenantId, id, dto);
   }
 
   @Patch(':id/status')
@@ -159,13 +150,7 @@ export class CommercialServiceOrdersController {
     description: 'Elimina una orden que aún está en DRAFT_CONFIGURING.',
   })
   @ApiOkResponse({ description: 'Orden eliminada' })
-  async deleteServiceOrder(
-    @Request() req: any,
-    @Param('id') id: string,
-  ) {
-    return this.serviceOrdersService.deleteServiceOrder(
-      req.user.tenantId,
-      id,
-    );
+  async deleteServiceOrder(@Request() req: any, @Param('id') id: string) {
+    return this.serviceOrdersService.deleteServiceOrder(req.user.tenantId, id);
   }
 }

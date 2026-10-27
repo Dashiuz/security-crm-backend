@@ -15,7 +15,9 @@ describe('CommercialCrmRepository', () => {
         delete: jest.fn().mockResolvedValue({ id: 'fu-1' }),
       },
       client: {
-        findMany: jest.fn().mockResolvedValue([{ id: 'client-1', name: 'Edificio Los Pinos' }]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'client-1', name: 'Edificio Los Pinos' }]),
         update: jest.fn().mockResolvedValue({ id: 'client-1' }),
       },
     };

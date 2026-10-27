@@ -150,7 +150,9 @@ export class ChameleonDocumentService {
   }
 
   async getSystemUsersAsSigners(user: UserContext) {
-    const users = await this.docEngineRepo.findSystemUsersForSigners(user.tenantId);
+    const users = await this.docEngineRepo.findSystemUsersForSigners(
+      user.tenantId,
+    );
     return users.map((u) => ({
       id: u.id,
       fullName: u.fullName,

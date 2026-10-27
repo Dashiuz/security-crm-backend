@@ -23,6 +23,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
+import { RequirePermissions } from '../../regulation/access-control/permissions.decorator';
 import { FormatEngineService } from '../services/format-engine.service';
 import {
   CreateFormatDto,
@@ -35,7 +37,7 @@ import { FormatCategory, FormatVisibilityScope } from '@prisma/client';
 
 @ApiTags('Format Engine')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('format-engine')
 export class FormatEngineController {
   constructor(private readonly formatEngineService: FormatEngineService) {}
@@ -45,7 +47,10 @@ export class FormatEngineController {
   // ==========================================
 
   @Get('formats')
-  @ApiOperation({ summary: 'Listar formatos universales (globales o personales)' })
+  @RequirePermissions('format:read', 'format:manage')
+  @ApiOperation({
+    summary: 'Listar formatos universales (globales o personales)',
+  })
   @ApiQuery({ name: 'category', enum: FormatCategory, required: false })
   @ApiQuery({ name: 'scope', enum: FormatVisibilityScope, required: false })
   @ApiQuery({ name: 'search', type: String, required: false })
@@ -63,7 +68,10 @@ export class FormatEngineController {
   }
 
   @Get('formats/next-code')
-  @ApiOperation({ summary: 'Generar código consecutivo estandarizado para nuevo formato' })
+  @RequirePermissions('format:read', 'format:manage')
+  @ApiOperation({
+    summary: 'Generar código consecutivo estandarizado para nuevo formato',
+  })
   @ApiQuery({ name: 'category', enum: FormatCategory, required: false })
   async getNextFormatCode(
     @Req() req: any,
@@ -76,18 +84,21 @@ export class FormatEngineController {
   }
 
   @Get('formats/:id')
+  @RequirePermissions('format:read', 'format:manage')
   @ApiOperation({ summary: 'Obtener detalle de un formato universal por ID' })
   async getFormatById(@Req() req: any, @Param('id') id: string) {
     return this.formatEngineService.getFormatById(id, req.user);
   }
 
   @Post('formats')
+  @RequirePermissions('format:manage')
   @ApiOperation({ summary: 'Crear un nuevo formato universal' })
   async createFormat(@Req() req: any, @Body() dto: CreateFormatDto) {
     return this.formatEngineService.createFormat(dto, req.user);
   }
 
   @Patch('formats/:id')
+  @RequirePermissions('format:manage')
   @ApiOperation({ summary: 'Actualizar un formato universal existente' })
   async updateFormat(
     @Req() req: any,
@@ -98,6 +109,7 @@ export class FormatEngineController {
   }
 
   @Delete('formats/:id')
+  @RequirePermissions('format:manage')
   @ApiOperation({ summary: 'Desactivar / eliminar un formato universal' })
   async deleteFormat(@Req() req: any, @Param('id') id: string) {
     return this.formatEngineService.deleteFormat(id, req.user);
@@ -108,20 +120,27 @@ export class FormatEngineController {
   // ==========================================
 
   @Get('variables')
-  @ApiOperation({ summary: 'Listar variables dinámicas disponibles para el usuario' })
+  @RequirePermissions('format:read', 'format:manage')
+  @ApiOperation({
+    summary: 'Listar variables dinámicas disponibles para el usuario',
+  })
   @ApiQuery({ name: 'search', type: String, required: false })
   async getVariables(@Req() req: any, @Query('search') search?: string) {
     return this.formatEngineService.getVariables(req.user, search);
   }
 
   @Post('variables')
+  @RequirePermissions('format:manage')
   @ApiOperation({ summary: 'Crear una nueva variable o atajo dinámico' })
   async createVariable(@Req() req: any, @Body() dto: CreateVariableDto) {
     return this.formatEngineService.createVariable(dto, req.user);
   }
 
   @Patch('variables/:id')
-  @ApiOperation({ summary: 'Actualizar una variable o atajo dinámico existente' })
+  @RequirePermissions('format:manage')
+  @ApiOperation({
+    summary: 'Actualizar una variable o atajo dinámico existente',
+  })
   async updateVariable(
     @Req() req: any,
     @Param('id') id: string,
@@ -131,6 +150,7 @@ export class FormatEngineController {
   }
 
   @Delete('variables/:id')
+  @RequirePermissions('format:manage')
   @ApiOperation({ summary: 'Eliminar una variable o atajo dinámico' })
   async deleteVariable(@Req() req: any, @Param('id') id: string) {
     return this.formatEngineService.deleteVariable(id, req.user);
@@ -141,7 +161,10 @@ export class FormatEngineController {
   // ==========================================
 
   @Get('system-catalog')
-  @ApiOperation({ summary: 'Obtener diccionario masivo de variables del sistema' })
+  @RequirePermissions('format:read', 'format:manage')
+  @ApiOperation({
+    summary: 'Obtener diccionario masivo de variables del sistema',
+  })
   getSystemCatalog() {
     return this.formatEngineService.getSystemCatalog();
   }
@@ -151,6 +174,7 @@ export class FormatEngineController {
   // ==========================================
 
   @Post('parse-file')
+  @RequirePermissions('format:manage')
   @ApiOperation({
     summary:
       'Procesa un archivo Word (.docx) o Excel (.xlsx) en memoria sin guardar en S3',
@@ -166,11 +190,11 @@ export class FormatEngineController {
     },
   })
   @UseInterceptors(FileInterceptor('file'))
-  async parseUploadedFile(
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async parseUploadedFile(@UploadedFile() file: Express.Multer.File) {
     if (!file || !file.buffer) {
-      throw new BadRequestException('Debe proporcionar un archivo válido para procesar.');
+      throw new BadRequestException(
+        'Debe proporcionar un archivo válido para procesar.',
+      );
     }
 
     return this.formatEngineService.parseUploadedFile(
@@ -185,6 +209,7 @@ export class FormatEngineController {
   // ==========================================
 
   @Post('render')
+  @RequirePermissions('format:read', 'format:manage')
   @ApiOperation({
     summary:
       'Interpolar variables en un HTML arbitrario usando contexto de base de datos',
@@ -194,6 +219,7 @@ export class FormatEngineController {
   }
 
   @Post('formats/:id/render')
+  @RequirePermissions('format:read', 'format:manage')
   @ApiOperation({
     summary:
       'Interpolar variables en una plantilla guardada usando contexto de base de datos',

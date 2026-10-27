@@ -1,13 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import { FormatEngineService } from './format-engine.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { DocumentParserService } from './document-parser.service';
 import { SystemCatalogService } from './system-catalog.service';
 import { FormatInterpolationService } from './format-interpolation.service';
-import { FormatCategory, FormatVisibilityScope, VariableSourceType } from '@prisma/client';
+import {
+  FormatCategory,
+  FormatVisibilityScope,
+  VariableSourceType,
+} from '@prisma/client';
 import { UserContext } from '../../../common/interfaces/user-context.interface';
-
 
 describe('FormatEngineService', () => {
   let service: FormatEngineService;
@@ -29,7 +36,6 @@ describe('FormatEngineService', () => {
     permissions: [],
     tenantId: 'tenant-uuid-1',
   };
-
 
   beforeEach(async () => {
     prismaMock = {
@@ -55,7 +61,9 @@ describe('FormatEngineService', () => {
 
     catalogMock = {
       getSystemCatalog: jest.fn().mockReturnValue([]),
-      resolveContextValues: jest.fn().mockResolvedValue({ cliente_nombre: 'Acme Corp' }),
+      resolveContextValues: jest
+        .fn()
+        .mockResolvedValue({ cliente_nombre: 'Acme Corp' }),
     };
 
     interpolatorMock = {
@@ -98,7 +106,9 @@ describe('FormatEngineService', () => {
           userId: mockUser.sub,
         }),
         orderBy: [{ isDefault: 'desc' }, { title: 'asc' }],
-        include: { user: { select: { id: true, fullName: true, document: true } } },
+        include: {
+          user: { select: { id: true, fullName: true, document: true } },
+        },
       });
     });
 
@@ -135,7 +145,10 @@ describe('FormatEngineService', () => {
 
     it('getNextFormatCode should return FOR-COM-001 when no formats exist', async () => {
       prismaMock.universalDocumentFormat.findMany.mockResolvedValue([]);
-      const res = await service.getNextFormatCode(FormatCategory.COMMERCIAL, mockUser);
+      const res = await service.getNextFormatCode(
+        FormatCategory.COMMERCIAL,
+        mockUser,
+      );
       expect(res.code).toBe('FOR-COM-001');
     });
 
@@ -145,12 +158,17 @@ describe('FormatEngineService', () => {
         { code: 'FOR-OPE-005' },
         { code: 'FOR-OPE-002' },
       ]);
-      const res = await service.getNextFormatCode(FormatCategory.OPERATIONS, mockUser);
+      const res = await service.getNextFormatCode(
+        FormatCategory.OPERATIONS,
+        mockUser,
+      );
       expect(res.code).toBe('FOR-OPE-006');
     });
 
     it('createFormat should create format and extract detectedVariables if not given', async () => {
-      prismaMock.universalDocumentFormat.create.mockResolvedValue({ id: 'fmt-new' });
+      prismaMock.universalDocumentFormat.create.mockResolvedValue({
+        id: 'fmt-new',
+      });
 
       const dto = {
         code: 'for-com-01',
@@ -176,11 +194,17 @@ describe('FormatEngineService', () => {
         scope: FormatVisibilityScope.PERSONAL,
         userId: mockUser.sub,
       });
-      prismaMock.universalDocumentFormat.update.mockResolvedValue({ id: 'fmt-1', title: 'Nuevo Titulo' });
+      prismaMock.universalDocumentFormat.update.mockResolvedValue({
+        id: 'fmt-1',
+        title: 'Nuevo Titulo',
+      });
 
       const result = await service.updateFormat(
         'fmt-1',
-        { title: 'Nuevo Titulo', bodyTemplate: '<div>{{cliente_nombre}}</div>' },
+        {
+          title: 'Nuevo Titulo',
+          bodyTemplate: '<div>{{cliente_nombre}}</div>',
+        },
         mockUser,
       );
 
@@ -193,7 +217,10 @@ describe('FormatEngineService', () => {
         id: 'fmt-1',
         scope: FormatVisibilityScope.GLOBAL,
       });
-      prismaMock.universalDocumentFormat.update.mockResolvedValue({ id: 'fmt-1', isActive: false });
+      prismaMock.universalDocumentFormat.update.mockResolvedValue({
+        id: 'fmt-1',
+        isActive: false,
+      });
 
       const result = await service.deleteFormat('fmt-1', mockUser);
       expect(prismaMock.universalDocumentFormat.update).toHaveBeenCalledWith({
@@ -271,9 +298,16 @@ describe('FormatEngineService', () => {
         scope: FormatVisibilityScope.PERSONAL,
         userId: mockUser.sub,
       });
-      prismaMock.formatVariable.update.mockResolvedValue({ id: 'var-1', label: 'Updated Label' });
+      prismaMock.formatVariable.update.mockResolvedValue({
+        id: 'var-1',
+        label: 'Updated Label',
+      });
 
-      const result = await service.updateVariable('var-1', { label: 'Updated Label' }, mockUser);
+      const result = await service.updateVariable(
+        'var-1',
+        { label: 'Updated Label' },
+        mockUser,
+      );
       expect(result.label).toBe('Updated Label');
     });
 
@@ -309,7 +343,11 @@ describe('FormatEngineService', () => {
 
       const result = await service.parseUploadedFile(buffer, 'test.docx');
       expect(result.html).toBe('<p>test</p>');
-      expect(parserMock.parseFileBuffer).toHaveBeenCalledWith(buffer, 'test.docx', undefined);
+      expect(parserMock.parseFileBuffer).toHaveBeenCalledWith(
+        buffer,
+        'test.docx',
+        undefined,
+      );
     });
 
     it('getSystemCatalog should delegate to catalogService', () => {
@@ -345,11 +383,14 @@ describe('FormatEngineService', () => {
         mockUser,
       );
 
-      expect(catalogMock.resolveContextValues).toHaveBeenCalledWith(mockUser.tenantId, {
-        clientId: 'client-1',
-        employeeId: undefined,
-        proposalId: undefined,
-      });
+      expect(catalogMock.resolveContextValues).toHaveBeenCalledWith(
+        mockUser.tenantId,
+        {
+          clientId: 'client-1',
+          employeeId: undefined,
+          proposalId: undefined,
+        },
+      );
       expect(interpolatorMock.interpolate).toHaveBeenCalledWith(
         '<p>{{cliente_nombre}} - {{MI_TOKEN}} - {{CUSTOM}}</p>',
         expect.objectContaining({

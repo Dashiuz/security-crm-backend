@@ -37,16 +37,27 @@ export class CreateProposalDto {
   @IsEnum(ProposalContractType, { message: 'Tipo de contrato inválido' })
   contractType?: ProposalContractType;
 
-  @ApiPropertyOptional({ example: 12, default: 12, description: 'Duración del contrato en meses (ej: 12 o 24)' })
+  @ApiPropertyOptional({
+    example: 12,
+    default: 12,
+    description: 'Duración del contrato en meses (ej: 12 o 24)',
+  })
   @IsOptional()
   @IsInt({ message: 'La duración del contrato debe ser en meses' })
   @Min(1, { message: 'La duración mínima es de 1 mes' })
   @Max(60, { message: 'La duración máxima es de 60 meses' })
   contractDurationMonths?: number;
 
-  @ApiPropertyOptional({ example: 0, default: 0, description: 'Descuento de pronto pago acordado en porcentaje' })
+  @ApiPropertyOptional({
+    example: 0,
+    default: 0,
+    description: 'Descuento de pronto pago acordado en porcentaje',
+  })
   @IsOptional()
-  @IsNumber({}, { message: 'El porcentaje de descuento debe ser un número válido' })
+  @IsNumber(
+    {},
+    { message: 'El porcentaje de descuento debe ser un número válido' },
+  )
   @Min(0, { message: 'El descuento mínimo es 0%' })
   @Max(100, { message: 'El descuento máximo es 100%' })
   promptPaymentDiscPercent?: number;
@@ -92,7 +103,9 @@ export class CreateProposalDto {
   valueAddedItems?: ProposalValueAddedItemDto[];
 
   // Snapshot JSON opcional para estado de borrador del frontend
-  @ApiPropertyOptional({ description: 'Snapshot completo del estado de interfaz para borrador' })
+  @ApiPropertyOptional({
+    description: 'Snapshot completo del estado de interfaz para borrador',
+  })
   @IsOptional()
   draftSnapshotJson?: Record<string, any>;
 }

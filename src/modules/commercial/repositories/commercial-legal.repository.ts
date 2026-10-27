@@ -58,7 +58,10 @@ export class CommercialLegalRepository {
     }
   }
 
-  async updatePolicy(id: string, data: Prisma.ClientInsurancePolicyUpdateInput) {
+  async updatePolicy(
+    id: string,
+    data: Prisma.ClientInsurancePolicyUpdateInput,
+  ) {
     try {
       return await this.prisma.clientInsurancePolicy.update({
         where: { id },
@@ -232,7 +235,10 @@ export class CommercialLegalRepository {
     }
   }
 
-  async updateAnsCommitment(id: string, data: Prisma.ClientAnsCommitmentUpdateInput) {
+  async updateAnsCommitment(
+    id: string,
+    data: Prisma.ClientAnsCommitmentUpdateInput,
+  ) {
     try {
       return await this.prisma.clientAnsCommitment.update({
         where: { id },

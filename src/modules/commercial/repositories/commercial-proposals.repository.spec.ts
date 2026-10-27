@@ -140,14 +140,21 @@ describe('CommercialProposalsRepository', () => {
         },
       ];
 
-      await repository.update('prop-1', { status: ProposalStatus.DRAFT }, newItems, newVag);
+      await repository.update(
+        'prop-1',
+        { status: ProposalStatus.DRAFT },
+        newItems,
+        newVag,
+      );
       expect(mockPrisma.$transaction).toHaveBeenCalled();
       expect(mockPrisma.proposalServiceItem.deleteMany).toHaveBeenCalledWith({
         where: { proposalId: 'prop-1' },
       });
-      expect(mockPrisma.proposalValueAddedItem.deleteMany).toHaveBeenCalledWith({
-        where: { proposalId: 'prop-1' },
-      });
+      expect(mockPrisma.proposalValueAddedItem.deleteMany).toHaveBeenCalledWith(
+        {
+          where: { proposalId: 'prop-1' },
+        },
+      );
     });
   });
 

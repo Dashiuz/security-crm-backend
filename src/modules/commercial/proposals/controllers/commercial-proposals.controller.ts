@@ -35,12 +35,13 @@ import { ProposalStatus } from '@prisma/client';
 @RequireFeature('commercial')
 @Controller('commercial/proposals')
 export class CommercialProposalsController {
-  constructor(
-    private readonly proposalsService: CommercialProposalsService,
-  ) {}
+  constructor(private readonly proposalsService: CommercialProposalsService) {}
 
   @Post()
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:create')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:create',
+  )
   @ApiOperation({
     summary: 'Crear nueva propuesta comercial',
     description:
@@ -56,17 +57,17 @@ export class CommercialProposalsController {
   }
 
   @Get()
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:read')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:read',
+  )
   @ApiOperation({
     summary: 'Listar propuestas comerciales paginadas',
     description:
       'Obtiene listado de propuestas con filtros por cliente, estado, semáforo P&L y búsqueda textual.',
   })
   @ApiOkResponse({ description: 'Lista paginada de propuestas comerciales' })
-  async getProposals(
-    @Request() req: any,
-    @Query() filter: ProposalFilterDto,
-  ) {
+  async getProposals(@Request() req: any, @Query() filter: ProposalFilterDto) {
     return this.proposalsService.getProposalsPaginated(
       req.user.tenantId,
       filter,
@@ -74,19 +75,27 @@ export class CommercialProposalsController {
   }
 
   @Post('simulate-pnl')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:read')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:read',
+  )
   @ApiOperation({
     summary: 'Simular P&L en tiempo real',
     description:
       'Calcula en memoria el margen bruto, costos directos, amortización de VAG, AIU, IVA y semáforo financiero sin persistir.',
   })
-  @ApiOkResponse({ description: 'Resultado de viabilidad y P&L calculado en vivo' })
+  @ApiOkResponse({
+    description: 'Resultado de viabilidad y P&L calculado en vivo',
+  })
   simulatePnl(@Body() dto: CalculatePnlDto) {
     return this.proposalsService.calculatePnlLive(dto);
   }
 
   @Get(':id')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:read')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:read',
+  )
   @ApiOperation({
     summary: 'Obtener detalle 360° de propuesta por ID',
     description:
@@ -98,7 +107,10 @@ export class CommercialProposalsController {
   }
 
   @Patch(':id')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:update')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:update',
+  )
   @ApiOperation({
     summary: 'Actualizar propuesta comercial',
     description:
@@ -119,7 +131,10 @@ export class CommercialProposalsController {
   }
 
   @Post(':id/approve-pnl')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:approve_pnl')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:approve_pnl',
+  )
   @ApiOperation({
     summary: 'Aprobación gerencial de P&L en semáforo ámbar',
     description:
@@ -135,7 +150,10 @@ export class CommercialProposalsController {
   }
 
   @Post(':id/issue-and-send')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:issue')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:issue',
+  )
   @ApiOperation({
     summary: 'Emitir oficialmente y enviar al cliente',
     description:
@@ -151,10 +169,14 @@ export class CommercialProposalsController {
   }
 
   @Patch(':id/status')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:update')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:update',
+  )
   @ApiOperation({
     summary: 'Cambiar estado de la propuesta comercial',
-    description: 'Permite transicionar a WON, LOST, VOIDED o REJECTED_BY_CLIENT.',
+    description:
+      'Permite transicionar a WON, LOST, VOIDED o REJECTED_BY_CLIENT.',
   })
   @ApiOkResponse({ description: 'Estado actualizado' })
   async updateStatus(
@@ -171,10 +193,14 @@ export class CommercialProposalsController {
   }
 
   @Delete(':id')
-  @RequirePermissions('commercial:proposals:manage', 'commercial:proposals:delete')
+  @RequirePermissions(
+    'commercial:proposals:manage',
+    'commercial:proposals:delete',
+  )
   @ApiOperation({
     summary: 'Eliminar propuesta en borrador',
-    description: 'Elimina definitivamente una cotización que aún no ha sido emitida.',
+    description:
+      'Elimina definitivamente una cotización que aún no ha sido emitida.',
   })
   @ApiOkResponse({ description: 'Propuesta eliminada' })
   async deleteProposal(@Request() req: any, @Param('id') id: string) {

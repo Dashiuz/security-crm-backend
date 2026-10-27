@@ -82,7 +82,9 @@ export class CreateContractAddendumDto {
   @IsNotEmpty()
   addendumNumber: string;
 
-  @ApiProperty({ example: 'Otrosí No. 1 - Adición de Puesto Portería y Reinversión' })
+  @ApiProperty({
+    example: 'Otrosí No. 1 - Adición de Puesto Portería y Reinversión',
+  })
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -141,11 +143,16 @@ export class CreateAnsCommitmentDto {
   @IsNotEmpty()
   clientId: string;
 
-  @ApiProperty({ enum: AnsCommitmentType, example: AnsCommitmentType.SECURITY_STUDY_DELIVERY })
+  @ApiProperty({
+    enum: AnsCommitmentType,
+    example: AnsCommitmentType.SECURITY_STUDY_DELIVERY,
+  })
   @IsEnum(AnsCommitmentType)
   commitmentType: AnsCommitmentType;
 
-  @ApiProperty({ example: 'Entrega Estudio de Seguridad Física de Copropiedad' })
+  @ApiProperty({
+    example: 'Entrega Estudio de Seguridad Física de Copropiedad',
+  })
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -159,12 +166,17 @@ export class CreateAnsCommitmentDto {
   @IsDateString()
   deliveredDate?: string;
 
-  @ApiPropertyOptional({ enum: AnsCommitmentStatus, default: AnsCommitmentStatus.PENDING })
+  @ApiPropertyOptional({
+    enum: AnsCommitmentStatus,
+    default: AnsCommitmentStatus.PENDING,
+  })
   @IsOptional()
   @IsEnum(AnsCommitmentStatus)
   status?: AnsCommitmentStatus;
 
-  @ApiPropertyOptional({ example: 'Entregado en reunión con Consejo de Administración' })
+  @ApiPropertyOptional({
+    example: 'Entregado en reunión con Consejo de Administración',
+  })
   @IsOptional()
   @IsString()
   evidenceNotes?: string;

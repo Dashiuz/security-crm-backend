@@ -9,7 +9,9 @@ describe('FormatInterpolationService', () => {
       providers: [FormatInterpolationService],
     }).compile();
 
-    service = module.get<FormatInterpolationService>(FormatInterpolationService);
+    service = module.get<FormatInterpolationService>(
+      FormatInterpolationService,
+    );
   });
 
   describe('extractVariables', () => {

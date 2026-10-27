@@ -71,7 +71,9 @@ export class CommercialServiceOrdersService {
       }
 
       // 3. Generar Consecutivos Automáticos
-      const year = new Date(dto.installationDate).getFullYear() || new Date().getFullYear();
+      const year =
+        new Date(dto.installationDate).getFullYear() ||
+        new Date().getFullYear();
       const orderFolioCode = await this.repository.getNextOrderFolioCode(
         tenantId,
         year,
@@ -128,18 +130,19 @@ export class CommercialServiceOrdersService {
           })),
         },
 
-        equipment: dto.equipment && dto.equipment.length > 0
-          ? {
-              create: dto.equipment.map((eq) => ({
-                tenant: { connect: { id: tenantId } },
-                itemName: eq.itemName,
-                quantity: eq.quantity || 1,
-                isMandatoryOnSite: eq.isMandatoryOnSite ?? true,
-                serialNumbers: eq.serialNumbers,
-                notes: eq.notes,
-              })),
-            }
-          : undefined,
+        equipment:
+          dto.equipment && dto.equipment.length > 0
+            ? {
+                create: dto.equipment.map((eq) => ({
+                  tenant: { connect: { id: tenantId } },
+                  itemName: eq.itemName,
+                  quantity: eq.quantity || 1,
+                  isMandatoryOnSite: eq.isMandatoryOnSite ?? true,
+                  serialNumbers: eq.serialNumbers,
+                  notes: eq.notes,
+                })),
+              }
+            : undefined,
       };
 
       const created = await this.repository.create(createData);
@@ -194,7 +197,10 @@ export class CommercialServiceOrdersService {
   /**
    * Listado paginado con filtros
    */
-  async getServiceOrdersPaginated(tenantId: string, filter: ServiceOrderFilterDto) {
+  async getServiceOrdersPaginated(
+    tenantId: string,
+    filter: ServiceOrderFilterDto,
+  ) {
     try {
       return await this.repository.findPaginated(tenantId, filter);
     } catch (error: any) {
@@ -319,9 +325,10 @@ export class CommercialServiceOrdersService {
       }
 
       // 1. Obtener los 9 departamentos destinatarios configurados en la matriz
-      const recipients = await this.prisma.serviceOrderDistributionRecipient.findMany({
-        where: { tenantId },
-      });
+      const recipients =
+        await this.prisma.serviceOrderDistributionRecipient.findMany({
+          where: { tenantId },
+        });
 
       const allDepartments: InternalDepartment[] = [
         InternalDepartment.CONTRACTS,
@@ -339,7 +346,9 @@ export class CommercialServiceOrdersService {
 
       for (const dept of allDepartments) {
         // Verificar si hay override en el DTO
-        const override = dto?.departmentOverrides?.find((o) => o.department === dept);
+        const override = dto?.departmentOverrides?.find(
+          (o) => o.department === dept,
+        );
         const configured = recipients.find((r) => r.department === dept);
 
         const email =
@@ -353,7 +362,9 @@ export class CommercialServiceOrdersService {
           department: dept,
           recipientEmail: email,
           wasEmailSuccess: true,
-          deliveryNotes: dto?.dispatchNotes || 'Despacho automatizado multidepartamental de orden de servicio.',
+          deliveryNotes:
+            dto?.dispatchNotes ||
+            'Despacho automatizado multidepartamental de orden de servicio.',
         });
       }
 
@@ -388,11 +399,7 @@ export class CommercialServiceOrdersService {
   /**
    * Cambia el estado de la orden (ej: a IN_OPERATION o CANCELLED)
    */
-  async updateStatus(
-    tenantId: string,
-    id: string,
-    status: ServiceOrderStatus,
-  ) {
+  async updateStatus(tenantId: string, id: string, status: ServiceOrderStatus) {
     try {
       const order = await this.repository.findById(tenantId, id);
       if (!order) {

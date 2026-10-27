@@ -30,7 +30,10 @@ export class CreateServiceOrderPositionDto {
   @Min(1)
   quantityGuards: number;
 
-  @ApiProperty({ enum: ShiftScheduleType, example: ShiftScheduleType.SCHEDULE_2X2X2 })
+  @ApiProperty({
+    enum: ShiftScheduleType,
+    example: ShiftScheduleType.SCHEDULE_2X2X2,
+  })
   @IsEnum(ShiftScheduleType)
   scheduleType: ShiftScheduleType;
 
@@ -38,7 +41,10 @@ export class CreateServiceOrderPositionDto {
   @IsEnum(WeaponModality)
   weaponModality: WeaponModality;
 
-  @ApiProperty({ example: 1750000, description: 'Sueldo pactado neto a pagar al guarda' })
+  @ApiProperty({
+    example: 1750000,
+    description: 'Sueldo pactado neto a pagar al guarda',
+  })
   @IsNumber()
   @Min(0)
   netMonthlySalaryToPay: number;
@@ -64,7 +70,9 @@ export class CreateServiceOrderPositionDto {
   @IsBoolean()
   requiresGalaUniform?: boolean;
 
-  @ApiPropertyOptional({ description: 'Habilidades específicas, manejo CCTV, etc.' })
+  @ApiPropertyOptional({
+    description: 'Habilidades específicas, manejo CCTV, etc.',
+  })
   @IsOptional()
   specificProfileTraits?: any;
 }
@@ -107,16 +115,25 @@ export class CreateServiceOrderDto {
   @IsString()
   proposalId?: string;
 
-  @ApiPropertyOptional({ enum: ServiceOrderType, default: ServiceOrderType.NEW_SITE })
+  @ApiPropertyOptional({
+    enum: ServiceOrderType,
+    default: ServiceOrderType.NEW_SITE,
+  })
   @IsOptional()
   @IsEnum(ServiceOrderType)
   orderType?: ServiceOrderType;
 
-  @ApiProperty({ example: '2026-11-01', description: 'Fecha inicio del servicio físico' })
+  @ApiProperty({
+    example: '2026-11-01',
+    description: 'Fecha inicio del servicio físico',
+  })
   @IsDateString()
   installationDate: string;
 
-  @ApiProperty({ example: '2027-10-31', description: 'Fecha fin de vigencia del contrato' })
+  @ApiProperty({
+    example: '2027-10-31',
+    description: 'Fecha fin de vigencia del contrato',
+  })
   @IsDateString()
   contractEndDate: string;
 
@@ -166,7 +183,9 @@ export class CreateServiceOrderDto {
   @IsEmail()
   administratorEmail?: string;
 
-  @ApiPropertyOptional({ description: 'ID del coordinador zonal de operaciones asignado' })
+  @ApiPropertyOptional({
+    description: 'ID del coordinador zonal de operaciones asignado',
+  })
   @IsOptional()
   @IsString()
   assignedCoordinatorId?: string;
@@ -186,7 +205,10 @@ export class CreateServiceOrderDto {
   @Min(0)
   totalMonthlyWithTax: number;
 
-  @ApiPropertyOptional({ example: 'Puesto requiere especial atención en acceso vehicular subterráneo.' })
+  @ApiPropertyOptional({
+    example:
+      'Puesto requiere especial atención en acceso vehicular subterráneo.',
+  })
   @IsOptional()
   @IsString()
   operationalNotes?: string;

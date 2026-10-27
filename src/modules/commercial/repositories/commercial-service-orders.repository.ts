@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import {
-  Prisma,
-  ServiceOrderStatus,
-} from '@prisma/client';
+import { Prisma, ServiceOrderStatus } from '@prisma/client';
 import { ServiceOrderFilterDto } from '../service-orders/dtos/service-order-filter.dto';
 
 @Injectable()
@@ -94,7 +91,12 @@ export class CommercialServiceOrdersRepository {
             orderBy: { dispatchedAt: 'desc' },
           },
           commercialUser: {
-            select: { id: true, fullName: true, document: true, position: true },
+            select: {
+              id: true,
+              fullName: true,
+              document: true,
+              position: true,
+            },
           },
           mediaAttachment: true,
         },
@@ -268,11 +270,7 @@ export class CommercialServiceOrdersRepository {
   /**
    * Actualiza el estado de la orden de servicio
    */
-  async updateStatus(
-    tenantId: string,
-    id: string,
-    status: ServiceOrderStatus,
-  ) {
+  async updateStatus(tenantId: string, id: string, status: ServiceOrderStatus) {
     try {
       return await this.prisma.serviceOrder.update({
         where: { id },
@@ -290,7 +288,9 @@ export class CommercialServiceOrdersRepository {
   /**
    * Registra los logs de despacho departamentales
    */
-  async createDispatchLogs(logs: Prisma.ServiceOrderDispatchLogCreateManyInput[]) {
+  async createDispatchLogs(
+    logs: Prisma.ServiceOrderDispatchLogCreateManyInput[],
+  ) {
     try {
       return await this.prisma.serviceOrderDispatchLog.createMany({
         data: logs,

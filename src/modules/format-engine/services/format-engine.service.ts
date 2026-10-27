@@ -17,8 +17,16 @@ import {
 } from '../dtos';
 import { DocumentParserService, ParseResult } from './document-parser.service';
 import { SystemCatalogService } from './system-catalog.service';
-import { FormatInterpolationService, InterpolationResult } from './format-interpolation.service';
-import { FormatCategory, FormatVisibilityScope, VariableSourceType, Prisma } from '@prisma/client';
+import {
+  FormatInterpolationService,
+  InterpolationResult,
+} from './format-interpolation.service';
+import {
+  FormatCategory,
+  FormatVisibilityScope,
+  VariableSourceType,
+  Prisma,
+} from '@prisma/client';
 
 @Injectable()
 export class FormatEngineService {
@@ -78,7 +86,9 @@ export class FormatEngineService {
             OR: [
               { title: { contains: filters.search, mode: 'insensitive' } },
               { code: { contains: filters.search, mode: 'insensitive' } },
-              { description: { contains: filters.search, mode: 'insensitive' } },
+              {
+                description: { contains: filters.search, mode: 'insensitive' },
+              },
             ],
           },
         ];
@@ -94,7 +104,10 @@ export class FormatEngineService {
         },
       });
     } catch (error: any) {
-      this.logger.error(`Error listando formatos: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error listando formatos: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -122,13 +135,18 @@ export class FormatEngineService {
       format.userId !== user.sub &&
       !this.hasAdminRole(user)
     ) {
-      throw new ForbiddenException('No tiene permisos para acceder a este formato personal.');
+      throw new ForbiddenException(
+        'No tiene permisos para acceder a este formato personal.',
+      );
     }
 
     return format;
   }
 
-  async getNextFormatCode(category: FormatCategory, user: UserContext): Promise<{ code: string }> {
+  async getNextFormatCode(
+    category: FormatCategory,
+    user: UserContext,
+  ): Promise<{ code: string }> {
     const prefixMap: Record<FormatCategory, string> = {
       [FormatCategory.COMMERCIAL]: 'FOR-COM-',
       [FormatCategory.OPERATIONS]: 'FOR-OPE-',
@@ -205,7 +223,9 @@ export class FormatEngineService {
       existing.userId !== user.sub &&
       !this.hasAdminRole(user)
     ) {
-      throw new ForbiddenException('Solo el propietario puede editar este formato personal.');
+      throw new ForbiddenException(
+        'Solo el propietario puede editar este formato personal.',
+      );
     }
 
     try {
@@ -213,9 +233,11 @@ export class FormatEngineService {
         updatedById: user.sub,
       };
 
-      if (dto.code !== undefined) updateData.code = dto.code.trim().toUpperCase();
+      if (dto.code !== undefined)
+        updateData.code = dto.code.trim().toUpperCase();
       if (dto.title !== undefined) updateData.title = dto.title.trim();
-      if (dto.description !== undefined) updateData.description = dto.description?.trim();
+      if (dto.description !== undefined)
+        updateData.description = dto.description?.trim();
       if (dto.category !== undefined) updateData.category = dto.category;
       if (dto.scope !== undefined) updateData.scope = dto.scope;
       if (dto.isDefault !== undefined) updateData.isDefault = dto.isDefault;
@@ -239,7 +261,10 @@ export class FormatEngineService {
         data: updateData,
       });
     } catch (error: any) {
-      this.logger.error(`Error actualizando formato ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error actualizando formato ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -252,7 +277,9 @@ export class FormatEngineService {
       existing.userId !== user.sub &&
       !this.hasAdminRole(user)
     ) {
-      throw new ForbiddenException('Solo el propietario puede eliminar este formato personal.');
+      throw new ForbiddenException(
+        'Solo el propietario puede eliminar este formato personal.',
+      );
     }
 
     try {
@@ -261,7 +288,10 @@ export class FormatEngineService {
         data: { isActive: false, updatedById: user.sub },
       });
     } catch (error: any) {
-      this.logger.error(`Error eliminando formato ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error eliminando formato ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -297,7 +327,10 @@ export class FormatEngineService {
         orderBy: [{ scope: 'asc' }, { key: 'asc' }],
       });
     } catch (error: any) {
-      this.logger.error(`Error listando variables: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error listando variables: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -306,7 +339,7 @@ export class FormatEngineService {
     const normalizedKey = dto.key
       .trim()
       .toUpperCase()
-      .replace(/[\s\.\-]+/g, '_')
+      .replace(/[\s.-]+/g, '_')
       .replace(/[^A-Z0-9_]/g, '');
 
     const isPersonal = dto.scope === FormatVisibilityScope.PERSONAL;
@@ -343,7 +376,10 @@ export class FormatEngineService {
         },
       });
     } catch (error: any) {
-      this.logger.error(`Error creando variable: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error creando variable: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -362,7 +398,9 @@ export class FormatEngineService {
       existing.userId !== user.sub &&
       !this.hasAdminRole(user)
     ) {
-      throw new ForbiddenException('Solo el propietario puede editar esta variable personal.');
+      throw new ForbiddenException(
+        'Solo el propietario puede editar esta variable personal.',
+      );
     }
 
     try {
@@ -371,9 +409,11 @@ export class FormatEngineService {
       };
 
       if (dto.label !== undefined) updateData.label = dto.label.trim();
-      if (dto.category !== undefined) updateData.category = dto.category?.trim();
+      if (dto.category !== undefined)
+        updateData.category = dto.category?.trim();
       if (dto.sourceType !== undefined) updateData.sourceType = dto.sourceType;
-      if (dto.staticValue !== undefined) updateData.staticValue = dto.staticValue;
+      if (dto.staticValue !== undefined)
+        updateData.staticValue = dto.staticValue;
       if (dto.systemPath !== undefined) updateData.systemPath = dto.systemPath;
       if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
 
@@ -382,7 +422,10 @@ export class FormatEngineService {
         data: updateData,
       });
     } catch (error: any) {
-      this.logger.error(`Error actualizando variable ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error actualizando variable ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -401,7 +444,9 @@ export class FormatEngineService {
       existing.userId !== user.sub &&
       !this.hasAdminRole(user)
     ) {
-      throw new ForbiddenException('Solo el propietario puede eliminar esta variable personal.');
+      throw new ForbiddenException(
+        'Solo el propietario puede eliminar esta variable personal.',
+      );
     }
 
     try {
@@ -409,7 +454,10 @@ export class FormatEngineService {
         where: { id },
       });
     } catch (error: any) {
-      this.logger.error(`Error eliminando variable ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error eliminando variable ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

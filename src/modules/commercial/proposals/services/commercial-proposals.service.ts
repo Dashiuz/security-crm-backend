@@ -4,11 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  ProposalStatus,
-  PnlHealthStatus,
-  Prisma,
-} from '@prisma/client';
+import { ProposalStatus, PnlHealthStatus, Prisma } from '@prisma/client';
 import { CommercialProposalsRepository } from '../../repositories/commercial-proposals.repository';
 import { PnlCalculatorService } from './pnl-calculator.service';
 import { CreateProposalDto } from '../dtos/create-proposal.dto';
@@ -153,22 +149,23 @@ export class CommercialProposalsService {
         },
 
         // Líneas Hijas de Valores Agregados
-        valueAddedItems: dto.valueAddedItems && dto.valueAddedItems.length > 0
-          ? {
-              create: dto.valueAddedItems.map((vag) => ({
-                tenant: { connect: { id: tenantId } },
-                valueAddedCatalogItem: vag.valueAddedCatalogItemId
-                  ? { connect: { id: vag.valueAddedCatalogItemId } }
-                  : undefined,
-                itemName: vag.itemName,
-                quantity: vag.quantity,
-                periodicity: vag.periodicity,
-                itemInternalCost: vag.itemInternalCost,
-                totalInternalCost: vag.itemInternalCost * vag.quantity,
-                notes: vag.notes,
-              })),
-            }
-          : undefined,
+        valueAddedItems:
+          dto.valueAddedItems && dto.valueAddedItems.length > 0
+            ? {
+                create: dto.valueAddedItems.map((vag) => ({
+                  tenant: { connect: { id: tenantId } },
+                  valueAddedCatalogItem: vag.valueAddedCatalogItemId
+                    ? { connect: { id: vag.valueAddedCatalogItemId } }
+                    : undefined,
+                  itemName: vag.itemName,
+                  quantity: vag.quantity,
+                  periodicity: vag.periodicity,
+                  itemInternalCost: vag.itemInternalCost,
+                  totalInternalCost: vag.itemInternalCost * vag.quantity,
+                  notes: vag.notes,
+                })),
+              }
+            : undefined,
       };
 
       const created = await this.repository.create(createData);
@@ -197,7 +194,9 @@ export class CommercialProposalsService {
     try {
       const existing = await this.repository.findById(tenantId, id);
       if (!existing) {
-        throw new NotFoundException(`Propuesta comercial [${id}] no encontrada`);
+        throw new NotFoundException(
+          `Propuesta comercial [${id}] no encontrada`,
+        );
       }
 
       // Proteger inmutabilidad si ya fue emitida o finalizada
@@ -353,7 +352,9 @@ export class CommercialProposalsService {
     try {
       const proposal = await this.repository.findById(tenantId, id);
       if (!proposal) {
-        throw new NotFoundException(`Propuesta comercial [${id}] no encontrada`);
+        throw new NotFoundException(
+          `Propuesta comercial [${id}] no encontrada`,
+        );
       }
       return proposal;
     } catch (error: any) {
@@ -387,7 +388,9 @@ export class CommercialProposalsService {
     try {
       const proposal = await this.repository.findById(tenantId, id);
       if (!proposal) {
-        throw new NotFoundException(`Propuesta comercial [${id}] no encontrada`);
+        throw new NotFoundException(
+          `Propuesta comercial [${id}] no encontrada`,
+        );
       }
 
       if (proposal.pnlStatus === PnlHealthStatus.DEFICIT_BLOCKED) {
@@ -418,7 +421,9 @@ export class CommercialProposalsService {
     try {
       const proposal = await this.repository.findById(tenantId, id);
       if (!proposal) {
-        throw new NotFoundException(`Propuesta comercial [${id}] no encontrada`);
+        throw new NotFoundException(
+          `Propuesta comercial [${id}] no encontrada`,
+        );
       }
 
       if (proposal.pnlStatus === PnlHealthStatus.DEFICIT_BLOCKED) {
@@ -463,7 +468,9 @@ export class CommercialProposalsService {
     try {
       const proposal = await this.repository.findById(tenantId, id);
       if (!proposal) {
-        throw new NotFoundException(`Propuesta comercial [${id}] no encontrada`);
+        throw new NotFoundException(
+          `Propuesta comercial [${id}] no encontrada`,
+        );
       }
 
       return await this.repository.updateStatus(
@@ -488,7 +495,9 @@ export class CommercialProposalsService {
     try {
       const proposal = await this.repository.findById(tenantId, id);
       if (!proposal) {
-        throw new NotFoundException(`Propuesta comercial [${id}] no encontrada`);
+        throw new NotFoundException(
+          `Propuesta comercial [${id}] no encontrada`,
+        );
       }
 
       if (proposal.status !== ProposalStatus.DRAFT) {

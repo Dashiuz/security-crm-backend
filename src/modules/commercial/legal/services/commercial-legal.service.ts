@@ -4,10 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  PolicyStatus,
-  Prisma,
-} from '@prisma/client';
+import { PolicyStatus, Prisma } from '@prisma/client';
 import { CommercialLegalRepository } from '../../repositories/commercial-legal.repository';
 import {
   CreateInsurancePolicyDto,
@@ -98,7 +95,11 @@ export class CommercialLegalService {
     }
   }
 
-  async updatePolicy(tenantId: string, id: string, dto: UpdateInsurancePolicyDto) {
+  async updatePolicy(
+    tenantId: string,
+    id: string,
+    dto: UpdateInsurancePolicyDto,
+  ) {
     try {
       const existing = await this.repository.findPolicyById(tenantId, id);
       if (!existing) {
@@ -219,7 +220,11 @@ export class CommercialLegalService {
     }
   }
 
-  async updateAddendum(tenantId: string, id: string, dto: UpdateContractAddendumDto) {
+  async updateAddendum(
+    tenantId: string,
+    id: string,
+    dto: UpdateContractAddendumDto,
+  ) {
     try {
       const existing = await this.repository.findAddendumById(tenantId, id);
       if (!existing) {
@@ -338,7 +343,11 @@ export class CommercialLegalService {
     }
   }
 
-  async updateAnsCommitment(tenantId: string, id: string, dto: UpdateAnsCommitmentDto) {
+  async updateAnsCommitment(
+    tenantId: string,
+    id: string,
+    dto: UpdateAnsCommitmentDto,
+  ) {
     try {
       const existing = await this.repository.findAnsById(tenantId, id);
       if (!existing) {
@@ -349,7 +358,9 @@ export class CommercialLegalService {
         commitmentType: dto.commitmentType,
         title: dto.title,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
-        deliveredDate: dto.deliveredDate ? new Date(dto.deliveredDate) : undefined,
+        deliveredDate: dto.deliveredDate
+          ? new Date(dto.deliveredDate)
+          : undefined,
         status: dto.status,
         evidenceNotes: dto.evidenceNotes,
       };

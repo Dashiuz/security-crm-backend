@@ -950,7 +950,12 @@ describe('ClientService (SPEC-UI-002)', () => {
           clientStatus: 'PROSPECT',
         },
       ]);
-      const list = await service.autocomplete('Prospecto', mockAdminUser, 5, true);
+      const list = await service.autocomplete(
+        'Prospecto',
+        mockAdminUser,
+        5,
+        true,
+      );
       expect(prisma.client.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.not.objectContaining({

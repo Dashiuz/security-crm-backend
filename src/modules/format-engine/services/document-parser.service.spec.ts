@@ -27,7 +27,11 @@ describe('DocumentParserService', () => {
 
     it('should throw BadRequestException if extension is not supported', async () => {
       await expect(
-        service.parseFileBuffer(Buffer.from('content'), 'test.pdf', 'application/pdf'),
+        service.parseFileBuffer(
+          Buffer.from('content'),
+          'test.pdf',
+          'application/pdf',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -35,7 +39,8 @@ describe('DocumentParserService', () => {
   describe('parseDocx', () => {
     it('should parse docx buffer into html and detect variables and normalize single brackets', async () => {
       (mammoth.convertToHtml as jest.Mock).mockResolvedValue({
-        value: '<p>Estimado {cliente.nombre}, su factura es [cliente.nit] con total {{total}}</p>',
+        value:
+          '<p>Estimado {cliente.nombre}, su factura es [cliente.nit] con total {{total}}</p>',
       });
 
       const buffer = Buffer.from('fake-docx-content');
@@ -51,7 +56,9 @@ describe('DocumentParserService', () => {
     });
 
     it('should throw BadRequestException if mammoth fails', async () => {
-      (mammoth.convertToHtml as jest.Mock).mockRejectedValue(new Error('Corrupt file'));
+      (mammoth.convertToHtml as jest.Mock).mockRejectedValue(
+        new Error('Corrupt file'),
+      );
 
       const buffer = Buffer.from('corrupt-docx');
       await expect(
@@ -95,7 +102,8 @@ describe('DocumentParserService', () => {
     });
 
     it('should extract unique variables from template', () => {
-      const html = '<p>{{empresa.nit}} y {{empresa.nit}} con {{cliente.razon_social}}</p>';
+      const html =
+        '<p>{{empresa.nit}} y {{empresa.nit}} con {{cliente.razon_social}}</p>';
       const vars = service.extractVariables(html);
       expect(vars).toEqual(['empresa.nit', 'cliente.razon_social']);
     });

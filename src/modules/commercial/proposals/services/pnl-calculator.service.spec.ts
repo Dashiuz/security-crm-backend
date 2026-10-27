@@ -1,5 +1,11 @@
 import { PnlCalculatorService } from './pnl-calculator.service';
-import { PnlHealthStatus, ShiftScheduleType, WeaponModality, CommercialSector, BenefitPeriodicity } from '@prisma/client';
+import {
+  PnlHealthStatus,
+  ShiftScheduleType,
+  WeaponModality,
+  CommercialSector,
+  BenefitPeriodicity,
+} from '@prisma/client';
 
 describe('PnlCalculatorService', () => {
   let service: PnlCalculatorService;

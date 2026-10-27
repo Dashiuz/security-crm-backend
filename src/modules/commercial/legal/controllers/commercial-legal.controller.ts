@@ -47,7 +47,10 @@ export class CommercialLegalController {
   @RequirePermissions('commercial:legal:manage', 'commercial:legal:create')
   @ApiOperation({ summary: 'Registrar póliza de seguro contractual' })
   @ApiCreatedResponse({ description: 'Póliza registrada exitosamente' })
-  async createPolicy(@Request() req: any, @Body() dto: CreateInsurancePolicyDto) {
+  async createPolicy(
+    @Request() req: any,
+    @Body() dto: CreateInsurancePolicyDto,
+  ) {
     return this.legalService.createPolicy(req.user.tenantId, dto);
   }
 
@@ -55,7 +58,10 @@ export class CommercialLegalController {
   @RequirePermissions('commercial:legal:manage', 'commercial:legal:read')
   @ApiOperation({ summary: 'Listar pólizas contractuales de un cliente' })
   @ApiOkResponse({ description: 'Lista de pólizas' })
-  async getPoliciesByClient(@Request() req: any, @Param('clientId') clientId: string) {
+  async getPoliciesByClient(
+    @Request() req: any,
+    @Param('clientId') clientId: string,
+  ) {
     return this.legalService.getPoliciesByClient(req.user.tenantId, clientId);
   }
 
@@ -95,7 +101,10 @@ export class CommercialLegalController {
   @RequirePermissions('commercial:legal:manage', 'commercial:legal:create')
   @ApiOperation({ summary: 'Registrar otrosí contractual (OSI)' })
   @ApiCreatedResponse({ description: 'Otrosí registrado exitosamente' })
-  async createAddendum(@Request() req: any, @Body() dto: CreateContractAddendumDto) {
+  async createAddendum(
+    @Request() req: any,
+    @Body() dto: CreateContractAddendumDto,
+  ) {
     return this.legalService.createAddendum(req.user.tenantId, dto);
   }
 
@@ -103,7 +112,10 @@ export class CommercialLegalController {
   @RequirePermissions('commercial:legal:manage', 'commercial:legal:read')
   @ApiOperation({ summary: 'Listar otrosíes de un cliente' })
   @ApiOkResponse({ description: 'Lista de otrosíes' })
-  async getAddendumsByClient(@Request() req: any, @Param('clientId') clientId: string) {
+  async getAddendumsByClient(
+    @Request() req: any,
+    @Param('clientId') clientId: string,
+  ) {
     return this.legalService.getAddendumsByClient(req.user.tenantId, clientId);
   }
 
@@ -143,7 +155,10 @@ export class CommercialLegalController {
   @RequirePermissions('commercial:legal:manage', 'commercial:legal:create')
   @ApiOperation({ summary: 'Registrar compromiso de nivel de servicio (ANS)' })
   @ApiCreatedResponse({ description: 'Compromiso ANS registrado exitosamente' })
-  async createAnsCommitment(@Request() req: any, @Body() dto: CreateAnsCommitmentDto) {
+  async createAnsCommitment(
+    @Request() req: any,
+    @Body() dto: CreateAnsCommitmentDto,
+  ) {
     return this.legalService.createAnsCommitment(req.user.tenantId, dto);
   }
 
@@ -151,7 +166,10 @@ export class CommercialLegalController {
   @RequirePermissions('commercial:legal:manage', 'commercial:legal:read')
   @ApiOperation({ summary: 'Listar compromisos ANS de un cliente' })
   @ApiOkResponse({ description: 'Lista de compromisos ANS' })
-  async getAnsByClient(@Request() req: any, @Param('clientId') clientId: string) {
+  async getAnsByClient(
+    @Request() req: any,
+    @Param('clientId') clientId: string,
+  ) {
     return this.legalService.getAnsByClient(req.user.tenantId, clientId);
   }
 

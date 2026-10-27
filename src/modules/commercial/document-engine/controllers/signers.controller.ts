@@ -46,8 +46,12 @@ export class SignersController {
 
   @Get('system-users')
   @RequirePermissions('commercial:settings:read', 'commercial:proposals:read')
-  @ApiOperation({ summary: 'Listar usuarios internos del sistema elegibles como firmantes' })
-  @ApiOkResponse({ description: 'Lista de usuarios del tenant con estado de firma digital' })
+  @ApiOperation({
+    summary: 'Listar usuarios internos del sistema elegibles como firmantes',
+  })
+  @ApiOkResponse({
+    description: 'Lista de usuarios del tenant con estado de firma digital',
+  })
   async getSystemUsersAsSigners(@Request() req: any) {
     return this.chameleonService.getSystemUsersAsSigners(req.user);
   }

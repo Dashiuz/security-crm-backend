@@ -1,10 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import {
-  Prisma,
-  ProposalStatus,
-  PnlHealthStatus,
-} from '@prisma/client';
+import { Prisma, ProposalStatus, PnlHealthStatus } from '@prisma/client';
 import { ProposalFilterDto } from '../proposals/dtos/proposal-filter.dto';
 
 @Injectable()
@@ -299,7 +295,9 @@ export class CommercialProposalsRepository {
         where: { id },
         data: {
           status,
-          ...(updatedById ? { updatedBy: { connect: { id: updatedById } } } : {}),
+          ...(updatedById
+            ? { updatedBy: { connect: { id: updatedById } } }
+            : {}),
           ...extraData,
         },
       });

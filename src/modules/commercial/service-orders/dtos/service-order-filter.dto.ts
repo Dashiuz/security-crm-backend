@@ -9,12 +9,18 @@ export class ServiceOrderFilterDto {
   @IsString()
   clientId?: string;
 
-  @ApiPropertyOptional({ enum: ServiceOrderStatus, description: 'Filtrar por estado' })
+  @ApiPropertyOptional({
+    enum: ServiceOrderStatus,
+    description: 'Filtrar por estado',
+  })
   @IsOptional()
   @IsEnum(ServiceOrderStatus)
   status?: ServiceOrderStatus;
 
-  @ApiPropertyOptional({ description: 'Búsqueda por código de orden (OS-), código OMEGA (OMG-) o nombre de cliente' })
+  @ApiPropertyOptional({
+    description:
+      'Búsqueda por código de orden (OS-), código OMEGA (OMG-) o nombre de cliente',
+  })
   @IsOptional()
   @IsString()
   search?: string;
@@ -24,7 +30,10 @@ export class ServiceOrderFilterDto {
   @IsString()
   cursor?: string;
 
-  @ApiPropertyOptional({ default: 20, description: 'Límite de registros por página' })
+  @ApiPropertyOptional({
+    default: 20,
+    description: 'Límite de registros por página',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

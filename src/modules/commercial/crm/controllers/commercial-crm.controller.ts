@@ -18,7 +18,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CommercialCrmService } from '../services/commercial-crm.service';
-import { CreateFollowUpDto, UpdateFollowUpDto, FollowUpFilterDto } from '../dtos/follow-up.dto';
+import {
+  CreateFollowUpDto,
+  UpdateFollowUpDto,
+  FollowUpFilterDto,
+} from '../dtos/follow-up.dto';
 import { JwtAuthGuard } from '../../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../regulation/access-control/permissions.guard';
 import { RequirePermissions } from '../../../regulation/access-control/permissions.decorator';
@@ -41,10 +45,7 @@ export class CommercialCrmController {
       'Registra llamadas, visitas técnicas, y calcula alerta automática a los 11 meses si el negocio se marca como LOST.',
   })
   @ApiCreatedResponse({ description: 'Seguimiento registrado exitosamente' })
-  async createFollowUp(
-    @Request() req: any,
-    @Body() dto: CreateFollowUpDto,
-  ) {
+  async createFollowUp(@Request() req: any, @Body() dto: CreateFollowUpDto) {
     return this.crmService.createFollowUp(
       req.user.tenantId,
       req.user.userId,
@@ -56,13 +57,11 @@ export class CommercialCrmController {
   @RequirePermissions('commercial:crm:manage', 'commercial:crm:read')
   @ApiOperation({
     summary: 'Listar interacciones de CRM paginadas',
-    description: 'Obtiene el historial global con filtros por cliente, comercial o estado.',
+    description:
+      'Obtiene el historial global con filtros por cliente, comercial o estado.',
   })
   @ApiOkResponse({ description: 'Lista paginada de seguimientos' })
-  async getFollowUps(
-    @Request() req: any,
-    @Query() filter: FollowUpFilterDto,
-  ) {
+  async getFollowUps(@Request() req: any, @Query() filter: FollowUpFilterDto) {
     return this.crmService.getFollowUpsPaginated(req.user.tenantId, filter);
   }
 
@@ -70,7 +69,8 @@ export class CommercialCrmController {
   @RequirePermissions('commercial:crm:manage', 'commercial:crm:read')
   @ApiOperation({
     summary: 'Obtener bitácora cronológica de un cliente',
-    description: 'Devuelve la línea de tiempo completa de interacciones con el cliente o prospecto.',
+    description:
+      'Devuelve la línea de tiempo completa de interacciones con el cliente o prospecto.',
   })
   @ApiOkResponse({ description: 'Línea de tiempo del cliente' })
   async getFollowUpsByClient(
@@ -96,10 +96,7 @@ export class CommercialCrmController {
   @RequirePermissions('commercial:crm:manage', 'commercial:crm:read')
   @ApiOperation({ summary: 'Obtener detalle de un seguimiento por ID' })
   @ApiOkResponse({ description: 'Detalle del seguimiento' })
-  async getFollowUpById(
-    @Request() req: any,
-    @Param('id') id: string,
-  ) {
+  async getFollowUpById(@Request() req: any, @Param('id') id: string) {
     return this.crmService.getFollowUpById(req.user.tenantId, id);
   }
 
@@ -119,10 +116,7 @@ export class CommercialCrmController {
   @RequirePermissions('commercial:crm:manage', 'commercial:crm:delete')
   @ApiOperation({ summary: 'Eliminar registro de seguimiento' })
   @ApiOkResponse({ description: 'Seguimiento eliminado' })
-  async deleteFollowUp(
-    @Request() req: any,
-    @Param('id') id: string,
-  ) {
+  async deleteFollowUp(@Request() req: any, @Param('id') id: string) {
     return this.crmService.deleteFollowUp(req.user.tenantId, id);
   }
 }

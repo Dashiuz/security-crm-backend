@@ -71,7 +71,11 @@ export class SnippetInterpolationService {
         );
         const isAlreadyInSrc = inSrcAttrPattern.test(template);
 
-        if ((isImageToken || isUrlOrBase64) && !isAlreadyInSrc && isUrlOrBase64) {
+        if (
+          (isImageToken || isUrlOrBase64) &&
+          !isAlreadyInSrc &&
+          isUrlOrBase64
+        ) {
           replacement = `<img src="${values[variable]}" class="noxia-interpolated-image" style="max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: 4px;" alt="${variable}" />`;
         }
 

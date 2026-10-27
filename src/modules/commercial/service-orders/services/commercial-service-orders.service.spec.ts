@@ -32,9 +32,13 @@ describe('CommercialServiceOrdersService', () => {
         positions: [],
         equipment: [],
       }),
-      findPaginated: jest.fn().mockResolvedValue({ data: [], meta: { nextCursor: null, take: 20 } }),
+      findPaginated: jest
+        .fn()
+        .mockResolvedValue({ data: [], meta: { nextCursor: null, take: 20 } }),
       update: jest.fn().mockResolvedValue({ id: 'so-1' }),
-      updateStatus: jest.fn().mockImplementation((tId, id, status) => ({ id, status })),
+      updateStatus: jest
+        .fn()
+        .mockImplementation((tId, id, status) => ({ id, status })),
       createDispatchLogs: jest.fn().mockResolvedValue({ count: 9 }),
       delete: jest.fn().mockResolvedValue({ id: 'so-1' }),
     };
@@ -47,19 +51,30 @@ describe('CommercialServiceOrdersService', () => {
           internalCode: null,
           clientStatus: ClientStatus.PROSPECT,
         }),
-        update: jest.fn().mockResolvedValue({ id: 'client-1', clientStatus: ClientStatus.ACTIVE }),
+        update: jest.fn().mockResolvedValue({
+          id: 'client-1',
+          clientStatus: ClientStatus.ACTIVE,
+        }),
       },
       commercialProposal: {
         findFirst: jest.fn().mockResolvedValue({
           id: 'prop-1',
           status: ProposalStatus.SENT_TO_CLIENT,
         }),
-        update: jest.fn().mockResolvedValue({ id: 'prop-1', status: ProposalStatus.WON }),
+        update: jest
+          .fn()
+          .mockResolvedValue({ id: 'prop-1', status: ProposalStatus.WON }),
       },
       serviceOrderDistributionRecipient: {
         findMany: jest.fn().mockResolvedValue([
-          { department: InternalDepartment.OPERATIONS, recipientEmail: 'operaciones@empresa.com' },
-          { department: InternalDepartment.HUMAN_RESOURCES, recipientEmail: 'rrhh@empresa.com' },
+          {
+            department: InternalDepartment.OPERATIONS,
+            recipientEmail: 'operaciones@empresa.com',
+          },
+          {
+            department: InternalDepartment.HUMAN_RESOURCES,
+            recipientEmail: 'rrhh@empresa.com',
+          },
         ]),
       },
     };
@@ -111,7 +126,10 @@ describe('CommercialServiceOrdersService', () => {
         where: { id: 'prop-1' },
         data: { status: ProposalStatus.WON, updatedById: 'usr-1' },
       });
-      expect(mockRepository.getNextOrderFolioCode).toHaveBeenCalledWith('ten-1', 2026);
+      expect(mockRepository.getNextOrderFolioCode).toHaveBeenCalledWith(
+        'ten-1',
+        2026,
+      );
       expect(mockRepository.getNextOmegaCode).toHaveBeenCalledWith('ten-1');
       expect(mockRepository.create).toHaveBeenCalled();
 
@@ -151,9 +169,9 @@ describe('CommercialServiceOrdersService', () => {
 
     it('getServiceOrderById debe lanzar NotFoundException si no existe', async () => {
       mockRepository.findById.mockResolvedValueOnce(null);
-      await expect(service.getServiceOrderById('ten-1', 'so-99')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getServiceOrderById('ten-1', 'so-99'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('getServiceOrdersPaginated debe consultar repositorio', async () => {
@@ -217,16 +235,24 @@ describe('CommercialServiceOrdersService', () => {
         status: ServiceOrderStatus.CANCELLED,
       });
 
-      await expect(
-        service.dispatchOrder('ten-1', 'so-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.dispatchOrder('ten-1', 'so-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('updateStatus y deleteServiceOrder', () => {
     it('updateStatus debe cambiar estado a IN_OPERATION', async () => {
-      const res = await service.updateStatus('ten-1', 'so-1', ServiceOrderStatus.IN_OPERATION);
-      expect(mockRepository.updateStatus).toHaveBeenCalledWith('ten-1', 'so-1', ServiceOrderStatus.IN_OPERATION);
+      const res = await service.updateStatus(
+        'ten-1',
+        'so-1',
+        ServiceOrderStatus.IN_OPERATION,
+      );
+      expect(mockRepository.updateStatus).toHaveBeenCalledWith(
+        'ten-1',
+        'so-1',
+        ServiceOrderStatus.IN_OPERATION,
+      );
       expect(res.status).toBe(ServiceOrderStatus.IN_OPERATION);
     });
 
@@ -242,9 +268,9 @@ describe('CommercialServiceOrdersService', () => {
         status: ServiceOrderStatus.ISSUED_DISPATCHED,
       });
 
-      await expect(
-        service.deleteServiceOrder('ten-1', 'so-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.deleteServiceOrder('ten-1', 'so-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

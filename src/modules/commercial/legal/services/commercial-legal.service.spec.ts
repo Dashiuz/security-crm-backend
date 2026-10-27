@@ -14,19 +14,25 @@ describe('CommercialLegalService', () => {
 
   beforeEach(() => {
     mockRepository = {
-      createPolicy: jest.fn().mockImplementation((data) => ({ id: 'pol-1', ...data })),
+      createPolicy: jest
+        .fn()
+        .mockImplementation((data) => ({ id: 'pol-1', ...data })),
       findPoliciesByClient: jest.fn().mockResolvedValue([{ id: 'pol-1' }]),
       findPolicyById: jest.fn().mockResolvedValue({ id: 'pol-1' }),
       updatePolicy: jest.fn().mockResolvedValue({ id: 'pol-1' }),
       deletePolicy: jest.fn().mockResolvedValue({ id: 'pol-1' }),
 
-      createAddendum: jest.fn().mockImplementation((data) => ({ id: 'osi-1', ...data })),
+      createAddendum: jest
+        .fn()
+        .mockImplementation((data) => ({ id: 'osi-1', ...data })),
       findAddendumsByClient: jest.fn().mockResolvedValue([{ id: 'osi-1' }]),
       findAddendumById: jest.fn().mockResolvedValue({ id: 'osi-1' }),
       updateAddendum: jest.fn().mockResolvedValue({ id: 'osi-1' }),
       deleteAddendum: jest.fn().mockResolvedValue({ id: 'osi-1' }),
 
-      createAnsCommitment: jest.fn().mockImplementation((data) => ({ id: 'ans-1', ...data })),
+      createAnsCommitment: jest
+        .fn()
+        .mockImplementation((data) => ({ id: 'ans-1', ...data })),
       findAnsByClient: jest.fn().mockResolvedValue([{ id: 'ans-1' }]),
       findAnsById: jest.fn().mockResolvedValue({ id: 'ans-1' }),
       updateAnsCommitment: jest.fn().mockResolvedValue({ id: 'ans-1' }),
@@ -35,7 +41,9 @@ describe('CommercialLegalService', () => {
 
     mockPrisma = {
       client: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'c-1', name: 'Edificio Los Pinos' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'c-1', name: 'Edificio Los Pinos' }),
       },
     };
 
@@ -74,11 +82,16 @@ describe('CommercialLegalService', () => {
       const pol = await service.getPolicyById('ten-1', 'pol-1');
       expect(pol.id).toBe('pol-1');
 
-      await service.updatePolicy('ten-1', 'pol-1', { insuranceCompanyName: 'Bolivar' } as any);
+      await service.updatePolicy('ten-1', 'pol-1', {
+        insuranceCompanyName: 'Bolivar',
+      } as any);
       expect(mockRepository.updatePolicy).toHaveBeenCalled();
 
       await service.deletePolicy('ten-1', 'pol-1');
-      expect(mockRepository.deletePolicy).toHaveBeenCalledWith('ten-1', 'pol-1');
+      expect(mockRepository.deletePolicy).toHaveBeenCalledWith(
+        'ten-1',
+        'pol-1',
+      );
     });
   });
 
@@ -102,11 +115,16 @@ describe('CommercialLegalService', () => {
       await service.getAddendumById('ten-1', 'osi-1');
       expect(mockRepository.findAddendumById).toHaveBeenCalled();
 
-      await service.updateAddendum('ten-1', 'osi-1', { title: 'Nuevo Título' } as any);
+      await service.updateAddendum('ten-1', 'osi-1', {
+        title: 'Nuevo Título',
+      } as any);
       expect(mockRepository.updateAddendum).toHaveBeenCalled();
 
       await service.deleteAddendum('ten-1', 'osi-1');
-      expect(mockRepository.deleteAddendum).toHaveBeenCalledWith('ten-1', 'osi-1');
+      expect(mockRepository.deleteAddendum).toHaveBeenCalledWith(
+        'ten-1',
+        'osi-1',
+      );
     });
   });
 
@@ -129,11 +147,16 @@ describe('CommercialLegalService', () => {
       await service.getAnsById('ten-1', 'ans-1');
       expect(mockRepository.findAnsById).toHaveBeenCalled();
 
-      await service.updateAnsCommitment('ten-1', 'ans-1', { status: AnsCommitmentStatus.FULFILLED } as any);
+      await service.updateAnsCommitment('ten-1', 'ans-1', {
+        status: AnsCommitmentStatus.FULFILLED,
+      } as any);
       expect(mockRepository.updateAnsCommitment).toHaveBeenCalled();
 
       await service.deleteAnsCommitment('ten-1', 'ans-1');
-      expect(mockRepository.deleteAnsCommitment).toHaveBeenCalledWith('ten-1', 'ans-1');
+      expect(mockRepository.deleteAnsCommitment).toHaveBeenCalledWith(
+        'ten-1',
+        'ans-1',
+      );
     });
   });
 });

@@ -9,7 +9,7 @@ export interface InterpolationResult {
 @Injectable()
 export class FormatInterpolationService {
   private readonly logger = new Logger(FormatInterpolationService.name);
-  private readonly variableRegex = /\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}/g;
+  private readonly variableRegex = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
 
   /**
    * Extrae todas las variables únicas con sintaxis {{variable}} de una plantilla
@@ -77,7 +77,11 @@ export class FormatInterpolationService {
         );
         const isAlreadyInSrc = inSrcAttrPattern.test(template);
 
-        if ((isImageToken || isUrlOrBase64) && !isAlreadyInSrc && isUrlOrBase64) {
+        if (
+          (isImageToken || isUrlOrBase64) &&
+          !isAlreadyInSrc &&
+          isUrlOrBase64
+        ) {
           replacement = `<img src="${matchedVal}" class="noxia-interpolated-image" style="max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: 4px;" alt="${variable}" />`;
         }
 

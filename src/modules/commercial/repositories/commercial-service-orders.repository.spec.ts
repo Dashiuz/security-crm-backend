@@ -9,7 +9,9 @@ describe('CommercialServiceOrdersRepository', () => {
     mockPrisma = {
       serviceOrder: {
         count: jest.fn().mockResolvedValue(0),
-        findFirst: jest.fn().mockResolvedValue({ id: 'so-1', orderFolioCode: 'OS-2026-0001' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'so-1', orderFolioCode: 'OS-2026-0001' }),
         findMany: jest.fn().mockResolvedValue([{ id: 'so-1' }]),
         create: jest.fn().mockResolvedValue({ id: 'so-1' }),
         update: jest.fn().mockResolvedValue({ id: 'so-1' }),
@@ -119,7 +121,9 @@ describe('CommercialServiceOrdersRepository', () => {
       expect(mockPrisma.serviceOrderPosition.deleteMany).toHaveBeenCalledWith({
         where: { serviceOrderId: 'so-1' },
       });
-      expect(mockPrisma.serviceOrderEquipmentItem.deleteMany).toHaveBeenCalledWith({
+      expect(
+        mockPrisma.serviceOrderEquipmentItem.deleteMany,
+      ).toHaveBeenCalledWith({
         where: { serviceOrderId: 'so-1' },
       });
       expect(mockPrisma.serviceOrder.update).toHaveBeenCalledWith(
@@ -132,7 +136,11 @@ describe('CommercialServiceOrdersRepository', () => {
 
   describe('updateStatus, createDispatchLogs y delete', () => {
     it('updateStatus debe cambiar el estado', async () => {
-      await repository.updateStatus('ten-1', 'so-1', ServiceOrderStatus.ISSUED_DISPATCHED);
+      await repository.updateStatus(
+        'ten-1',
+        'so-1',
+        ServiceOrderStatus.ISSUED_DISPATCHED,
+      );
       expect(mockPrisma.serviceOrder.update).toHaveBeenCalledWith({
         where: { id: 'so-1' },
         data: { status: ServiceOrderStatus.ISSUED_DISPATCHED },
@@ -140,9 +148,18 @@ describe('CommercialServiceOrdersRepository', () => {
     });
 
     it('createDispatchLogs debe registrar los logs en lote', async () => {
-      const logs: any[] = [{ tenantId: 'ten-1', serviceOrderId: 'so-1', department: 'OPERATIONS', recipientEmail: 'ops@noxia.com' }];
+      const logs: any[] = [
+        {
+          tenantId: 'ten-1',
+          serviceOrderId: 'so-1',
+          department: 'OPERATIONS',
+          recipientEmail: 'ops@noxia.com',
+        },
+      ];
       await repository.createDispatchLogs(logs);
-      expect(mockPrisma.serviceOrderDispatchLog.createMany).toHaveBeenCalledWith({
+      expect(
+        mockPrisma.serviceOrderDispatchLog.createMany,
+      ).toHaveBeenCalledWith({
         data: logs,
       });
     });

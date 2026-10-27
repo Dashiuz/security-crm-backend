@@ -1,5 +1,11 @@
 import { CommercialProposalsService } from './commercial-proposals.service';
-import { ProposalStatus, PnlHealthStatus, ShiftScheduleType, WeaponModality, CommercialSector } from '@prisma/client';
+import {
+  ProposalStatus,
+  PnlHealthStatus,
+  ShiftScheduleType,
+  WeaponModality,
+  CommercialSector,
+} from '@prisma/client';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('CommercialProposalsService', () => {
@@ -25,9 +31,13 @@ describe('CommercialProposalsService', () => {
         items: [],
         valueAddedItems: [],
       }),
-      findPaginated: jest.fn().mockResolvedValue({ data: [], meta: { nextCursor: null, take: 20 } }),
+      findPaginated: jest
+        .fn()
+        .mockResolvedValue({ data: [], meta: { nextCursor: null, take: 20 } }),
       update: jest.fn().mockResolvedValue({ id: 'prop-1' }),
-      updateStatus: jest.fn().mockImplementation((tId, id, status) => ({ id, status })),
+      updateStatus: jest
+        .fn()
+        .mockImplementation((tId, id, status) => ({ id, status })),
       delete: jest.fn().mockResolvedValue({ id: 'prop-1' }),
     };
 
@@ -52,7 +62,9 @@ describe('CommercialProposalsService', () => {
 
     mockPrisma = {
       client: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'client-1', name: 'Edificio Los Pinos' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'client-1', name: 'Edificio Los Pinos' }),
       },
       tariffPeriodConfig: {
         findFirst: jest.fn().mockResolvedValue({ id: 'tp-1', year: 2026 }),
@@ -97,7 +109,10 @@ describe('CommercialProposalsService', () => {
       const res = await service.createProposal('ten-1', 'usr-1', validDto);
       expect(mockPrisma.client.findFirst).toHaveBeenCalled();
       expect(mockPrisma.tariffPeriodConfig.findFirst).toHaveBeenCalled();
-      expect(mockRepository.getNextFolioCode).toHaveBeenCalledWith('ten-1', 2026);
+      expect(mockRepository.getNextFolioCode).toHaveBeenCalledWith(
+        'ten-1',
+        2026,
+      );
       expect(mockRepository.create).toHaveBeenCalled();
       expect(res.status).toBe(ProposalStatus.DRAFT);
     });
@@ -288,9 +303,9 @@ describe('CommercialProposalsService', () => {
         status: ProposalStatus.SENT_TO_CLIENT,
       });
 
-      await expect(
-        service.deleteProposal('ten-1', 'prop-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.deleteProposal('ten-1', 'prop-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });
