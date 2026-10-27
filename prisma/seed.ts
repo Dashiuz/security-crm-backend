@@ -557,6 +557,17 @@ async function main() {
       key: 'commercial:legal:manage',
       desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
     },
+    // Universal Document Format Engine (SPEC-CORE-010 / SPEC-ADM-024)
+    {
+      id: 'format_read_perm_id',
+      key: 'format:read',
+      desc: 'Consultar plantillas y formatos universales',
+    },
+    {
+      id: 'format_manage_perm_id',
+      key: 'format:manage',
+      desc: 'Diseñar, crear y actualizar formatos y variables transversales',
+    },
   ];
 
   // 5. Departments

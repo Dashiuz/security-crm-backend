@@ -69,6 +69,16 @@ describe('ChameleonDocumentService', () => {
       upsertSkin: jest.fn().mockResolvedValue(sampleSkin),
       updateSkinLogo: jest.fn().mockResolvedValue(sampleSkin),
       findSigners: jest.fn().mockResolvedValue([sampleSigner]),
+      findSystemUsersForSigners: jest.fn().mockResolvedValue([
+        {
+          id: 'usr-1',
+          fullName: 'Juan Pérez',
+          email: 'juan@noxia.com',
+          document: '12345678',
+          signatureUrl: 'https://s3.aws.com/sig.png',
+          signatureMethod: 'DRAWN',
+        },
+      ]),
       findSignerById: jest.fn().mockResolvedValue(sampleSigner),
       findSignerByEmail: jest.fn().mockResolvedValue(null),
       createSigner: jest.fn().mockResolvedValue(sampleSigner),
@@ -203,6 +213,14 @@ describe('ChameleonDocumentService', () => {
       const signers = await service.getSigners(mockUser);
       expect(mockDocEngineRepo.findSigners).toHaveBeenCalledWith('tenant-abc');
       expect(signers).toHaveLength(1);
+    });
+
+    it('debe listar los usuarios del sistema elegibles como firmantes con bandera hasSignature', async () => {
+      const users = await service.getSystemUsersAsSigners(mockUser);
+      expect(mockDocEngineRepo.findSystemUsersForSigners).toHaveBeenCalledWith('tenant-abc');
+      expect(users).toHaveLength(1);
+      expect(users[0].hasSignature).toBe(true);
+      expect(users[0].fullName).toBe('Juan Pérez');
     });
 
     it('debe consultar firmante por id', async () => {

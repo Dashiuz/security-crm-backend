@@ -932,11 +932,33 @@ describe('ClientService (SPEC-UI-002)', () => {
           name: 'Conjunto Uno',
           internalCode: 'CLI-1',
           nit: '123',
+          clientStatus: 'ACTIVE',
         },
       ]);
       const list = await service.autocomplete('Conjunto', mockAdminUser, 5);
       expect(prisma.client.findMany).toHaveBeenCalled();
       expect(list).toHaveLength(1);
+    });
+
+    it('autocomplete with includeProspects should allow prospects', async () => {
+      prisma.client.findMany = jest.fn().mockResolvedValue([
+        {
+          id: 'c-prospect-1',
+          name: 'Prospecto Edificio Vista',
+          internalCode: 'PROS-1',
+          nit: '999',
+          clientStatus: 'PROSPECT',
+        },
+      ]);
+      const list = await service.autocomplete('Prospecto', mockAdminUser, 5, true);
+      expect(prisma.client.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            clientStatus: expect.anything(),
+          }),
+        }),
+      );
+      expect(list[0].clientStatus).toBe('PROSPECT');
     });
 
     it('autocompleteUnits should query units in prisma', async () => {

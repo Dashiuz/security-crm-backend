@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValueAddedCategory } from '@prisma/client';
 
@@ -37,6 +38,7 @@ export class CreateValueAddedDto {
     example: 450000.0,
     description: 'Costo interno de referencia para análisis de P&L',
   })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   internalReferenceCost: number;
@@ -47,6 +49,7 @@ export class CreateValueAddedDto {
   isStandardBenefit?: boolean;
 
   @ApiPropertyOptional({ example: 1, default: 1 })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   @Min(1)

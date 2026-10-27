@@ -95,6 +95,10 @@ model User {
   serviceOrdersCommercial    ServiceOrder[]       @relation("ServiceOrderCommercial")
   followUpsCommercial        CommercialFollowUp[] @relation("FollowUpCommercial")
 
+  // Format Engine relations
+  formatVariablesCreated  FormatVariable[]          @relation("FormatVariablesCreated")
+  universalFormatsCreated UniversalDocumentFormat[] @relation("UniversalFormatsCreated")
+
   @@index([tenantId])
   @@index([clientId])
   @@index([document])

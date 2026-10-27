@@ -30,6 +30,7 @@ import {
   NotificationsModule,
   SignaturesModule,
   CommercialModule,
+  FormatEngineModule,
 } from './modules/index';
 
 @Module({
@@ -62,6 +63,7 @@ import {
     NotificationsModule,
     SignaturesModule,
     CommercialModule,
+    FormatEngineModule,
   ],
   controllers: [AppController],
   providers: [

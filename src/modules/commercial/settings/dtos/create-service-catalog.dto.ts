@@ -9,6 +9,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   CommercialSector,
@@ -22,6 +23,7 @@ export class CreateServiceCatalogDto {
     example: 1,
     description: 'Código numérico único del servicio dentro del tenant',
   })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   serviceCode: number;
@@ -70,6 +72,7 @@ export class CreateServiceCatalogDto {
   daysModality?: WorkingDaysModality;
 
   @ApiProperty({ example: 24, description: 'Horas diarias de cobertura' })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(24)
@@ -79,6 +82,7 @@ export class CreateServiceCatalogDto {
     example: 15,
     description: 'Horas diurnas asignadas (06:00 a 21:00)',
   })
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   @Max(24)
@@ -88,12 +92,14 @@ export class CreateServiceCatalogDto {
     example: 9,
     description: 'Horas nocturnas asignadas (21:00 a 06:00)',
   })
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   @Max(24)
   nightHours: number;
 
   @ApiProperty({ example: 30, description: 'Días facturables al mes' })
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(31)
@@ -103,6 +109,11 @@ export class CreateServiceCatalogDto {
     example: 0.1,
     description:
       'Porcentaje de Administración y Supervisión (A&S) (ej. 0.08, 0.10, 0.11)',
+  })
+  @Type(() => Number)
+  @Transform(({ value }) => {
+    const num = Number(value);
+    return num > 1 ? num / 100 : num;
   })
   @IsNumber()
   @Min(0)

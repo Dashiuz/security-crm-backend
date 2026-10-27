@@ -37,11 +37,19 @@ export class SignersController {
   constructor(private readonly chameleonService: ChameleonDocumentService) {}
 
   @Get()
-  @RequirePermissions('commercial:settings:read')
+  @RequirePermissions('commercial:settings:read', 'commercial:proposals:read')
   @ApiOperation({ summary: 'Listar firmantes autorizados de la empresa' })
   @ApiOkResponse({ description: 'Lista de firmantes activos' })
   async getSigners(@Request() req: any) {
     return this.chameleonService.getSigners(req.user);
+  }
+
+  @Get('system-users')
+  @RequirePermissions('commercial:settings:read', 'commercial:proposals:read')
+  @ApiOperation({ summary: 'Listar usuarios internos del sistema elegibles como firmantes' })
+  @ApiOkResponse({ description: 'Lista de usuarios del tenant con estado de firma digital' })
+  async getSystemUsersAsSigners(@Request() req: any) {
+    return this.chameleonService.getSystemUsersAsSigners(req.user);
   }
 
   @Get(':id')

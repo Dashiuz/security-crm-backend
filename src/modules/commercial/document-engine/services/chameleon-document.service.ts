@@ -149,6 +149,19 @@ export class ChameleonDocumentService {
     return this.docEngineRepo.findSigners(user.tenantId);
   }
 
+  async getSystemUsersAsSigners(user: UserContext) {
+    const users = await this.docEngineRepo.findSystemUsersForSigners(user.tenantId);
+    return users.map((u) => ({
+      id: u.id,
+      fullName: u.fullName,
+      document: u.document,
+      corporateTitle: u.position || u.department || 'Funcionario',
+      hasSignature: !!u.signatureUrl,
+      signatureUrl: u.signatureUrl,
+      signatureMethod: u.signatureMethod,
+    }));
+  }
+
   async getSignerById(id: string, user: UserContext) {
     const signer = await this.docEngineRepo.findSignerById(id, user.tenantId);
     if (!signer) {

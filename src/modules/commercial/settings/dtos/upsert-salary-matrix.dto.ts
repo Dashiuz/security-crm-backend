@@ -39,6 +39,7 @@ export class SalaryMatrixItemDto {
     example: 3.0,
     description: 'Guardas requeridos por puesto para cubrir 24h',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   guardsRequiredPerPost?: number;
@@ -47,6 +48,7 @@ export class SalaryMatrixItemDto {
     example: 1750905.0,
     description: 'Sueldo base mensual (SMMLV 2026)',
   })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   baseSalary: number;
@@ -55,6 +57,7 @@ export class SalaryMatrixItemDto {
     example: 249095.0,
     description: 'Auxilio de transporte mensual legal',
   })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   transportAllowance: number;
@@ -64,6 +67,7 @@ export class SalaryMatrixItemDto {
     default: 8,
     description: 'Horas ordinarias por turno',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   shiftOrdinaryHours?: number;
@@ -73,6 +77,7 @@ export class SalaryMatrixItemDto {
     default: 4,
     description: 'Horas extras por turno',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   shiftExtraHours?: number;
@@ -81,11 +86,13 @@ export class SalaryMatrixItemDto {
     example: 680000.0,
     description: 'Total estimado de horas extras y recargos',
   })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   estimatedOvertimePay: number;
 
   @ApiProperty({ example: 2680000.0, description: 'Total devengado bruto' })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   grossSalary: number;
@@ -95,6 +102,7 @@ export class SalaryMatrixItemDto {
     default: 0.04,
     description: 'Porcentaje deducción salud (4%)',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   healthDeductionPct?: number;
@@ -104,21 +112,25 @@ export class SalaryMatrixItemDto {
     default: 0.04,
     description: 'Porcentaje deducción pensión (4%)',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   pensionDeductionPct?: number;
 
   @ApiProperty({ example: 97236.0, description: 'Valor retenido de salud' })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   healthDeduction: number;
 
   @ApiProperty({ example: 97236.0, description: 'Valor retenido de pensión' })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   pensionDeduction: number;
 
   @ApiProperty({ example: 194472.0, description: 'Total deducciones' })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   totalDeductions: number;
@@ -128,6 +140,7 @@ export class SalaryMatrixItemDto {
     default: 0,
     description: 'Bonificación fija no salarial',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   fixedBonusNonSalary?: number;
@@ -137,6 +150,7 @@ export class SalaryMatrixItemDto {
     default: 0,
     description: 'Rodamiento de vehículo',
   })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   vehicleAllowance?: number;
@@ -145,6 +159,7 @@ export class SalaryMatrixItemDto {
     example: 2485528.0,
     description: 'Sueldo neto bancario a recibir por el guarda',
   })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   netTakeHomePay: number;

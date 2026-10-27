@@ -389,13 +389,20 @@ export class ClientService {
     return res;
   }
 
-  async autocomplete(query: string, user: UserContext, limit = 20) {
+  async autocomplete(
+    query: string,
+    user: UserContext,
+    limit = 20,
+    includeProspects = false,
+  ) {
     const trimmed = (query || '').trim();
     const where: any = {
       tenantId: user.tenantId,
       deletedAt: null,
       isActive: true,
-      clientStatus: { not: ClientStatus.PROSPECT },
+      ...(includeProspects
+        ? {}
+        : { clientStatus: { not: ClientStatus.PROSPECT } }),
     };
 
     if (
@@ -447,6 +454,7 @@ export class ClientService {
         name: true,
         internalCode: true,
         nit: true,
+        clientStatus: true,
       },
       orderBy: { name: 'asc' },
     });

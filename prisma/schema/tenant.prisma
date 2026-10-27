@@ -61,6 +61,8 @@ model Tenant {
   clientInsurancePolicies        ClientInsurancePolicy[]
   contractAddendums              ContractAddendum[]
   clientAnsCommitments           ClientAnsCommitment[]
+  universalDocumentFormats       UniversalDocumentFormat[]
+  formatVariables                FormatVariable[]
 
   @@map("tenant")
 }

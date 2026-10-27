@@ -176,4 +176,24 @@ export class DocumentEngineRepository {
       where: { id },
     });
   }
+
+  async findSystemUsersForSigners(tenantId: string) {
+    return this.prisma.user.findMany({
+      where: {
+        tenantId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        document: true,
+        position: true,
+        department: true,
+        signatureUrl: true,
+        signatureMethod: true,
+        signatureUpdatedAt: true,
+      },
+      orderBy: { fullName: 'asc' },
+    });
+  }
 }

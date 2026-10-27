@@ -53,6 +53,8 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientInsurancePolicy',
               'ContractAddendum',
               'ClientAnsCommitment',
+              'UniversalDocumentFormat',
+              'FormatVariable',
             ];
             const multiTenantModels = [
               'User',
@@ -100,6 +102,8 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientInsurancePolicy',
               'ContractAddendum',
               'ClientAnsCommitment',
+              'UniversalDocumentFormat',
+              'FormatVariable',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -360,6 +364,8 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'TenantDocumentSkin',
                 'DocumentTextSnippet',
                 'ServiceOrderDistributionRecipient',
+                'UniversalDocumentFormat',
+                'FormatVariable',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

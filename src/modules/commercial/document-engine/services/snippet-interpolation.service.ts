@@ -52,10 +52,29 @@ export class SnippetInterpolationService {
     for (const variable of foundVariables) {
       if (values[variable] !== undefined && values[variable] !== null) {
         let replacement = String(values[variable]);
-        if (typeof values[variable] === 'number') {
-          // Si parece valor monetario o canon, no romper formato
-          replacement = String(values[variable]);
+        const isImageToken =
+          variable.includes('logo') ||
+          variable.includes('foto') ||
+          variable.includes('firma') ||
+          variable.includes('plano') ||
+          variable.includes('image');
+
+        const isUrlOrBase64 =
+          typeof values[variable] === 'string' &&
+          (values[variable].startsWith('http://') ||
+            values[variable].startsWith('https://') ||
+            values[variable].startsWith('data:image/'));
+
+        const inSrcAttrPattern = new RegExp(
+          `src=["'][^"']*?\\{\\{\\s*${variable}\\s*\\}\\}[^"']*?["']`,
+          'i',
+        );
+        const isAlreadyInSrc = inSrcAttrPattern.test(template);
+
+        if ((isImageToken || isUrlOrBase64) && !isAlreadyInSrc && isUrlOrBase64) {
+          replacement = `<img src="${values[variable]}" class="noxia-interpolated-image" style="max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: 4px;" alt="${variable}" />`;
         }
+
         const pattern = new RegExp(`\\{\\{\\s*${variable}\\s*\\}\\}`, 'g');
         result = result.replace(pattern, replacement);
         substituted.push(variable);
