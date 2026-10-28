@@ -32,7 +32,7 @@ describe('CommercialProposalsController', () => {
   });
 
   const mockReq = {
-    user: { tenantId: 'ten-1', userId: 'usr-1' },
+    user: { tenantId: 'ten-1', sub: 'usr-1', userId: 'usr-1' },
   };
 
   it('createProposal debe delegar al servicio con tenantId y userId', async () => {
@@ -56,10 +56,10 @@ describe('CommercialProposalsController', () => {
     expect(res.data).toBeDefined();
   });
 
-  it('simulatePnl debe delegar al cálculo en vivo', () => {
+  it('simulatePnl debe delegar al cálculo en vivo', async () => {
     const dto: any = { items: [] };
-    const res = controller.simulatePnl(dto);
-    expect(mockService.calculatePnlLive).toHaveBeenCalledWith(dto);
+    const res = await controller.simulatePnl(dto, mockReq);
+    expect(mockService.calculatePnlLive).toHaveBeenCalledWith(dto, 'ten-1');
     expect(res.netMarginPercentage).toBe(20);
   });
 

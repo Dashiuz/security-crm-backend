@@ -78,6 +78,8 @@ describe('EmployeeService', () => {
         .fn()
         .mockResolvedValue({ id: 'user-1', clientId: null }),
       updateUser: jest.fn().mockResolvedValue({ id: 'user-1' }),
+      softDeleteUser: jest.fn().mockResolvedValue({ id: 'user-1' }),
+      revokeAllSessionsForUser: jest.fn().mockResolvedValue(undefined),
       checkTenantActive: jest.fn().mockResolvedValue(true),
     };
 

@@ -121,10 +121,11 @@ export class CommercialSettingsController {
   @Post('simulate-salary')
   @RequirePermissions('commercial:settings:read')
   @ApiOperation({
-    summary: 'Simular nómina de guarda y matriz de 8 horas oficiales SVSP 2026',
+    summary:
+      'Simular nómina de guarda consumiendo vigencia tarifaria activa de la BD',
   })
-  simulateSalary(@Body() dto: SimulateSalaryDto) {
-    return this.commercialSettingsService.simulateSalary(dto);
+  simulateSalary(@Body() dto: SimulateSalaryDto, @Request() req: any) {
+    return this.commercialSettingsService.simulateSalary(dto, req.user);
   }
 
   // ==========================================

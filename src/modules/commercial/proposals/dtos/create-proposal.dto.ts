@@ -62,6 +62,17 @@ export class CreateProposalDto {
   @Max(100, { message: 'El descuento máximo es 100%' })
   promptPaymentDiscPercent?: number;
 
+  @ApiPropertyOptional({
+    example: 10,
+    default: 10,
+    description: 'Días calendario pactados para descuento de pronto pago',
+  })
+  @IsOptional()
+  @IsInt({ message: 'Los días de pronto pago deben ser un número entero' })
+  @Min(1, { message: 'El mínimo es 1 día' })
+  @Max(90, { message: 'El máximo son 90 días' })
+  promptPaymentDays?: number;
+
   // Switches del Dossier Comercial
   @ApiPropertyOptional({ default: true })
   @IsOptional()

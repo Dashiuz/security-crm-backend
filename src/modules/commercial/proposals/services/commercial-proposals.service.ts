@@ -26,9 +26,27 @@ export class CommercialProposalsService {
   /**
    * Simula el cálculo de P&L en vivo sin persistir cambios en base de datos
    */
-  calculatePnlLive(dto: CalculatePnlDto) {
+  async calculatePnlLive(dto: CalculatePnlDto, tenantId?: string) {
     try {
-      return this.pnlCalculator.computePnl(dto);
+      let aiuRate = dto.aiuRate;
+      let ivaOnAiuRate = dto.ivaOnAiuRate;
+
+      if (tenantId && (aiuRate === undefined || ivaOnAiuRate === undefined)) {
+        const settings = await this.prisma.commercialSettings.findUnique({
+          where: { tenantId },
+        });
+        if (settings) {
+          if (aiuRate === undefined) aiuRate = Number(settings.defaultAiuRate);
+          if (ivaOnAiuRate === undefined)
+            ivaOnAiuRate = Number(settings.defaultIvaOnAiuRate);
+        }
+      }
+
+      return this.pnlCalculator.computePnl({
+        ...dto,
+        aiuRate,
+        ivaOnAiuRate,
+      });
     } catch (error: any) {
       this.logger.error(
         `Error en simulación en vivo de P&L: ${error.message}`,
@@ -67,12 +85,23 @@ export class CommercialProposalsService {
         );
       }
 
-      // 3. Computar P&L y semáforo financiero
+      // 3. Consultar configuración tributaria del tenant desde la base de datos
+      const settings = await this.prisma.commercialSettings.findUnique({
+        where: { tenantId },
+      });
+      const aiuRate = settings ? Number(settings.defaultAiuRate) : 0.1;
+      const ivaOnAiuRate = settings
+        ? Number(settings.defaultIvaOnAiuRate)
+        : 0.19;
+
+      // 4. Computar P&L y semáforo financiero
       const pnl = this.pnlCalculator.computePnl({
         contractDurationMonths: dto.contractDurationMonths || 12,
         promptPaymentDiscPercent: dto.promptPaymentDiscPercent || 0,
         items: dto.items,
         valueAddedItems: dto.valueAddedItems || [],
+        aiuRate,
+        ivaOnAiuRate,
       });
 
       // 4. Generar folio consecutivo para el año de la vigencia
@@ -107,6 +136,7 @@ export class CommercialProposalsService {
         subtotalMonthlyPreDisc: pnl.subtotalMonthlyPreDisc,
         promptPaymentDiscPercent: pnl.promptPaymentDiscPercent,
         promptPaymentDiscAmount: pnl.promptPaymentDiscAmount,
+        promptPaymentDays: dto.promptPaymentDays ?? 10,
         subtotalMonthlyAfterDisc: pnl.subtotalMonthlyAfterDisc,
         aiuBaseAmount: pnl.aiuBaseAmount,
         ivaAmount: pnl.ivaAmount,
@@ -124,8 +154,13 @@ export class CommercialProposalsService {
           ? (dto.draftSnapshotJson as Prisma.InputJsonValue)
           : Prisma.JsonNull,
 
-        createdBy: { connect: { id: userId } },
-        updatedBy: { connect: { id: userId } },
+        // Auditoría de Creación y Edición
+        ...(userId
+          ? {
+              createdBy: { connect: { id: userId } },
+              updatedBy: { connect: { id: userId } },
+            }
+          : {}),
 
         // Líneas Hijas de Puestos
         items: {
@@ -291,7 +326,7 @@ export class CommercialProposalsService {
         draftSnapshotJson: dto.draftSnapshotJson
           ? (dto.draftSnapshotJson as Prisma.InputJsonValue)
           : undefined,
-        updatedBy: { connect: { id: userId } },
+        ...(userId ? { updatedBy: { connect: { id: userId } } } : {}),
       };
 
       // Si se enviaron nuevos items, mapear para reemplazo

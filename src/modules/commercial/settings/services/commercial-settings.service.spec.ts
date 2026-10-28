@@ -29,6 +29,8 @@ describe('CommercialSettingsService', () => {
     defaultIvaOnAiuRate: new Prisma.Decimal(0.19),
     defaultRetefuenteRate: new Prisma.Decimal(0.02),
     defaultReteIcaRate: new Prisma.Decimal(0.0138),
+    defaultPromptPaymentDays: 10,
+    defaultPromptPaymentDisc: new Prisma.Decimal(0.0),
     tariffPeriods: [],
     serviceCatalog: [],
     salaryMatrix: [],
@@ -352,11 +354,20 @@ describe('CommercialSettingsService', () => {
     });
 
     it('debe simular salario de guarda', async () => {
-      const res = await service.simulateSalary({
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce({
         smmlv: 1750905,
-        transportAllowance: 249095,
-        scheduleType: ShiftScheduleType.SCHEDULE_2X2X2,
+        monthlyTransportAux: 249095,
+        statutoryWeeklyHours: 44,
       });
+
+      const res = await service.simulateSalary(
+        {
+          smmlv: 1750905,
+          transportAllowance: 249095,
+          scheduleType: ShiftScheduleType.SCHEDULE_2X2X2,
+        },
+        mockUser,
+      );
 
       expect(res.grossSalaryTotal).toBeGreaterThan(0);
       expect(res.netTakeHomePay).toBeGreaterThan(0);
@@ -542,8 +553,9 @@ describe('CommercialSettingsService', () => {
     it('debe simular tarifas usando el periodo activo cuando no se proporciona tariffPeriodId', async () => {
       mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce({
         smmlv: 1750905,
+        monthlyTransportAux: 249095,
         commercialMultiplier: 8.8,
-        strata46Multiplier: 8.6,
+        strata46Multiplier: 9.77,
         strata13Multiplier: 7.66,
         dayProportionFactor: 0.5597,
         nightProportionFactor: 0.4403,
@@ -561,6 +573,96 @@ describe('CommercialSettingsService', () => {
       );
 
       expect(res.subtotalBeforeTax).toBeGreaterThan(0);
+    });
+
+    it('debe simular tarifas con un tariffPeriodId específico', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce({
+        id: 'tp-custom',
+        smmlv: 1800000,
+        monthlyTransportAux: 260000,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 9.77,
+        strata13Multiplier: 7.66,
+        dayProportionFactor: 0.4759,
+        nightProportionFactor: 0.5241,
+        statutoryDayHours: 13,
+        statutoryNightHours: 11,
+      });
+
+      const res = await service.simulateTariff(
+        {
+          tariffPeriodId: 'tp-custom',
+          sector: CommercialSector.RESIDENTIAL_STRATA_4_6,
+          weaponModality: WeaponModality.NO_WEAPON,
+          dayHours: 24,
+          nightHours: 0,
+          billableDays: 30,
+        },
+        mockUser,
+      );
+
+      expect(res.tariffBase24h).toBe(Math.round(1800000 * 9.77));
+    });
+
+    it('debe lanzar NotFoundException si el tariffPeriodId especificado no existe en BD', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce(null);
+
+      await expect(
+        service.simulateTariff(
+          {
+            tariffPeriodId: 'tp-inexistente',
+            sector: CommercialSector.COMMERCIAL_PUBLIC,
+            weaponModality: WeaponModality.NO_WEAPON,
+            dayHours: 15,
+            nightHours: 9,
+            billableDays: 30,
+          },
+          mockUser,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('debe lanzar NotFoundException si no existe ninguna vigencia en BD para el tenant', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+
+      await expect(
+        service.simulateTariff(
+          {
+            sector: CommercialSector.COMMERCIAL_PUBLIC,
+            weaponModality: WeaponModality.NO_WEAPON,
+            dayHours: 15,
+            nightHours: 9,
+            billableDays: 30,
+          },
+          mockUser,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('debe simular salario de guarda consumiendo vigencia activa de BD', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst.mockResolvedValueOnce({
+        smmlv: 1750905,
+        monthlyTransportAux: 249095,
+        statutoryWeeklyHours: 44,
+      });
+
+      const res = await service.simulateSalary({}, mockUser);
+
+      expect(res.baseSalary).toBe(1750905);
+      expect(res.transportAllowance).toBe(249095);
+      expect(res.reference.statutoryWeeklyHours).toBe(44);
+    });
+
+    it('debe lanzar NotFoundException al simular salario si no existe vigencia en BD', async () => {
+      mockPrisma.tariffPeriodConfig.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+
+      await expect(service.simulateSalary({}, mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('debe lanzar NotFoundException al actualizar o eliminar elementos inexistentes', async () => {

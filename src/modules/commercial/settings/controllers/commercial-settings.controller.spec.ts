@@ -88,8 +88,8 @@ describe('CommercialSettingsController', () => {
 
   it('debe simular nómina de guarda', async () => {
     const dto = { smmlv: 1750905 };
-    const res = await controller.simulateSalary(dto);
-    expect(mockService.simulateSalary).toHaveBeenCalledWith(dto);
+    const res = await controller.simulateSalary(dto, mockReq);
+    expect(mockService.simulateSalary).toHaveBeenCalledWith(dto, mockReq.user);
     expect(res.netTakeHomePay).toBe(2485528);
   });
 

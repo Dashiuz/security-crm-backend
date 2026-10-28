@@ -1051,117 +1051,129 @@ async function main() {
 
   // 12. Commercial Settings & SVSP 2026 Reference
   console.log('Seeding Commercial Settings for active tenants...');
-  const testTenantId = 'p1vk4imb6ugp1z0flglw86pk';
-  const commercialSetting = await prisma.commercialSettings.upsert({
-    where: { tenantId: testTenantId },
-    update: {},
-    create: {
-      tenantId: testTenantId,
-      defaultAiuRate: 0.10,
-      defaultIvaOnAiuRate: 0.19,
-      defaultRetefuenteRate: 0.02,
-      defaultReteIcaRate: 0.0138,
-      maxReinvestmentPct1Yr: 0.80,
-      maxReinvestmentPct2Yr: 1.60,
-      defaultQuoteValidityDays: 15,
-      enableGuardSalaryDisplay: true,
-      qualityDocCode: 'CM-F-001',
-      qualityDocVersion: 'V.4',
-    },
-  });
+  const tenantsToSeed = ['p1vk4imb6ugp1z0flglw86pk', 'system'];
+  for (const tenantId of tenantsToSeed) {
+    const commercialSetting = await prisma.commercialSettings.upsert({
+      where: { tenantId },
+      update: {},
+      create: {
+        tenantId,
+        defaultAiuRate: 0.10,
+        defaultIvaOnAiuRate: 0.19,
+        defaultRetefuenteRate: 0.02,
+        defaultReteIcaRate: 0.0138,
+        maxReinvestmentPct1Yr: 0.80,
+        maxReinvestmentPct2Yr: 1.60,
+        defaultQuoteValidityDays: 15,
+        enableGuardSalaryDisplay: true,
+        defaultPromptPaymentDays: 10,
+        defaultPromptPaymentDisc: 0.00,
+        qualityDocCode: 'CM-F-001',
+        qualityDocVersion: 'V.4',
+      },
+    });
 
-  // Default Tariff Period for 2026 (SVSP Official Reference)
-  await prisma.tariffPeriodConfig.upsert({
-    where: {
-      tenantId_year_label: {
-        tenantId: testTenantId,
+    // Default Tariff Period for 2026 (SVSP Official Reference)
+    await prisma.tariffPeriodConfig.upsert({
+      where: {
+        tenantId_year_label: {
+          tenantId,
+          year: 2026,
+          label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
+        },
+      },
+      update: {
+        smmlv: 1750905.00,
+        monthlyTransportAux: 249095.00,
+        dailyTransportAux: 8303.17,
+        statutoryWeeklyHours: 44,
+        baseHourlyRate: 7959.00,
+        statutoryDayHours: 13,
+        statutoryNightHours: 11,
+        dayProportionFactor: 0.4759,
+        nightProportionFactor: 0.5241,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 9.77,
+        strata13Multiplier: 7.66376105,
+      },
+      create: {
+        tenantId,
+        commercialSettingsId: commercialSetting.id,
         year: 2026,
         label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+        smmlv: 1750905.00,
+        monthlyTransportAux: 249095.00,
+        dailyTransportAux: 8303.17,
+        statutoryWeeklyHours: 44,
+        baseHourlyRate: 7959.00,
+        statutoryDayHours: 13,
+        statutoryNightHours: 11,
+        dayProportionFactor: 0.4759,
+        nightProportionFactor: 0.5241,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 9.77,
+        strata13Multiplier: 7.66376105,
       },
-    },
-    update: {
-      smmlv: 1750905.00,
-      monthlyTransportAux: 249095.00,
-      dailyTransportAux: 8303.17,
-      statutoryWeeklyHours: 44,
-      baseHourlyRate: 7959.00,
-    },
-    create: {
-      tenantId: testTenantId,
-      commercialSettingsId: commercialSetting.id,
-      year: 2026,
-      label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
-      startDate: new Date('2026-01-01'),
-      endDate: new Date('2026-12-31'),
-      isActive: true,
-      smmlv: 1750905.00,
-      monthlyTransportAux: 249095.00,
-      dailyTransportAux: 8303.17,
-      statutoryWeeklyHours: 44,
-      baseHourlyRate: 7959.00,
-      statutoryDayHours: 15,
-      statutoryNightHours: 9,
-      dayProportionFactor: 0.5597,
-      nightProportionFactor: 0.4403,
-      commercialMultiplier: 8.8,
-      strata46Multiplier: 8.6,
-      strata13Multiplier: 7.66376105,
-    },
-  });
+    });
 
-  // Default Position Salary Matrix (Guarda Portero 2x2x2)
-  await prisma.positionSalaryMatrix.upsert({
-    where: {
-      tenantId_positionTitle_scheduleType: {
-        tenantId: testTenantId,
+    // Default Position Salary Matrix (Guarda Portero 2x2x2)
+    await prisma.positionSalaryMatrix.upsert({
+      where: {
+        tenantId_positionTitle_scheduleType: {
+          tenantId,
+          positionTitle: 'Guarda Portero',
+          scheduleType: 'SCHEDULE_2X2X2',
+        },
+      },
+      update: {
+        baseSalary: 1750905.00,
+        transportAllowance: 249095.00,
+        shiftOrdinaryHours: 8,
+        shiftExtraHours: 4,
+      },
+      create: {
+        tenantId,
+        commercialSettingsId: commercialSetting.id,
         positionTitle: 'Guarda Portero',
         scheduleType: 'SCHEDULE_2X2X2',
+        guardsRequiredPerPost: 3.0,
+        baseSalary: 1750905.00,
+        transportAllowance: 249095.00,
+        shiftOrdinaryHours: 8,
+        shiftExtraHours: 4,
+        estimatedOvertimePay: 450000.00,
+        grossSalary: 2449095.00,
+        healthDeductionPct: 0.04,
+        pensionDeductionPct: 0.04,
+        healthDeduction: 88000.00,
+        pensionDeduction: 88000.00,
+        totalDeductions: 176000.00,
+        fixedBonusNonSalary: 0,
+        vehicleAllowance: 0,
+        netTakeHomePay: 2273095.00,
+        isActive: true,
       },
-    },
-    update: {
-      baseSalary: 1750905.00,
-      transportAllowance: 249095.00,
-      shiftOrdinaryHours: 8,
-      shiftExtraHours: 4,
-    },
-    create: {
-      tenantId: testTenantId,
-      commercialSettingsId: commercialSetting.id,
-      positionTitle: 'Guarda Portero',
-      scheduleType: 'SCHEDULE_2X2X2',
-      guardsRequiredPerPost: 3.0,
-      baseSalary: 1750905.00,
-      transportAllowance: 249095.00,
-      shiftOrdinaryHours: 8,
-      shiftExtraHours: 4,
-      estimatedOvertimePay: 450000.00,
-      grossSalary: 2449095.00,
-      healthDeductionPct: 0.04,
-      pensionDeductionPct: 0.04,
-      healthDeduction: 88000.00,
-      pensionDeduction: 88000.00,
-      totalDeductions: 176000.00,
-      fixedBonusNonSalary: 0,
-      vehicleAllowance: 0,
-      netTakeHomePay: 2273095.00,
-      isActive: true,
-    },
-  });
+    });
 
-  // Default Document Skin
-  await prisma.tenantDocumentSkin.upsert({
-    where: { tenantId: testTenantId },
-    update: {},
-    create: {
-      tenantId: testTenantId,
-      commercialSettingsId: commercialSetting.id,
-      primaryBrandColorHex: '#1E1B4B',
-      accentBrandColorHex: '#7C3AED',
-      companyLegalName: 'Seguridad Test Ltda.',
-      companyNit: '900.123.456-7',
-      supervigilanciaLicense: 'Res. 20264100001234 de SuperVigilancia',
-    },
-  });
+    // Default Document Skin
+    await prisma.tenantDocumentSkin.upsert({
+      where: { tenantId },
+      update: {},
+      create: {
+        tenantId,
+        commercialSettingsId: commercialSetting.id,
+        primaryBrandColorHex: '#1E1B4B',
+        accentBrandColorHex: '#7C3AED',
+        companyLegalName:
+          tenantId === 'system' ? 'NOXIA Master System' : 'Seguridad Test Ltda.',
+        companyNit: tenantId === 'system' ? '900.000.000-1' : '900.123.456-7',
+        supervigilanciaLicense: 'Res. 20264100001234 de SuperVigilancia',
+      },
+    });
+  }
 
   console.log('✅ Commercial settings and SVSP 2026 reference seeded');
 

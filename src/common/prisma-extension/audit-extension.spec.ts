@@ -289,4 +289,136 @@ describe('auditExtension - Multi Client Scope', () => {
       expect(updateArgs.data.createdBy).toBeUndefined();
     });
   });
+
+  it('should inject createdById/updatedById for AuthorizedSigner model', async () => {
+    const ctx = {
+      userId: 'user-signer-admin',
+      tenantId: 'tenant-signers',
+      isGodlike: false,
+      allowedClientIds: 'ALL' as const,
+      features: ['commercial'],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+
+      const createArgs: any = {
+        data: {
+          fullName: 'Juan Pérez',
+          idNumber: '10203040',
+          corporateTitle: 'Director Comercial',
+          email: 'juan@example.com',
+        },
+      };
+
+      await allOps({
+        model: 'AuthorizedSigner',
+        operation: 'create',
+        args: createArgs,
+        query: mockQuery,
+      });
+
+      expect(createArgs.data.tenantId).toBe('tenant-signers');
+      expect(createArgs.data.createdById).toBe('user-signer-admin');
+      expect(createArgs.data.updatedById).toBe('user-signer-admin');
+      expect(createArgs.data.createdBy).toBeUndefined();
+      expect(createArgs.data.updatedBy).toBeUndefined();
+    });
+  });
+
+  it('should NOT inject createdBy/updatedBy for models without audit columns like ServiceOrder and ProposalServiceItem', async () => {
+    const ctx = {
+      userId: 'user-ops',
+      tenantId: 'tenant-ops',
+      isGodlike: false,
+      allowedClientIds: 'ALL' as const,
+      features: ['commercial'],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+
+      // 1. ServiceOrder
+      const soCreateArgs: any = {
+        data: {
+          orderFolioCode: 'OS-2026-0001',
+          omegaCode: 'OMG-001',
+          installationDate: new Date(),
+        },
+      };
+
+      await allOps({
+        model: 'ServiceOrder',
+        operation: 'create',
+        args: soCreateArgs,
+        query: mockQuery,
+      });
+
+      expect(soCreateArgs.data.tenantId).toBe('tenant-ops');
+      expect(soCreateArgs.data.createdBy).toBeUndefined();
+      expect(soCreateArgs.data.updatedBy).toBeUndefined();
+      expect(soCreateArgs.data.createdById).toBeUndefined();
+      expect(soCreateArgs.data.updatedById).toBeUndefined();
+
+      // 2. ProposalServiceItem
+      const psiCreateArgs: any = {
+        data: {
+          positionTitle: 'Guarda Portero',
+          unitMonthlyBilledPrice: 5000000,
+        },
+      };
+
+      await allOps({
+        model: 'ProposalServiceItem',
+        operation: 'create',
+        args: psiCreateArgs,
+        query: mockQuery,
+      });
+
+      expect(psiCreateArgs.data.tenantId).toBe('tenant-ops');
+      expect(psiCreateArgs.data.createdBy).toBeUndefined();
+      expect(psiCreateArgs.data.updatedBy).toBeUndefined();
+    });
+  });
+
+  it('should enforce multi-client scoping on CommercialProposal and ServiceOrder', async () => {
+    const ctx = {
+      userId: 'commercial-user-1',
+      tenantId: 'tenant-comm',
+      allowedClientIds: ['cli-assigned-1', 'cli-assigned-2'],
+      features: ['commercial'],
+    };
+
+    await contextService.run(ctx, async () => {
+      const allOps = extension.query.$allModels.$allOperations;
+
+      // 1. CommercialProposal findMany
+      const propArgs: any = { where: { status: 'DRAFT' } };
+      await allOps({
+        model: 'CommercialProposal',
+        operation: 'findMany',
+        args: propArgs,
+        query: mockQuery,
+      });
+
+      expect(propArgs.where.tenantId).toBe('tenant-comm');
+      expect(propArgs.where.AND).toEqual([
+        { clientId: { in: ['cli-assigned-1', 'cli-assigned-2'] } },
+      ]);
+
+      // 2. ServiceOrder findMany
+      const soArgs: any = { where: { status: 'DRAFT_CONFIGURING' } };
+      await allOps({
+        model: 'ServiceOrder',
+        operation: 'findMany',
+        args: soArgs,
+        query: mockQuery,
+      });
+
+      expect(soArgs.where.tenantId).toBe('tenant-comm');
+      expect(soArgs.where.AND).toEqual([
+        { clientId: { in: ['cli-assigned-1', 'cli-assigned-2'] } },
+      ]);
+    });
+  });
 });

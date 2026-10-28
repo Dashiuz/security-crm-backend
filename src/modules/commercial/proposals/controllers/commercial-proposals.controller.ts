@@ -49,11 +49,8 @@ export class CommercialProposalsController {
   })
   @ApiCreatedResponse({ description: 'Propuesta creada exitosamente' })
   async createProposal(@Request() req: any, @Body() dto: CreateProposalDto) {
-    return this.proposalsService.createProposal(
-      req.user.tenantId,
-      req.user.userId,
-      dto,
-    );
+    const userId = req.user?.sub || req.user?.userId;
+    return this.proposalsService.createProposal(req.user.tenantId, userId, dto);
   }
 
   @Get()
@@ -87,8 +84,8 @@ export class CommercialProposalsController {
   @ApiOkResponse({
     description: 'Resultado de viabilidad y P&L calculado en vivo',
   })
-  simulatePnl(@Body() dto: CalculatePnlDto) {
-    return this.proposalsService.calculatePnlLive(dto);
+  simulatePnl(@Body() dto: CalculatePnlDto, @Request() req: any) {
+    return this.proposalsService.calculatePnlLive(dto, req.user?.tenantId);
   }
 
   @Get(':id')
@@ -122,9 +119,10 @@ export class CommercialProposalsController {
     @Param('id') id: string,
     @Body() dto: UpdateProposalDto,
   ) {
+    const userId = req.user?.sub || req.user?.userId;
     return this.proposalsService.updateProposal(
       req.user.tenantId,
-      req.user.userId,
+      userId,
       id,
       dto,
     );
@@ -142,11 +140,8 @@ export class CommercialProposalsController {
   })
   @ApiOkResponse({ description: 'Propuesta aprobada para emisión comercial' })
   async approvePnl(@Request() req: any, @Param('id') id: string) {
-    return this.proposalsService.approvePnl(
-      req.user.tenantId,
-      req.user.userId,
-      id,
-    );
+    const userId = req.user?.sub || req.user?.userId;
+    return this.proposalsService.approvePnl(req.user.tenantId, userId, id);
   }
 
   @Post(':id/issue-and-send')
@@ -161,11 +156,8 @@ export class CommercialProposalsController {
   })
   @ApiOkResponse({ description: 'Propuesta emitida formalmente' })
   async issueProposal(@Request() req: any, @Param('id') id: string) {
-    return this.proposalsService.issueProposal(
-      req.user.tenantId,
-      req.user.userId,
-      id,
-    );
+    const userId = req.user?.sub || req.user?.userId;
+    return this.proposalsService.issueProposal(req.user.tenantId, userId, id);
   }
 
   @Patch(':id/status')
@@ -184,9 +176,10 @@ export class CommercialProposalsController {
     @Param('id') id: string,
     @Body('status') status: ProposalStatus,
   ) {
+    const userId = req.user?.sub || req.user?.userId;
     return this.proposalsService.updateStatus(
       req.user.tenantId,
-      req.user.userId,
+      userId,
       id,
       status,
     );

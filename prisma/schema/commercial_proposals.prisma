@@ -63,6 +63,7 @@ model CommercialProposal {
   subtotalMonthlyPreDisc    Decimal               @db.Decimal(14, 2)
   promptPaymentDiscPercent  Decimal               @default(0) @db.Decimal(5, 2)
   promptPaymentDiscAmount   Decimal               @default(0) @db.Decimal(14, 2)
+  promptPaymentDays         Int                   @default(10) // Días calendario pactados para descuento de pronto pago
   subtotalMonthlyAfterDisc  Decimal               @db.Decimal(14, 2)
   aiuBaseAmount             Decimal               @db.Decimal(14, 2)
   ivaAmount                 Decimal               @db.Decimal(14, 2)

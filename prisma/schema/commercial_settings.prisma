@@ -15,6 +15,8 @@ model CommercialSettings {
   maxReinvestmentPct2Yr    Decimal @default(1.60) @db.Decimal(5, 4) // 160% acumulado
   defaultQuoteValidityDays Int     @default(15) // Días hábiles de validez
   enableGuardSalaryDisplay Boolean @default(true) // Mostrar sueldo del guarda en ofertas
+  defaultPromptPaymentDays Int     @default(10) // Días calendario pactados para descuento por pronto pago
+  defaultPromptPaymentDisc Decimal @default(0.00) @db.Decimal(5, 4) // Descuento de pronto pago por omisión
 
   // Metadatos ISO / Calidad para Encabezados de Formatos Internos
   qualityDocCode         String    @default("CM-F-001")
@@ -69,7 +71,7 @@ model TariffPeriodConfig {
 
   // Multiplicadores Sectoriales (en número de SMMLV)
   commercialMultiplier Decimal @default(8.8) @db.Decimal(4, 2) // 8.8 SMMLV
-  strata46Multiplier   Decimal @default(8.6) @db.Decimal(4, 2) // 8.6 SMMLV
+  strata46Multiplier   Decimal @default(9.77) @db.Decimal(4, 2) // 9.77 SMMLV (Circular SVSP 2026 - Ley 2101)
   strata13Multiplier   Decimal @default(7.66376105) @db.Decimal(10, 8) // 7.66 SMMLV
 
   createdAt   DateTime @default(now())

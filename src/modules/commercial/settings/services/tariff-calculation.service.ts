@@ -72,7 +72,7 @@ export class TariffCalculationEngine {
   }
 
   static calculate(input: TariffInput): TariffCalculationBreakdown {
-    // 1. Multiplicador de Sector (múltiplos de SMMLV según decreto SVSP)
+    // 1. Multiplicador de Sector (múltiplos de SMMLV según circular SVSP)
     let multiplier = 8.8; // Comercial y Público
     if (
       input.customSectorMultiplier !== undefined &&
@@ -80,7 +80,7 @@ export class TariffCalculationEngine {
     ) {
       multiplier = input.customSectorMultiplier;
     } else if (input.sector === CommercialSector.RESIDENTIAL_STRATA_4_6) {
-      multiplier = 8.6;
+      multiplier = 9.77; // Circular SVSP 2026 oficial para estratos 4, 5 y 6
     } else if (input.sector === CommercialSector.RESIDENTIAL_STRATA_1_3) {
       multiplier = 7.66376105;
     }
@@ -92,20 +92,40 @@ export class TariffCalculationEngine {
     const dayFactor = input.dayProportionFactor ?? this.DEFAULT_DAY_PROPORTION;
     const nightFactor =
       input.nightProportionFactor ?? this.DEFAULT_NIGHT_PROPORTION;
-    const legalDayHours =
-      input.statutoryDayHours ?? this.DEFAULT_LEGAL_DAY_HOURS;
-    const legalNightHours =
-      input.statutoryNightHours ?? this.DEFAULT_LEGAL_NIGHT_HOURS;
+
+    // Si no se especifican horas legales pero el factor es el de 2026 (0.4759), usar 13h/11h
+    const defaultDayH =
+      dayFactor === 0.4759 || Math.abs(dayFactor - 0.4759) < 0.001
+        ? 13
+        : this.DEFAULT_LEGAL_DAY_HOURS;
+    const defaultNightH =
+      nightFactor === 0.5241 || Math.abs(nightFactor - 0.5241) < 0.001
+        ? 11
+        : this.DEFAULT_LEGAL_NIGHT_HOURS;
+
+    const legalDayHours = input.statutoryDayHours ?? defaultDayH;
+    const legalNightHours = input.statutoryNightHours ?? defaultNightH;
 
     const dayHourlyRateMonth = (tariffBase24h * dayFactor) / legalDayHours;
     const nightHourlyRateMonth =
       (tariffBase24h * nightFactor) / legalNightHours;
 
     // 4. Costo Directo Mensual
-    const dailyCost =
-      dayHourlyRateMonth * input.dayHours +
-      nightHourlyRateMonth * input.nightHours;
-    const directCost = this.roundTax((dailyCost / 30) * input.billableDays);
+    let directCost: number;
+    // Si es un puesto 24h continuo de 30 días con proporciones normales (ej. 13h día / 11h noche o 15h día / 9h noche)
+    if (
+      input.billableDays === 30 &&
+      input.dayHours + input.nightHours === 24 &&
+      input.dayHours === legalDayHours &&
+      input.nightHours === legalNightHours
+    ) {
+      directCost = tariffBase24h;
+    } else {
+      const dailyCost =
+        dayHourlyRateMonth * input.dayHours +
+        nightHourlyRateMonth * input.nightHours;
+      directCost = this.roundTax((dailyCost / 30) * input.billableDays);
+    }
 
     // 5. A&S (Administración y Supervisión)
     let adminSupervisionPct = 0.1;
@@ -183,15 +203,25 @@ export class TariffCalculationEngine {
       billableDays: number;
       discountPct?: number;
       customSectorMultiplier?: number;
+      customAdminSupervisionPct?: number;
       manualSmmlv?: number;
       manualTransportAux?: number;
+      statutoryDayHours?: number;
+      statutoryNightHours?: number;
+      dayProportionFactor?: number;
+      nightProportionFactor?: number;
+      aiuRate?: number;
+      ivaOnAiuRate?: number;
     },
     smmlv: number,
     commercialMultiplier = 8.8,
-    strata46Multiplier = 8.6,
+    strata46Multiplier = 9.77,
     strata13Multiplier = 7.66376105,
-    dayFactor = 0.5597,
-    nightFactor = 0.4403,
+    dayFactor = 0.4759,
+    nightFactor = 0.5241,
+    statutoryDayHours = 13,
+    statutoryNightHours = 11,
+    monthlyTransportAux = 249095.0,
   ): TariffCalculationBreakdown {
     const finalSmmlv = dto.manualSmmlv ?? smmlv;
     let sectorMultiplier: number | undefined;
@@ -207,7 +237,7 @@ export class TariffCalculationEngine {
 
     return this.calculate({
       smmlv: finalSmmlv,
-      monthlyTransportAux: dto.manualTransportAux ?? 249095.0,
+      monthlyTransportAux: dto.manualTransportAux ?? monthlyTransportAux,
       sector: dto.sector,
       weaponModality: dto.weaponModality,
       dayHours: dto.dayHours,
@@ -215,8 +245,13 @@ export class TariffCalculationEngine {
       billableDays: dto.billableDays,
       discountPct: dto.discountPct,
       customSectorMultiplier: sectorMultiplier,
-      dayProportionFactor: dayFactor,
-      nightProportionFactor: nightFactor,
+      customAdminSupervisionPct: dto.customAdminSupervisionPct,
+      dayProportionFactor: dto.dayProportionFactor ?? dayFactor,
+      nightProportionFactor: dto.nightProportionFactor ?? nightFactor,
+      statutoryDayHours: dto.statutoryDayHours ?? statutoryDayHours,
+      statutoryNightHours: dto.statutoryNightHours ?? statutoryNightHours,
+      aiuRate: dto.aiuRate,
+      ivaOnAiuRate: dto.ivaOnAiuRate,
     });
   }
 }

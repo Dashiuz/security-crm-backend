@@ -40,6 +40,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PositionSalaryMatrix',
               'ValueAddedCatalogItem',
               'TenantDocumentSkin',
+              'AuthorizedSigner',
               'DocumentTextSnippet',
               'ServiceOrderDistributionRecipient',
               'CommercialProposal',
@@ -89,6 +90,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PositionSalaryMatrix',
               'ValueAddedCatalogItem',
               'TenantDocumentSkin',
+              'AuthorizedSigner',
               'DocumentTextSnippet',
               'ServiceOrderDistributionRecipient',
               'CommercialProposal',
@@ -136,6 +138,12 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PqrsTicket',
               'PqrsMessage',
               'Employee',
+              'CommercialProposal',
+              'ServiceOrder',
+              'CommercialFollowUp',
+              'ClientInsurancePolicy',
+              'ContractAddendum',
+              'ClientAnsCommitment',
             ];
             const isMultiClient = (multiClientModels as any[]).includes(model);
 
@@ -352,6 +360,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'SecurityStudy',
                 'PqrsTicket',
                 'PqrsMessage',
+                'CommercialProposal',
               ];
               const isRelationAudit = relationAuditModels.includes(model);
 
@@ -362,12 +371,28 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'PositionSalaryMatrix',
                 'ValueAddedCatalogItem',
                 'TenantDocumentSkin',
+                'AuthorizedSigner',
                 'DocumentTextSnippet',
                 'ServiceOrderDistributionRecipient',
                 'UniversalDocumentFormat',
                 'FormatVariable',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
+
+              const scalarAuditStringModels = [
+                'User',
+                'Employee',
+                'Role',
+                'Department',
+                'Position',
+                'Tenant',
+                'ClientProperties',
+                'Tower',
+                'Floor',
+                'Unit',
+              ];
+              const isScalarStringAudit =
+                scalarAuditStringModels.includes(model);
 
               if (operation === 'create') {
                 if (model === 'SignatureRequest') {
@@ -425,7 +450,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                     }
                   }
                   args.data = { ...data, ...newFields };
-                } else {
+                } else if (isScalarStringAudit) {
                   args.data = {
                     ...(args.data as any),
                     createdBy: (args.data as any).createdBy || auditActor,
@@ -473,7 +498,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                       };
                     }
                   }
-                } else {
+                } else if (isScalarStringAudit) {
                   args.data = {
                     ...(args.data as any),
                     updatedBy: (args.data as any).updatedBy || auditActor,
@@ -573,7 +598,7 @@ export const auditExtension = (contextService: RequestContextService) => {
 
                   (args as any).create = { ...createData, ...newCreate };
                   (args as any).update = { ...updateData, ...newUpdate };
-                } else {
+                } else if (isScalarStringAudit) {
                   (args as any).create = {
                     ...((args as any).create || {}),
                     createdBy: (args as any).create?.createdBy || auditActor,

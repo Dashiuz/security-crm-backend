@@ -1,8 +1,23 @@
-import { IsInt, IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  Min,
+  IsString,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ShiftScheduleType } from '@prisma/client';
 
 export class SimulateSalaryDto {
+  @ApiPropertyOptional({
+    description:
+      'ID de la vigencia tarifaria en BD. Si se omite, consume la vigencia activa.',
+  })
+  @IsString()
+  @IsOptional()
+  tariffPeriodId?: string;
+
   @ApiPropertyOptional({
     example: 1750905.0,
     description: 'SMMLV base de simulación',

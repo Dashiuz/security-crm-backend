@@ -87,6 +87,27 @@ export class UpdateCommercialSettingsDto {
   enableGuardSalaryDisplay?: boolean;
 
   @ApiPropertyOptional({
+    example: 10,
+    description: 'Días calendario pactados para descuento por pronto pago',
+  })
+  @IsNumber()
+  @Min(1)
+  @Max(90)
+  @IsOptional()
+  defaultPromptPaymentDays?: number;
+
+  @ApiPropertyOptional({
+    example: 0.05,
+    description:
+      'Porcentaje por defecto de descuento por pronto pago (ej: 0.05 = 5%)',
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  defaultPromptPaymentDisc?: number;
+
+  @ApiPropertyOptional({
     example: 'CM-F-001',
     description: 'Código de calidad ISO para formatos comerciales',
   })

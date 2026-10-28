@@ -292,6 +292,20 @@ export class SystemCatalogService {
             dataType: 'NUMBER',
             example: '12',
           },
+          {
+            systemPath: 'proposal.promptPaymentDays',
+            label: 'Días de Pronto Pago',
+            token: 'propuesta_dias_pronto_pago',
+            dataType: 'NUMBER',
+            example: '10',
+          },
+          {
+            systemPath: 'proposal.promptPaymentDiscPercent',
+            label: 'Porcentaje Descuento Pronto Pago',
+            token: 'propuesta_descuento_pronto_pago',
+            dataType: 'TEXT',
+            example: '2.00%',
+          },
         ],
       },
       {
@@ -498,6 +512,12 @@ export class SystemCatalogService {
           values['propuesta_meses'] = String(
             proposal.contractDurationMonths || 12,
           );
+          values['propuesta_dias_pronto_pago'] = String(
+            proposal.promptPaymentDays ?? 10,
+          );
+          values['propuesta_descuento_pronto_pago'] = `${Number(
+            proposal.promptPaymentDiscPercent || 0,
+          )}%`;
         }
       } catch (err: any) {
         this.logger.error(

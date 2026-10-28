@@ -69,6 +69,12 @@ describe('CommercialProposalsService', () => {
       tariffPeriodConfig: {
         findFirst: jest.fn().mockResolvedValue({ id: 'tp-1', year: 2026 }),
       },
+      commercialSettings: {
+        findUnique: jest.fn().mockResolvedValue({
+          defaultAiuRate: 0.1,
+          defaultIvaOnAiuRate: 0.19,
+        }),
+      },
     };
 
     service = new CommercialProposalsService(
@@ -79,10 +85,14 @@ describe('CommercialProposalsService', () => {
   });
 
   describe('calculatePnlLive', () => {
-    it('debe delegar el cálculo al engine de P&L', () => {
+    it('debe delegar el cálculo al engine de P&L', async () => {
       const dto: any = { contractDurationMonths: 12, items: [] };
-      const res = service.calculatePnlLive(dto);
-      expect(mockPnlCalculator.computePnl).toHaveBeenCalledWith(dto);
+      const res = await service.calculatePnlLive(dto, 'ten-1');
+      expect(mockPnlCalculator.computePnl).toHaveBeenCalledWith({
+        ...dto,
+        aiuRate: 0.1,
+        ivaOnAiuRate: 0.19,
+      });
       expect(res.netMarginPercentage).toBe(20);
     });
   });

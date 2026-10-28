@@ -35,6 +35,7 @@ import {
   InternalDepartment,
   PositionSalaryMatrix,
   ServiceOrderDistributionRecipient,
+  TariffPeriodConfig,
   Prisma,
 } from '@prisma/client';
 import { CommercialSettingsRepository } from '../../repositories/commercial-settings.repository';
@@ -146,7 +147,9 @@ export class CommercialSettingsService {
           commercialMultiplier: new Prisma.Decimal(
             dto.commercialMultiplier ?? 8.8,
           ),
-          strata46Multiplier: new Prisma.Decimal(dto.strata46Multiplier ?? 8.6),
+          strata46Multiplier: new Prisma.Decimal(
+            dto.strata46Multiplier ?? 9.77,
+          ),
           strata13Multiplier: new Prisma.Decimal(
             dto.strata13Multiplier ?? 7.66376105,
           ),
@@ -289,48 +292,75 @@ export class CommercialSettingsService {
     user: UserContext,
   ): Promise<TariffCalculationBreakdown> {
     try {
-      let smmlv = 1750905.0;
-      let commercialMult = 8.8;
-      let strata46Mult = 8.6;
-      let strata13Mult = 7.66376105;
-      let dayFactor = 0.5597;
-      let nightFactor = 0.4403;
+      // 1. Consultar configuración tributaria y comercial del tenant
+      const settings = await this.getSettings(user);
 
+      // 2. Consultar vigencia tarifaria (por ID específico o la activa por defecto)
+      let period: TariffPeriodConfig | null = null;
       if (dto.tariffPeriodId) {
-        const period = await this.prisma.tariffPeriodConfig.findFirst({
+        period = await this.prisma.tariffPeriodConfig.findFirst({
           where: { id: dto.tariffPeriodId, tenantId: user.tenantId },
         });
-        if (period) {
-          smmlv = Number(period.smmlv);
-          commercialMult = Number(period.commercialMultiplier);
-          strata46Mult = Number(period.strata46Multiplier);
-          strata13Mult = Number(period.strata13Multiplier);
-          dayFactor = Number(period.dayProportionFactor);
-          nightFactor = Number(period.nightProportionFactor);
+        if (!period) {
+          throw new NotFoundException(
+            `Vigencia tarifaria con id [${dto.tariffPeriodId}] no encontrada`,
+          );
         }
       } else {
-        const activePeriod = await this.prisma.tariffPeriodConfig.findFirst({
+        period = await this.prisma.tariffPeriodConfig.findFirst({
           where: { tenantId: user.tenantId, isActive: true },
           orderBy: { startDate: 'desc' },
         });
-        if (activePeriod) {
-          smmlv = Number(activePeriod.smmlv);
-          commercialMult = Number(activePeriod.commercialMultiplier);
-          strata46Mult = Number(activePeriod.strata46Multiplier);
-          strata13Mult = Number(activePeriod.strata13Multiplier);
-          dayFactor = Number(activePeriod.dayProportionFactor);
-          nightFactor = Number(activePeriod.nightProportionFactor);
+        if (!period) {
+          period = await this.prisma.tariffPeriodConfig.findFirst({
+            where: { tenantId: user.tenantId },
+            orderBy: { startDate: 'desc' },
+          });
         }
       }
 
+      if (!period) {
+        throw new NotFoundException(
+          'No se encontró ninguna vigencia tarifaria configurada en la base de datos para esta empresa.',
+        );
+      }
+
+      // 3. Extraer variables directamente desde la base de datos
+      const smmlv = Number(period.smmlv);
+      const monthlyTransportAux = Number(period.monthlyTransportAux);
+      const commercialMult = Number(period.commercialMultiplier);
+      const strata46Mult = Number(period.strata46Multiplier);
+      const strata13Mult = Number(period.strata13Multiplier);
+      const dayFactor = Number(period.dayProportionFactor);
+      const nightFactor = Number(period.nightProportionFactor);
+      const statutoryDayHours = period.statutoryDayHours ?? 13;
+      const statutoryNightHours = period.statutoryNightHours ?? 11;
+
+      // Tasas tributarias desde CommercialSettings (con soporte a sobreescritura si vienen en DTO)
+      const aiuRate = dto.aiuRate ?? Number(settings.defaultAiuRate);
+      const ivaOnAiuRate =
+        dto.ivaOnAiuRate ?? Number(settings.defaultIvaOnAiuRate);
+      const discountPct =
+        dto.discountPct ?? Number(settings.defaultPromptPaymentDisc);
+
+      const simulationDto = {
+        ...dto,
+        discountPct,
+        aiuRate,
+        ivaOnAiuRate,
+      };
+
       return TariffCalculationEngine.calculateRate(
-        dto,
+        simulationDto,
         smmlv,
         commercialMult,
         strata46Mult,
         strata13Mult,
         dayFactor,
         nightFactor,
+        statutoryDayHours,
+        statutoryNightHours,
+        monthlyTransportAux,
       );
     } catch (error) {
       this.logger.error(
@@ -343,9 +373,52 @@ export class CommercialSettingsService {
 
   async simulateSalary(
     dto: SimulateSalaryDto,
+    user: UserContext,
   ): Promise<GuardPayrollSimulationResult> {
     try {
-      return GuardSalaryCalculationEngine.simulateGuardPayroll(dto);
+      // 1. Consultar vigencia tarifaria en BD
+      let period: TariffPeriodConfig | null = null;
+      if (dto.tariffPeriodId) {
+        period = await this.prisma.tariffPeriodConfig.findFirst({
+          where: { id: dto.tariffPeriodId, tenantId: user.tenantId },
+        });
+        if (!period) {
+          throw new NotFoundException(
+            `Vigencia tarifaria con id [${dto.tariffPeriodId}] no encontrada`,
+          );
+        }
+      } else {
+        period = await this.prisma.tariffPeriodConfig.findFirst({
+          where: { tenantId: user.tenantId, isActive: true },
+          orderBy: { startDate: 'desc' },
+        });
+        if (!period) {
+          period = await this.prisma.tariffPeriodConfig.findFirst({
+            where: { tenantId: user.tenantId },
+            orderBy: { startDate: 'desc' },
+          });
+        }
+      }
+
+      if (!period) {
+        throw new NotFoundException(
+          'No se encontró ninguna vigencia tarifaria configurada en la base de datos para simular nómina.',
+        );
+      }
+
+      // 2. Extraer parámetros base de la BD (con soporte a sobreescritura voluntaria en DTO)
+      const smmlv = dto.smmlv ?? Number(period.smmlv);
+      const transportAllowance =
+        dto.transportAllowance ?? Number(period.monthlyTransportAux);
+      const statutoryWeeklyHours =
+        dto.statutoryWeeklyHours ?? period.statutoryWeeklyHours;
+
+      return GuardSalaryCalculationEngine.simulateGuardPayroll({
+        ...dto,
+        smmlv,
+        transportAllowance,
+        statutoryWeeklyHours,
+      });
     } catch (error) {
       this.logger.error(
         `Error al simular nómina de guarda: ${error.message}`,
@@ -1058,6 +1131,8 @@ export class CommercialSettingsService {
         maxReinvestmentPct2Yr: new Prisma.Decimal(1.6),
         defaultQuoteValidityDays: 15,
         enableGuardSalaryDisplay: true,
+        defaultPromptPaymentDays: 10,
+        defaultPromptPaymentDisc: new Prisma.Decimal(0.0),
         qualityDocCode: 'CM-F-001',
         qualityDocVersion: 'V.4',
         createdById: userId,
@@ -1078,12 +1153,12 @@ export class CommercialSettingsService {
         dailyTransportAux: new Prisma.Decimal(8303.17),
         statutoryWeeklyHours: 44,
         baseHourlyRate: new Prisma.Decimal(7959.0),
-        statutoryDayHours: 15,
-        statutoryNightHours: 9,
-        dayProportionFactor: new Prisma.Decimal(0.5597),
-        nightProportionFactor: new Prisma.Decimal(0.4403),
+        statutoryDayHours: 13,
+        statutoryNightHours: 11,
+        dayProportionFactor: new Prisma.Decimal(0.4759),
+        nightProportionFactor: new Prisma.Decimal(0.5241),
         commercialMultiplier: new Prisma.Decimal(8.8),
-        strata46Multiplier: new Prisma.Decimal(8.6),
+        strata46Multiplier: new Prisma.Decimal(9.77),
         strata13Multiplier: new Prisma.Decimal(7.66376105),
         createdById: userId,
       },

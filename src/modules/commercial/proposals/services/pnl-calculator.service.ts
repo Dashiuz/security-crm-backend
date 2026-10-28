@@ -53,10 +53,12 @@ export class PnlCalculatorService {
       );
 
       // 3. Impuestos Estatutarios (Decreto 4950 de 2007 / Art. 462-1 E.T.)
-      // Base AIU = 10% del subtotal facturado
-      const aiuBaseAmount = this.roundMoney(subtotalMonthlyAfterDisc * 0.1);
-      // IVA = 19% sobre la base AIU
-      const ivaAmount = this.roundMoney(aiuBaseAmount * 0.19);
+      const aiuRate = dto.aiuRate ?? 0.1;
+      const ivaOnAiuRate = dto.ivaOnAiuRate ?? 0.19;
+      // Base AIU
+      const aiuBaseAmount = this.roundMoney(subtotalMonthlyAfterDisc * aiuRate);
+      // IVA sobre la base AIU
+      const ivaAmount = this.roundMoney(aiuBaseAmount * ivaOnAiuRate);
       // Total Facturado Mensual con Impuestos
       const totalMonthlyWithTax = this.roundMoney(
         subtotalMonthlyAfterDisc + ivaAmount,

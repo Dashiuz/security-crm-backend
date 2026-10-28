@@ -157,6 +157,8 @@ export class ChameleonDocumentService {
       id: u.id,
       fullName: u.fullName,
       document: u.document,
+      position: u.position,
+      department: u.department,
       corporateTitle: u.position || u.department || 'Funcionario',
       hasSignature: !!u.signatureUrl,
       signatureUrl: u.signatureUrl,

@@ -91,4 +91,86 @@ export class SimulateTariffDto {
   @Min(0)
   @IsOptional()
   customSectorMultiplier?: number;
+
+  @ApiPropertyOptional({
+    example: 10,
+    description: 'Días calendario pactados para el pronto pago',
+  })
+  @IsInt()
+  @Min(1)
+  @Max(90)
+  @IsOptional()
+  promptPaymentDays?: number;
+
+  @ApiPropertyOptional({
+    example: 0.1,
+    description: 'Sobrescritura manual del factor A&S (ej. 0.10 = 10%)',
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  customAdminSupervisionPct?: number;
+
+  @ApiPropertyOptional({
+    example: 13,
+    description: 'Horas diurnas legales según régimen (ej. 13 o 15)',
+  })
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  @IsOptional()
+  statutoryDayHours?: number;
+
+  @ApiPropertyOptional({
+    example: 11,
+    description: 'Horas nocturnas legales según régimen (ej. 11 o 9)',
+  })
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  @IsOptional()
+  statutoryNightHours?: number;
+
+  @ApiPropertyOptional({
+    example: 0.4759,
+    description: 'Factor de ponderación diurna de la franja',
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  dayProportionFactor?: number;
+
+  @ApiPropertyOptional({
+    example: 0.5241,
+    description: 'Factor de ponderación nocturna de la franja',
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  nightProportionFactor?: number;
+
+  @ApiPropertyOptional({
+    example: 0.1,
+    description:
+      'Tasa base AIU (ej. 0.10 para 10%). Por omisión usa la de CommercialSettings.',
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  aiuRate?: number;
+
+  @ApiPropertyOptional({
+    example: 0.19,
+    description:
+      'Tasa IVA sobre AIU (ej. 0.19 para 19%). Por omisión usa la de CommercialSettings.',
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  ivaOnAiuRate?: number;
 }

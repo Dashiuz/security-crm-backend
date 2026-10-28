@@ -190,6 +190,8 @@ describe('SystemCatalogService', () => {
         totalMonthlyWithTax: 12500000,
         proposalFolioCode: 'FOL-2026-001',
         contractDurationMonths: 24,
+        promptPaymentDays: 15,
+        promptPaymentDiscPercent: 2.5,
       });
 
       const values = await service.resolveContextValues(tenantId, {
@@ -199,6 +201,8 @@ describe('SystemCatalogService', () => {
       expect(values['propuesta_total_mensual']).toContain('12.500.000');
       expect(values['propuesta_codigo_omega']).toBe('FOL-2026-001');
       expect(values['propuesta_meses']).toBe('24');
+      expect(values['propuesta_dias_pronto_pago']).toBe('15');
+      expect(values['propuesta_descuento_pronto_pago']).toBe('2.5%');
       expect(values['monto_en_letras']).toContain('DOCE MILLONES');
     });
 

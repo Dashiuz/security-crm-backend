@@ -70,19 +70,57 @@ describe('TariffCalculationEngine (Motor Tarifario SVSP 2026)', () => {
     expect(proportions.nightProportionFactor).toBe(0.375); // 9/24 = 0.375
   });
 
-  it('debe aplicar 8.6 SMMLV para Residencial Estratos 4, 5 y 6', () => {
+  it('debe calcular con exactitud el Escenario 1 del Manual SVSP 2026 (Residencial Estrato 5, 9.77 SMMLV, 24h con Arma)', () => {
+    // Escenario 1 del Manual:
+    // SMMLV: $1.750.905, Multiplicador: 9.77
+    // Costo Directo Base 24h: $1.750.905 * 9.77 = $17.106.341,85
+    // A&S (10%): $1.710.634,19 -> Subtotal: $18.816.976,04
+    // Base AIU (10%): $1.881.697,60 -> IVA 19%: $357.522,54
+    // TOTAL FACTURA: $19.174.498,58 (COP: $19.174.499)
+    const input: TariffInput = {
+      smmlv: SMMLV_2026,
+      monthlyTransportAux: TRANSPORT_AUX_2026,
+      sector: CommercialSector.RESIDENTIAL_STRATA_4_6,
+      weaponModality: WeaponModality.LETHAL_WEAPON,
+      dayHours: 13,
+      nightHours: 11,
+      billableDays: 30,
+      customSectorMultiplier: 9.77,
+      statutoryDayHours: 13,
+      statutoryNightHours: 11,
+      dayProportionFactor: 0.4759,
+      nightProportionFactor: 0.5241,
+    };
+
+    const res = TariffCalculationEngine.calculate(input);
+
+    expect(res.tariffBase24h).toBe(17106342); // 1.750.905 * 9.77 = 17106341.85 -> 17106342
+    expect(res.directCost).toBe(17106342);
+    expect(res.adminSupervisionPct).toBe(0.1);
+    expect(res.adminSupervisionValue).toBe(1710634.2);
+    expect(res.subtotalBeforeTax).toBe(18816976.2);
+    expect(res.aiuBaseValue).toBe(1881697.62);
+    expect(res.ivaValue).toBe(357522.55);
+    expect(res.totalWithTax).toBe(19174499);
+  });
+
+  it('debe aplicar 9.77 SMMLV por defecto para Residencial Estratos 4, 5 y 6 (Circular 2026)', () => {
     const input: TariffInput = {
       smmlv: SMMLV_2026,
       monthlyTransportAux: TRANSPORT_AUX_2026,
       sector: CommercialSector.RESIDENTIAL_STRATA_4_6,
       weaponModality: WeaponModality.NO_WEAPON,
-      dayHours: 15,
-      nightHours: 9,
+      dayHours: 13,
+      nightHours: 11,
       billableDays: 30,
+      statutoryDayHours: 13,
+      statutoryNightHours: 11,
+      dayProportionFactor: 0.4759,
+      nightProportionFactor: 0.5241,
     };
 
     const res = TariffCalculationEngine.calculate(input);
-    expect(res.tariffBase24h).toBe(Math.round(SMMLV_2026 * 8.6));
+    expect(res.tariffBase24h).toBe(Math.round(SMMLV_2026 * 9.77));
     expect(res.adminSupervisionPct).toBe(0.1); // Residencial sin arma aplica 10%
   });
 

@@ -40,6 +40,22 @@ export class CalculatePnlDto {
   @ValidateNested({ each: true })
   @Type(() => ProposalValueAddedItemDto)
   valueAddedItems?: ProposalValueAddedItemDto[];
+
+  @ApiPropertyOptional({
+    example: 0.1,
+    description: 'Tasa base AIU configurada en tenant (ej: 0.10)',
+  })
+  @IsOptional()
+  @IsNumber()
+  aiuRate?: number;
+
+  @ApiPropertyOptional({
+    example: 0.19,
+    description: 'Tasa IVA sobre AIU configurada en tenant (ej: 0.19)',
+  })
+  @IsOptional()
+  @IsNumber()
+  ivaOnAiuRate?: number;
 }
 
 export interface PnlCalculationResult {
