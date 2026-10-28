@@ -3,12 +3,15 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { Prisma, Employee } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class EmployeeRepositoryService {
+  private readonly logger = new Logger(EmployeeRepositoryService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   private readonly employeeSelect = {
@@ -107,6 +110,10 @@ export class EmployeeRepositoryService {
 
       return employee;
     } catch (e: any) {
+      this.logger.error(
+        `Error al crear empleado en base de datos: ${e?.message || e}`,
+        e?.stack,
+      );
       // Prisma unique violation
       if (e?.code === 'P2002') {
         throw new ConflictException(
@@ -175,6 +182,10 @@ export class EmployeeRepositoryService {
 
       return updated;
     } catch (e: any) {
+      this.logger.error(
+        `Error al actualizar empleado [${id}] en base de datos: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2002') {
         throw new ConflictException(
           'Ya existe un empleado registrado con este número de documento en la empresa.',
@@ -270,6 +281,9 @@ export class EmployeeRepositoryService {
         fullName: true,
         document: true,
         documentType: true,
+        email: true,
+        phone: true,
+        signatureUrl: true,
         departmentRef: { select: { id: true, name: true } },
         positionRef: { select: { id: true, name: true } },
       },

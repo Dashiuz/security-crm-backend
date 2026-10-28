@@ -12,6 +12,9 @@ export enum MediaTypeCategory {
   DOCUMENT = 'DOCUMENT',
   SECURITY_STUDY = 'SECURITY_STUDY',
   PQRS = 'PQRS',
+  BRAND_LOGO = 'BRAND_LOGO',
+  SIGNER_SIGNATURE = 'SIGNER_SIGNATURE',
+  COMPILED_DOCUMENT = 'COMPILED_DOCUMENT',
 }
 
 export class UploadMediaDto {

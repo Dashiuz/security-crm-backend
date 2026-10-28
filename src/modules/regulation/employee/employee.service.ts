@@ -69,7 +69,11 @@ export class EmployeeService {
         avatarUrl = await this.s3Service.getPresignedUrl(
           row.mediaAttachments[0].s3Key,
         );
-      } catch {
+      } catch (err: any) {
+        this.logger.error(
+          `Error al obtener presigned URL de avatar de empleado [${row.id}]: ${err?.message || err}`,
+          err?.stack,
+        );
         avatarUrl = null;
       }
     }
@@ -168,8 +172,11 @@ export class EmployeeService {
             notes: 'Asignación inicial al registrar empleado',
           });
         }
-      } catch {
-        // Continue if client lookup fails
+      } catch (err: any) {
+        this.logger.error(
+          `Error al buscar cliente asignado para historial [${dto.clientId}]: ${err?.message || err}`,
+          err?.stack,
+        );
       }
     }
 
@@ -206,8 +213,11 @@ export class EmployeeService {
             clientId: dto.clientId || null,
           } as any);
         }
-      } catch {
-        // Ignore if user not found yet
+      } catch (err: any) {
+        this.logger.error(
+          `Error al sincronizar clientId en cuenta de usuario vinculada [${document}]: ${err?.message || err}`,
+          err?.stack,
+        );
       }
     }
 
@@ -262,7 +272,11 @@ export class EmployeeService {
           userRoles: roles || [],
         };
       });
-    } catch {
+    } catch (err: any) {
+      this.logger.error(
+        `Error al enriquecer empleados con roles de usuario: ${err?.message || err}`,
+        err?.stack,
+      );
       return responses;
     }
   }
@@ -447,8 +461,11 @@ export class EmployeeService {
           });
         }
       }
-    } catch {
-      // Ignore if user not found
+    } catch (err: any) {
+      this.logger.error(
+        `Error al sincronizar actualización de empleado en cuenta de usuario [${current.document}]: ${err?.message || err}`,
+        err?.stack,
+      );
     }
 
     return await this.mapEmployeeToResponse(updatedEmployee);
@@ -468,8 +485,11 @@ export class EmployeeService {
         await this.userRepository.softDeleteUser(user.id);
         await this.userRepository.revokeAllSessionsForUser(user.id);
       }
-    } catch {
-      // Ignore if user doesn't exist
+    } catch (err: any) {
+      this.logger.error(
+        `Error al propagar eliminación suave de empleado a cuenta de usuario [${current.document}]: ${err?.message || err}`,
+        err?.stack,
+      );
     }
 
     return deletedEmployee as any;
@@ -492,8 +512,11 @@ export class EmployeeService {
         await this.userRepository.softDeleteUser(user.id);
         await this.userRepository.revokeAllSessionsForUser(user.id);
       }
-    } catch {
-      // Ignore if user doesn't exist
+    } catch (err: any) {
+      this.logger.error(
+        `Error al propagar retiro de empleado a cuenta de usuario [${current.document}]: ${err?.message || err}`,
+        err?.stack,
+      );
     }
 
     return await this.mapEmployeeToResponse(retired as any);
@@ -634,6 +657,10 @@ export class EmployeeService {
 
         successRows++;
       } catch (err: any) {
+        this.logger.error(
+          `Error al importar fila ${rowNum} de empleados: ${err?.message || err}`,
+          err?.stack,
+        );
         errorRows++;
         errors.push({
           row: rowNum,
@@ -791,15 +818,17 @@ export class EmployeeService {
               clientId: targetClient.id,
             } as any);
           } catch (error: unknown) {
-            this.logger.warn(
+            this.logger.error(
               `Could not sync linked user clientId: ${(error as Error).message}`,
+              (error as Error).stack,
             );
           }
         }
       }
-    } catch (err) {
-      this.logger.warn(
-        `Could not sync UserClientAccess in assignClient: ${(err as Error).message}`,
+    } catch (err: any) {
+      this.logger.error(
+        `Could not sync UserClientAccess in assignClient: ${err?.message || err}`,
+        err?.stack,
       );
     }
 
@@ -903,14 +932,16 @@ export class EmployeeService {
             clientId: newClientId,
           } as any);
         } catch (error: unknown) {
-          this.logger.warn(
+          this.logger.error(
             `Could not sync linked user clientId on unassign: ${(error as Error).message}`,
+            (error as Error).stack,
           );
         }
       }
-    } catch (err) {
-      this.logger.warn(
-        `Could not sync UserClientAccess on unassign: ${(err as Error).message}`,
+    } catch (err: any) {
+      this.logger.error(
+        `Could not sync UserClientAccess on unassign: ${err?.message || err}`,
+        err?.stack,
       );
     }
 
@@ -1119,9 +1150,10 @@ export class EmployeeService {
         where: { employeeId: employee.id },
         data: { userId: newUser.id },
       });
-    } catch (linkErr) {
-      this.logger.warn(
-        `Could not link new user to existing UserClientAccess: ${(linkErr as Error).message}`,
+    } catch (linkErr: any) {
+      this.logger.error(
+        `Could not link new user to existing UserClientAccess: ${linkErr?.message || linkErr}`,
+        linkErr?.stack,
       );
     }
 

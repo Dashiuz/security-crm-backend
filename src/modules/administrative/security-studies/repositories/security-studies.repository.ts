@@ -214,7 +214,10 @@ export class SecurityStudiesRepository {
           tenantId,
         );
       } catch (err: any) {
-        this.logger.warn(`PostGIS boundary update skipped: ${err.message}`);
+        this.logger.error(
+          `PostGIS boundary update skipped: ${err?.message || err}`,
+          err?.stack,
+        );
       }
     } else {
       try {
@@ -224,8 +227,11 @@ export class SecurityStudiesRepository {
           geoJsonStr,
           clientId,
         );
-      } catch {
-        // PostGIS opcional
+      } catch (err: any) {
+        this.logger.error(
+          `PostGIS boundary update skipped (optional): ${err?.message || err}`,
+          err?.stack,
+        );
       }
     }
 

@@ -1,9 +1,11 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TenantRepositoryService {
+  private readonly logger = new Logger(TenantRepositoryService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.TenantCreateInput) {
@@ -18,6 +20,10 @@ export class TenantRepositoryService {
         },
       });
     } catch (e: any) {
+      this.logger.error(
+        `Error al crear empresa/tenant: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2002') {
         throw new ConflictException(
           'Ya existe una empresa registrada con este nombre o identificador (slug).',
@@ -64,6 +70,10 @@ export class TenantRepositoryService {
         },
       });
     } catch (e: any) {
+      this.logger.error(
+        `Error al actualizar empresa/tenant [${id}]: ${e?.message || e}`,
+        e?.stack,
+      );
       if (e?.code === 'P2002') {
         throw new ConflictException(
           'Ya existe una empresa registrada con este nombre o identificador (slug).',

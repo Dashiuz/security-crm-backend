@@ -37,6 +37,7 @@ Noxia's centralized NestJS API serves as the core backend engine for the Securit
 
 - **NEVER** guess the DB structure. Read `/prisma/schema/*.*` before writing queries, types, or DTOs related to the database.
 - Do not execute destructive operations (`DROP`, `DELETE` without `WHERE`) without explicit confirmation from the user.
+- Do not execute any db push without explicit confirmation from the user.
 
 ## Anti-Over-Engineering
 
@@ -95,6 +96,8 @@ src/
 - The `PermissionsGuard` checks required RBAC permissions (`@RequirePermissions('minuta:read', 'minuta:create')`).
 - The `tenantId` is extracted automatically via `RequestContextService` (AsyncLocalStorage) and applied to Prisma queries via ORM extensions.
 - **NEVER** accept `tenantId` from the request body — always from the validated token context.
+- every "try-catch" block must have a "logger.error"
+- every sensitive or relevant database information related with the project to work properly must be updated in the seed.ts file
 
 ```typescript
 // ✅ CORRECT — controller uses JwtAuthGuard + PermissionsGuard, delegates to service

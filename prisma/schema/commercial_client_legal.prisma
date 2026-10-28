@@ -1,0 +1,127 @@
+// =========================================================================
+// ENUMS: GESTIÓN LEGAL, PÓLIZAS Y COMPROMISOS ANS
+// =========================================================================
+
+enum PolicyType {
+  COMPLIANCE               // Póliza de Cumplimiento
+  WAGES_AND_BENEFITS       // Salarios y Prestaciones Sociales (Vigencia + 3 años)
+  SERVICE_QUALITY          // Calidad del Servicio
+  CIVIL_LIABILITY_PLO      // Responsabilidad Civil Extracontractual (PLO)
+  GLOBAL_THEFT             // Póliza Global de Hurto
+}
+
+enum PolicyStatus {
+  ACTIVE                   // Vigente
+  EXPIRING_SOON            // Vence en <= 30 días
+  EXPIRED                  // Vencida
+  CANCELLED                // Anulada
+}
+
+enum AnsCommitmentType {
+  SECURITY_STUDY_DELIVERY  // Entrega del estudio de seguridad (máximo 15 días)
+  PRIOR_TAKEOVER_EMPALME   // Empalme previo operativo (3 días antes)
+  FREE_GUARD_SUPPORT_12H   // Turno de apoyo de 12h sin costo (hasta 3 por año)
+  QUARTERLY_MANAGEMENT_REP // Informe trimestral de gestión de seguridad
+}
+
+enum AnsCommitmentStatus {
+  PENDING                  // En plazo
+  FULFILLED                // Entregado / Cumplido
+  BREACHED                 // Vencido sin cumplimiento
+}
+
+// =========================================================================
+// MODELOS: PÓLIZAS, OTROSÍES (OSI) Y COMPROMISOS ANS
+// =========================================================================
+
+/// Control de pólizas de seguros contractuales con trazabilidad de alertas
+model ClientInsurancePolicy {
+  id                        String              @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId                  String
+  client                    Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  policyType                PolicyType
+  insuranceCompanyName      String              @db.VarChar(150) // "Seguros del Estado", "Seguros Bolívar"
+  policyCertificateNumber   String              @db.VarChar(100)
+  insuredAmount             Decimal             @db.Decimal(14, 2)
+  effectiveStartDate        DateTime            @db.Date
+  effectiveEndDate          DateTime            @db.Date
+  status                    PolicyStatus        @default(ACTIVE)
+
+  // Archivo PDF de la póliza en AWS S3
+  mediaAttachmentId         String?             @unique
+  mediaAttachment           MediaAttachment?    @relation(fields: [mediaAttachmentId], references: [id], onDelete: SetNull)
+
+  alertSent30Days           Boolean             @default(false)
+  alertSent7Days            Boolean             @default(false)
+
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  @@unique([tenantId, policyCertificateNumber])
+  @@index([tenantId, clientId, status])
+  @@index([tenantId, effectiveEndDate])
+  @@map("client_insurance_policies")
+}
+
+/// Otrosíes, adiciones contractuales y desembolso de reinversión (OSI)
+model ContractAddendum {
+  id                        String              @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId                  String
+  client                    Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  addendumNumber            String              @db.VarChar(50)  // "OSI-001", "OTROSI-2026-01"
+  title                     String              @db.VarChar(200) // "Otrosí adición cámaras y reinversión"
+  effectiveStartDate        DateTime            @db.Date
+  effectiveEndDate          DateTime            @db.Date
+  durationYears             Int                 @default(1)
+
+  // Fondos de Reinversión y Valores Agregados Pactados
+  reinvestmentAmountPact    Decimal             @default(0) @db.Decimal(14, 2)
+  disbursedAmount           Decimal             @default(0) @db.Decimal(14, 2)
+  disbursementDate          DateTime?           @db.Date
+  disbursementReceiptS3Key  String?
+
+  description               String?             @db.Text
+
+  // Archivo PDF firmado en AWS S3
+  mediaAttachmentId         String?             @unique
+  mediaAttachment           MediaAttachment?    @relation(fields: [mediaAttachmentId], references: [id], onDelete: SetNull)
+
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  @@unique([tenantId, clientId, addendumNumber])
+  @@index([tenantId, clientId])
+  @@map("contract_addendums")
+}
+
+/// Acuerdos de Niveles de Servicio asumidos contractualmente
+model ClientAnsCommitment {
+  id                        String              @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId                  String
+  client                    Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  commitmentType            AnsCommitmentType
+  title                     String              @db.VarChar(200)
+  dueDate                   DateTime            @db.Date
+  deliveredDate             DateTime?           @db.Date
+  status                    AnsCommitmentStatus @default(PENDING)
+  evidenceNotes             String?             @db.Text
+
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  @@index([tenantId, clientId, status])
+  @@index([tenantId, dueDate])
+  @@map("client_ans_commitments")
+}

@@ -226,9 +226,10 @@ export class SecurityStudiesService {
         if (imageKey) {
           try {
             baseImageUrl = await this.s3Service.getPresignedUrl(imageKey);
-          } catch (e) {
-            this.logger.warn(
-              `Could not sign URL for study image [${imageKey}]: ${e}`,
+          } catch (e: any) {
+            this.logger.error(
+              `Could not sign URL for study image [${imageKey}]: ${e?.message || e}`,
+              e?.stack,
             );
           }
         }
@@ -258,9 +259,10 @@ export class SecurityStudiesService {
           try {
             const url = await this.s3Service.getPresignedUrl(file.s3Key);
             return { ...file, url };
-          } catch (err) {
-            this.logger.warn(
-              `Could not sign URL for attached file [${file.s3Key}]: ${err}`,
+          } catch (err: any) {
+            this.logger.error(
+              `Could not sign URL for attached file [${file.s3Key}]: ${err?.message || err}`,
+              err?.stack,
             );
             return file;
           }
@@ -287,9 +289,10 @@ export class SecurityStudiesService {
     if (imageKey) {
       try {
         baseImageUrl = await this.s3Service.getPresignedUrl(imageKey);
-      } catch (e) {
-        this.logger.warn(
-          `Could not sign URL for study image [${imageKey}]: ${e}`,
+      } catch (e: any) {
+        this.logger.error(
+          `Could not sign URL for study image [${imageKey}]: ${e?.message || e}`,
+          e?.stack,
         );
       }
     }
@@ -632,9 +635,10 @@ export class SecurityStudiesService {
     if (targetFile?.s3Key) {
       try {
         await this.s3Service.deleteFile(targetFile.s3Key);
-      } catch (err) {
-        this.logger.warn(
-          `Could not delete S3 object [${targetFile.s3Key}]: ${err}`,
+      } catch (err: any) {
+        this.logger.error(
+          `Could not delete S3 object [${targetFile.s3Key}]: ${err?.message || err}`,
+          err?.stack,
         );
       }
     }
@@ -715,8 +719,11 @@ export class SecurityStudiesService {
         baseImageUrl = await this.s3Service.getPresignedUrl(
           client.mapboxBaseImageS3Key,
         );
-      } catch (e) {
-        this.logger.warn(`Could not sign URL for client base image: ${e}`);
+      } catch (e: any) {
+        this.logger.error(
+          `Could not sign URL for client base image: ${e?.message || e}`,
+          e?.stack,
+        );
       }
     }
 

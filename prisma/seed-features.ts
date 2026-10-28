@@ -22,6 +22,7 @@ async function main() {
     { key: 'canva', name: 'Canva de Seguridad', description: 'Diseño interactivo y geofencing en canva' },
     { key: 'pqrs', name: 'Módulo PQRS', description: 'Gestión B2B de Peticiones, Quejas, Reclamos, Sugerencias y Felicitaciones' },
     { key: 'signature', name: 'Motor de Firmas Digitales (Noxia Sign)', description: 'Gestión y emisión de documentos con firmas electrónicas y validez jurídica' },
+    { key: 'commercial', name: 'Gestión Comercial', description: 'Motor tarifario SVSP, cotizaciones, propuestas y órdenes de servicio' },
   ];
 
   for (const f of featuresData) {

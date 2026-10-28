@@ -10,6 +10,9 @@ import {
   ValidateIf,
   IsObject,
   ValidateNested,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ClientSector, AdministrationType } from '@prisma/client';
@@ -20,6 +23,17 @@ export class CreateProspectDto {
   @IsEnum(ClientSector, { message: 'Sector no válido.' })
   @IsNotEmpty({ message: 'El sector es requerido.' })
   sector: ClientSector;
+
+  @ApiProperty({
+    example: 4,
+    required: false,
+    description: 'Estrato socioeconómico (1 al 6)',
+  })
+  @IsInt({ message: 'El estrato debe ser un número entero.' })
+  @Min(1, { message: 'El estrato mínimo permitido es 1.' })
+  @Max(6, { message: 'El estrato máximo permitido es 6.' })
+  @IsOptional()
+  stratum?: number;
 
   @ApiProperty({ example: 'Conjunto Residencial Los Sauces' })
   @IsString({ message: 'El Nombre o Razón Social es requerido.' })

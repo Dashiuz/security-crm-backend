@@ -1,0 +1,163 @@
+// =========================================================================
+// ENUMS: CICLO DE VIDA DE PROPUESTAS Y EVALUACIÓN FINANCIERA
+// =========================================================================
+
+enum ProposalStatus {
+  DRAFT                    // En elaboración (0 bytes en S3, solo JSONB)
+  UNDER_REVIEW             // Margen en semáforo ámbar: requiere visto bueno
+  APPROVED_INTERNAL        // Aprobada internamente para despacho al cliente
+  SENT_TO_CLIENT           // Emitida oficialmente, PDF congelado en S3 y enviado
+  WON                      // Aceptada por el cliente -> Habilita Orden de Servicio (OS)
+  LOST                     // Descartada / Rechazada por el cliente
+  VOIDED                   // Anulada administrativamente
+}
+
+enum ProposalContractType {
+  NEW_CONTRACT             // Cliente nuevo
+  RENEWAL                  // Renovación de contrato existente
+  ADDITION                 // Adición de puestos a contrato activo
+}
+
+enum PnlHealthStatus {
+  PROFITABLE               // Margen >= 15% (Verde)
+  WARNING_LOW_MARGIN       // Margen entre 8% y 14.99% (Ámbar - Requiere aprobación)
+  DEFICIT_BLOCKED          // Margen < 8% (Rojo - Bloqueado para emisión)
+}
+
+enum BenefitPeriodicity {
+  SINGLE_ONE_TIME          // Única vez al inicio del contrato
+  MONTHLY_RECURRING        // Mensual recurrente durante el contrato
+  ANNUAL_RENEWAL           // Anual por cada año de contrato
+}
+
+// =========================================================================
+// MODELOS: PROPUESTAS Y LÍNEAS COTIZADAS
+// =========================================================================
+
+/// Cabecera de propuesta económica y cotización
+model CommercialProposal {
+  id                        String                @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId                  String
+  client                    Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  tariffPeriodId            String
+  tariffPeriod              TariffPeriodConfig    @relation(fields: [tariffPeriodId], references: [id], onDelete: Restrict)
+
+  proposalFolioCode         String                @db.VarChar(50) // Ej: "COT-2026-0042"
+  versionNumber             Int                   @default(1)
+  status                    ProposalStatus        @default(DRAFT)
+  contractType              ProposalContractType  @default(NEW_CONTRACT)
+  contractDurationMonths    Int                   @default(12)    // 12 o 24 meses
+
+  // Flags Modulares del Dossier (Switches)
+  includePresentation       Boolean               @default(true)
+  includeTechSecurityStudy  Boolean               @default(true)
+  includeEconomicQuote      Boolean               @default(true)
+  includeValuesAdded        Boolean               @default(true)
+  includeHseqAnnexes        Boolean               @default(false)
+
+  // Resumen Económico Facturable al Cliente
+  subtotalMonthlyPreDisc    Decimal               @db.Decimal(14, 2)
+  promptPaymentDiscPercent  Decimal               @default(0) @db.Decimal(5, 2)
+  promptPaymentDiscAmount   Decimal               @default(0) @db.Decimal(14, 2)
+  promptPaymentDays         Int                   @default(10) // Días calendario pactados para descuento de pronto pago
+  subtotalMonthlyAfterDisc  Decimal               @db.Decimal(14, 2)
+  aiuBaseAmount             Decimal               @db.Decimal(14, 2)
+  ivaAmount                 Decimal               @db.Decimal(14, 2)
+  totalMonthlyWithTax       Decimal               @db.Decimal(14, 2)
+  totalAnnualContractValue  Decimal               @db.Decimal(16, 2)
+
+  // Motor P&L: Costos y Márgenes en Tiempo Real
+  estimatedMonthlyRealCost  Decimal               @db.Decimal(14, 2)
+  monthlyVagAmortization    Decimal               @default(0) @db.Decimal(14, 2)
+  totalMonthlyOperatingCost Decimal               @db.Decimal(14, 2)
+  netMonthlyMarginAmount    Decimal               @db.Decimal(14, 2)
+  netMarginPercentage       Decimal               @db.Decimal(6, 2)
+  pnlStatus                 PnlHealthStatus       @default(PROFITABLE)
+
+  // Filosofía Zero-Bloat en S3: Snapshot JSON para borrador
+  draftSnapshotJson         Json?                 @db.JsonB
+
+  // PDF Oficial Congelado en S3 (Solo al emitir formalmente)
+  mediaAttachmentId         String?               @unique
+  mediaAttachment           MediaAttachment?      @relation(fields: [mediaAttachmentId], references: [id], onDelete: SetNull)
+  documentSha256            String?               @db.VarChar(64)
+
+  // Relaciones Hijas
+  items                     ProposalServiceItem[]
+  valueAddedItems           ProposalValueAddedItem[]
+  serviceOrder              ServiceOrder?
+
+  createdById               String?
+  createdBy                 User?                 @relation("CommercialProposalCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById               String?
+  updatedBy                 User?                 @relation("CommercialProposalUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+
+  @@unique([tenantId, proposalFolioCode, versionNumber])
+  @@index([tenantId, clientId])
+  @@index([tenantId, status])
+  @@index([tenantId, pnlStatus])
+  @@map("commercial_proposals")
+}
+
+/// Línea de puesto o servicio de vigilancia cotizado
+model ProposalServiceItem {
+  id                        String              @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposalId                String
+  proposal                  CommercialProposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  serviceCatalogId          String?
+  serviceCatalog            SecurityServiceCatalog? @relation(fields: [serviceCatalogId], references: [id], onDelete: Restrict)
+
+  positionTitle             String              @db.VarChar(100)
+  quantity                  Int                 @default(1)
+  scheduleType              ShiftScheduleType
+  weaponModality            WeaponModality      @default(NO_WEAPON)
+  tariffCategory            CommercialSector    @default(RESIDENTIAL_STRATA_4_6)
+
+  // Parámetros Unitarios de Facturación
+  unitMonthlyBilledPrice    Decimal             @db.Decimal(14, 2)
+  totalMonthlyBilledPrice   Decimal             @db.Decimal(14, 2)
+
+  // Parámetros de Costo de Nómina Real
+  unitMonthlyRealCost       Decimal             @db.Decimal(14, 2)
+  totalMonthlyRealCost      Decimal             @db.Decimal(14, 2)
+
+  sortOrder                 Int                 @default(0)
+  createdAt                 DateTime            @default(now())
+
+  @@index([tenantId, proposalId])
+  @@map("proposal_service_items")
+}
+
+/// Valor agregado o beneficio en especie ofrecido en la oferta
+model ProposalValueAddedItem {
+  id                        String              @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposalId                String
+  proposal                  CommercialProposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  valueAddedCatalogItemId   String?
+  valueAddedCatalogItem     ValueAddedCatalogItem? @relation(fields: [valueAddedCatalogItemId], references: [id], onDelete: Restrict)
+
+  itemName                  String              @db.VarChar(150)
+  quantity                  Int                 @default(1)
+  periodicity               BenefitPeriodicity  @default(SINGLE_ONE_TIME)
+  itemInternalCost          Decimal             @db.Decimal(14, 2)
+  totalInternalCost         Decimal             @db.Decimal(14, 2)
+
+  notes                     String?             @db.Text
+  createdAt                 DateTime            @default(now())
+
+  @@index([tenantId, proposalId])
+  @@map("proposal_value_added_items")
+}
