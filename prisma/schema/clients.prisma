@@ -25,7 +25,7 @@ model Client {
   observations   String?
 
   sector ClientSector @default(RESIDENTIAL)
-
+  stratum Int?
 
   installedTech      Boolean @default(false)
   securityStudy      String?
@@ -46,6 +46,28 @@ model Client {
   administrationType        AdministrationType?
   administrationCompanyData Json?               @db.JsonB
   councilData               Json?               @db.JsonB
+
+  // CRM Lead Capture Data
+  leadSource            LeadSourceChannel?
+  leadSourceDetail      String?            @db.VarChar(255)
+  quoteDeliveryFormat   String?            @default("EMAIL")
+  maxDeliveryDate       DateTime?          @db.Date
+
+  // Contactos Clave y Cumpleaños
+  councilPresidentName  String?            @db.VarChar(150)
+  councilPresidentPhone String?            @db.VarChar(50)
+  councilPresidentEmail String?            @db.VarChar(150)
+  councilPresidentBirth DateTime?          @db.Date
+
+  treasurerName         String?            @db.VarChar(150)
+  treasurerPhone        String?            @db.VarChar(50)
+  treasurerBirth        DateTime?          @db.Date
+
+  administratorBirth    DateTime?          @db.Date
+
+  // Trazabilidad de Recaptación Comercial (Alarma 11 Meses)
+  recaptationTargetDate DateTime?          @db.Date
+  recaptationAlertSent  Boolean            @default(false)
 
   createdAt   DateTime @default(now())
   createdById String?
@@ -78,6 +100,13 @@ model Client {
   securityStudies  SecurityStudy[]
   pqrsTickets      PqrsTicket[]
   pqrsMessages     PqrsMessage[]
+
+  proposals             CommercialProposal[]
+  serviceOrders         ServiceOrder[]
+  followUps             CommercialFollowUp[]
+  insurancePolicies     ClientInsurancePolicy[]
+  contractAddendums     ContractAddendum[]
+  ansCommitments        ClientAnsCommitment[]
 
   mapboxBaseImageS3Key String?
   geofence             Json?   @db.JsonB

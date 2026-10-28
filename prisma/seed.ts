@@ -483,6 +483,91 @@ async function main() {
       key: 'signatures:verify:public',
       desc: 'Verificación pública de autenticidad e integridad de documentos por QR',
     },
+    // Commercial Domain & SVSP Tariff (SPEC-ADM-018)
+    {
+      id: 'commercial_settings_read_perm_id',
+      key: 'commercial:settings:read',
+      desc: 'Consultar parámetros comerciales, tarifas SVSP y catálogo de servicios',
+    },
+    {
+      id: 'commercial_settings_manage_perm_id',
+      key: 'commercial:settings:manage',
+      desc: 'Administrar vigencias tarifarias, salarios, valores agregados y skins',
+    },
+    // Commercial Proposals & P&L (SPEC-ADM-020)
+    {
+      id: 'commercial_proposals_read_perm_id',
+      key: 'commercial:proposals:read',
+      desc: 'Consultar propuestas comerciales y cotizaciones',
+    },
+    {
+      id: 'commercial_proposals_create_perm_id',
+      key: 'commercial:proposals:create',
+      desc: 'Crear cotizaciones y ofertas comerciales',
+    },
+    {
+      id: 'commercial_proposals_update_perm_id',
+      key: 'commercial:proposals:update',
+      desc: 'Modificar líneas y borradores de propuestas',
+    },
+    {
+      id: 'commercial_proposals_issue_perm_id',
+      key: 'commercial:proposals:issue',
+      desc: 'Emitir oficialmente propuestas congelando PDF en S3',
+    },
+    {
+      id: 'commercial_proposals_approve_pnl_perm_id',
+      key: 'commercial:proposals:approve_pnl',
+      desc: 'Aprobar propuestas con margen P&L en alerta ámbar',
+    },
+    // Commercial Service Orders (SPEC-ADM-021)
+    {
+      id: 'commercial_orders_read_perm_id',
+      key: 'commercial:orders:read',
+      desc: 'Consultar órdenes de servicio e histórico',
+    },
+    {
+      id: 'commercial_orders_create_perm_id',
+      key: 'commercial:orders:create',
+      desc: 'Crear órdenes de servicio, asignar código OMEGA y disparar despacho',
+    },
+    {
+      id: 'commercial_orders_manage_perm_id',
+      key: 'commercial:orders:manage',
+      desc: 'Control total y reintentos de despacho de órdenes de servicio',
+    },
+    // Commercial CRM & Legal (SPEC-ADM-022)
+    {
+      id: 'commercial_crm_read_perm_id',
+      key: 'commercial:crm:read',
+      desc: 'Consultar prospectos, pipeline y bitácora de seguimiento',
+    },
+    {
+      id: 'commercial_crm_followup_perm_id',
+      key: 'commercial:crm:followup',
+      desc: 'Registrar gestiones de contacto y cierres por pérdida',
+    },
+    {
+      id: 'commercial_legal_read_perm_id',
+      key: 'commercial:legal:read',
+      desc: 'Consultar cartera legal 360, pólizas, otrosíes y compromisos ANS',
+    },
+    {
+      id: 'commercial_legal_manage_perm_id',
+      key: 'commercial:legal:manage',
+      desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
+    },
+    // Universal Document Format Engine (SPEC-CORE-010 / SPEC-ADM-024)
+    {
+      id: 'format_read_perm_id',
+      key: 'format:read',
+      desc: 'Consultar plantillas y formatos universales',
+    },
+    {
+      id: 'format_manage_perm_id',
+      key: 'format:manage',
+      desc: 'Diseñar, crear y actualizar formatos y variables transversales',
+    },
   ];
 
   // 5. Departments
@@ -963,6 +1048,134 @@ async function main() {
     });
   }
   console.log('✅ User roles seeded');
+
+  // 12. Commercial Settings & SVSP 2026 Reference
+  console.log('Seeding Commercial Settings for active tenants...');
+  const tenantsToSeed = ['p1vk4imb6ugp1z0flglw86pk', 'system'];
+  for (const tenantId of tenantsToSeed) {
+    const commercialSetting = await prisma.commercialSettings.upsert({
+      where: { tenantId },
+      update: {},
+      create: {
+        tenantId,
+        defaultAiuRate: 0.10,
+        defaultIvaOnAiuRate: 0.19,
+        defaultRetefuenteRate: 0.02,
+        defaultReteIcaRate: 0.0138,
+        maxReinvestmentPct1Yr: 0.80,
+        maxReinvestmentPct2Yr: 1.60,
+        defaultQuoteValidityDays: 15,
+        enableGuardSalaryDisplay: true,
+        defaultPromptPaymentDays: 10,
+        defaultPromptPaymentDisc: 0.00,
+        qualityDocCode: 'CM-F-001',
+        qualityDocVersion: 'V.4',
+      },
+    });
+
+    // Default Tariff Period for 2026 (SVSP Official Reference)
+    await prisma.tariffPeriodConfig.upsert({
+      where: {
+        tenantId_year_label: {
+          tenantId,
+          year: 2026,
+          label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
+        },
+      },
+      update: {
+        smmlv: 1750905.00,
+        monthlyTransportAux: 249095.00,
+        dailyTransportAux: 8303.17,
+        statutoryWeeklyHours: 44,
+        baseHourlyRate: 7959.00,
+        statutoryDayHours: 13,
+        statutoryNightHours: 11,
+        dayProportionFactor: 0.4759,
+        nightProportionFactor: 0.5241,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 9.77,
+        strata13Multiplier: 7.66376105,
+      },
+      create: {
+        tenantId,
+        commercialSettingsId: commercialSetting.id,
+        year: 2026,
+        label: 'Tarifa Vigencia Oficial SVSP 2026 (44 Horas)',
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2026-12-31'),
+        isActive: true,
+        smmlv: 1750905.00,
+        monthlyTransportAux: 249095.00,
+        dailyTransportAux: 8303.17,
+        statutoryWeeklyHours: 44,
+        baseHourlyRate: 7959.00,
+        statutoryDayHours: 13,
+        statutoryNightHours: 11,
+        dayProportionFactor: 0.4759,
+        nightProportionFactor: 0.5241,
+        commercialMultiplier: 8.8,
+        strata46Multiplier: 9.77,
+        strata13Multiplier: 7.66376105,
+      },
+    });
+
+    // Default Position Salary Matrix (Guarda Portero 2x2x2)
+    await prisma.positionSalaryMatrix.upsert({
+      where: {
+        tenantId_positionTitle_scheduleType: {
+          tenantId,
+          positionTitle: 'Guarda Portero',
+          scheduleType: 'SCHEDULE_2X2X2',
+        },
+      },
+      update: {
+        baseSalary: 1750905.00,
+        transportAllowance: 249095.00,
+        shiftOrdinaryHours: 8,
+        shiftExtraHours: 4,
+      },
+      create: {
+        tenantId,
+        commercialSettingsId: commercialSetting.id,
+        positionTitle: 'Guarda Portero',
+        scheduleType: 'SCHEDULE_2X2X2',
+        guardsRequiredPerPost: 3.0,
+        baseSalary: 1750905.00,
+        transportAllowance: 249095.00,
+        shiftOrdinaryHours: 8,
+        shiftExtraHours: 4,
+        estimatedOvertimePay: 450000.00,
+        grossSalary: 2449095.00,
+        healthDeductionPct: 0.04,
+        pensionDeductionPct: 0.04,
+        healthDeduction: 88000.00,
+        pensionDeduction: 88000.00,
+        totalDeductions: 176000.00,
+        fixedBonusNonSalary: 0,
+        vehicleAllowance: 0,
+        netTakeHomePay: 2273095.00,
+        isActive: true,
+      },
+    });
+
+    // Default Document Skin
+    await prisma.tenantDocumentSkin.upsert({
+      where: { tenantId },
+      update: {},
+      create: {
+        tenantId,
+        commercialSettingsId: commercialSetting.id,
+        primaryBrandColorHex: '#1E1B4B',
+        accentBrandColorHex: '#7C3AED',
+        companyLegalName:
+          tenantId === 'system' ? 'NOXIA Master System' : 'Seguridad Test Ltda.',
+        companyNit: tenantId === 'system' ? '900.000.000-1' : '900.123.456-7',
+        supervigilanciaLicense: 'Res. 20264100001234 de SuperVigilancia',
+      },
+    });
+  }
+
+  console.log('✅ Commercial settings and SVSP 2026 reference seeded');
 
   console.log('🎉 Seed completed successfully!');
 }

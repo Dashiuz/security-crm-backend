@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable, Optional, Logger } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { SessionObjectInterface } from '../../../common/interfaces/index';
@@ -6,6 +6,8 @@ import { S3Service } from '../../../modules/storage/services/s3.service';
 
 @Injectable()
 export class UserRepositoryService {
+  private readonly logger = new Logger(UserRepositoryService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly s3Service?: S3Service,
@@ -288,7 +290,11 @@ export class UserRepositoryService {
             employee.mediaAttachments[0].s3Key,
           );
         }
-      } catch {
+      } catch (err: any) {
+        this.logger.error(
+          `Error al resolver presignedUrl de avatar para usuario [${userId}]: ${err?.message || err}`,
+          err?.stack,
+        );
         avatarUrl = null;
       }
     }

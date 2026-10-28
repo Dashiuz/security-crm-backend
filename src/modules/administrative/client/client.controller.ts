@@ -90,17 +90,23 @@ export class ClientController {
     'minuta:manage',
     'minuta:create',
     'minuta:read',
+    'commercial:proposals:read',
+    'commercial:proposals:create',
+    'commercial:settings:read',
+    'commercial:crm:read',
   )
   @ApiOperation({ summary: 'Search active clients with autocomplete' })
   autocomplete(
     @Query('query') query: string,
     @Query('limit') limit: string,
+    @Query('includeProspects') includeProspects: string,
     @Request() req,
   ) {
     return this.clientService.autocomplete(
       query,
       req.user,
       limit ? parseInt(limit, 10) : 20,
+      includeProspects === 'true' || includeProspects === '1',
     );
   }
 

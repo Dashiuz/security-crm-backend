@@ -1,0 +1,340 @@
+/// Configuración comercial global por empresa de seguridad (tenantId)
+model CommercialSettings {
+  id       String @id @default(cuid(2))
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Parámetros Tributarios Predeterminados (Porcentajes en Decimal)
+  defaultAiuRate        Decimal @default(0.10) @db.Decimal(5, 4) // 10% Base AIU
+  defaultIvaOnAiuRate   Decimal @default(0.19) @db.Decimal(5, 4) // 19% IVA sobre AIU
+  defaultRetefuenteRate Decimal @default(0.02) @db.Decimal(5, 4) // 2% Retefuente sobre AIU
+  defaultReteIcaRate    Decimal @default(0.0138) @db.Decimal(6, 5) // 1.38% ReteICA sobre Subtotal
+
+  // Topes de Negociación y Políticas Comerciales
+  maxReinvestmentPct1Yr    Decimal @default(0.80) @db.Decimal(5, 4) // 80% de la 1ra factura
+  maxReinvestmentPct2Yr    Decimal @default(1.60) @db.Decimal(5, 4) // 160% acumulado
+  defaultQuoteValidityDays Int     @default(15) // Días hábiles de validez
+  enableGuardSalaryDisplay Boolean @default(true) // Mostrar sueldo del guarda en ofertas
+  defaultPromptPaymentDays Int     @default(10) // Días calendario pactados para descuento por pronto pago
+  defaultPromptPaymentDisc Decimal @default(0.00) @db.Decimal(5, 4) // Descuento de pronto pago por omisión
+
+  // Metadatos ISO / Calidad para Encabezados de Formatos Internos
+  qualityDocCode         String    @default("CM-F-001")
+  qualityDocVersion      String    @default("V.4")
+  qualityDocRevisionDate DateTime? @db.Date
+
+  // Relaciones Hijas
+  tariffPeriods          TariffPeriodConfig[]
+  serviceCatalog         SecurityServiceCatalog[]
+  salaryMatrix           PositionSalaryMatrix[]
+  valueAddedCatalog      ValueAddedCatalogItem[]
+  distributionRecipients ServiceOrderDistributionRecipient[]
+  documentSkin           TenantDocumentSkin?
+  textSnippets           DocumentTextSnippet[]
+
+  // Auditoría
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  @@index([tenantId])
+  @@map("commercial_settings")
+}
+
+/// Tramos de vigencia tarifaria (soporta múltiples períodos en el año, ej. reducciones de jornada)
+model TariffPeriodConfig {
+  id                   String             @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String
+  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+
+  year      Int // Ej: 2026
+  label     String // Ej: "Tarifa Vigencia Oficial SVSP 2026 (44 Horas)"
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  isActive  Boolean  @default(true)
+
+  // Variables Macroeconómicas Oficiales 2026 (SuperVigilancia)
+  smmlv               Decimal @default(1750905.00) @db.Decimal(12, 2) // $1.750.905 SMMLV 2026
+  monthlyTransportAux Decimal @default(249095.00) @db.Decimal(12, 2) // $249.095 Auxilio Transporte
+  dailyTransportAux   Decimal @default(8303.17) @db.Decimal(12, 2) // $8.303,17 diario
+
+  // Factores de Proporcionalidad Horaria y Jornada Legal 2026 (Ley 2101: 44 Horas)
+  statutoryWeeklyHours  Int     @default(44) // 44h semanales en 2026 (divisor 220 horas)
+  baseHourlyRate        Decimal @default(7959.00) @db.Decimal(10, 2) // $7.959 Valor Hora Base Ordinaria Diurna
+  statutoryDayHours     Int     @default(15) // Horas diurnas legales (06:00 - 21:00)
+  statutoryNightHours   Int     @default(9) // Horas nocturnas legales (21:00 - 06:00)
+  dayProportionFactor   Decimal @default(0.5597) @db.Decimal(6, 4)
+  nightProportionFactor Decimal @default(0.4403) @db.Decimal(6, 4)
+
+  // Multiplicadores Sectoriales (en número de SMMLV)
+  commercialMultiplier Decimal @default(8.8) @db.Decimal(4, 2) // 8.8 SMMLV
+  strata46Multiplier   Decimal @default(9.77) @db.Decimal(4, 2) // 9.77 SMMLV (Circular SVSP 2026 - Ley 2101)
+  strata13Multiplier   Decimal @default(7.66376105) @db.Decimal(10, 8) // 7.66 SMMLV
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  proposals   CommercialProposal[]
+
+  @@unique([tenantId, year, label])
+  @@index([tenantId, isActive])
+  @@map("tariff_period_configs")
+}
+
+/// Catálogo maestro de servicios de seguridad física
+model SecurityServiceCatalog {
+  id                   String             @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String
+  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+
+  serviceCode    Int // Código numérico interno (ej: 1, 2, 829, 1135)
+  name           String // Ej: "Servicio de Vigilancia 24 horas"
+  targetPosition String // Guarda, Supervisor, OMT, Recepcionista
+  sector         CommercialSector
+  weaponModality WeaponModality
+  scheduleType   ShiftScheduleType   @default(SCHEDULE_2X2X2)
+  daysModality   WorkingDaysModality @default(DAYS_30_ALL_MONTH)
+
+  dailyTotalHours      Int // 24, 12, 16, 9, 8, etc.
+  dayHours             Int // Horas diurnas en el turno (ej. 15 en 24h, 3 en 12h noche)
+  nightHours           Int // Horas nocturnas en el turno (ej. 9 en 24h, 9 en 12h noche)
+  billableDaysPerMonth Int // 30, 26, 24, 22, 20, 10, 8, 2
+
+  adminSupervisionPct Decimal @db.Decimal(5, 4) // 0.08, 0.10, 0.11
+
+  isSystemStandard Boolean @default(true)
+  isActive         Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  proposalServiceItems ProposalServiceItem[]
+
+  @@unique([tenantId, serviceCode])
+  @@index([tenantId, sector, weaponModality])
+  @@map("security_service_catalogs")
+}
+
+/// Matriz de salarios de referencia por cargo operativo y esquema de turno (Referencia SVSP 2026)
+model PositionSalaryMatrix {
+  id                   String             @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String
+  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+
+  positionTitle         String // "Guarda Portero", "Supervisor Motorizado", "OMT", "Recepcionista"
+  scheduleType          ShiftScheduleType @default(SCHEDULE_2X2X2)
+  guardsRequiredPerPost Decimal           @default(3.0) @db.Decimal(4, 2) // Factor de guardas por puesto
+
+  // Estructura Salarial Base SVSP 2026
+  baseSalary         Decimal @default(1750905.00) @db.Decimal(12, 2) // SMMLV Base ($1.750.905)
+  transportAllowance Decimal @default(249095.00) @db.Decimal(12, 2) // Auxilio Transporte ($249.095)
+  shiftOrdinaryHours Int     @default(8) // 8h ordinarias por turno
+  shiftExtraHours    Int     @default(4) // 4h extras por turno (8h ord + 4h ext = 12h/turno)
+
+  // Devengados Derivados de Recargos y Horas Extras
+  estimatedOvertimePay Decimal @db.Decimal(12, 2) // Horas extras y recargos calculados
+  grossSalary          Decimal @db.Decimal(12, 2) // Total Devengado (Base + Auxilio + Recargos)
+
+  // Deducciones de Nómina del Trabajador (Ley SVSP: 4.0% Salud + 4.0% Pensión)
+  healthDeductionPct  Decimal @default(0.04) @db.Decimal(5, 4) // 4.0% Salud
+  pensionDeductionPct Decimal @default(0.04) @db.Decimal(5, 4) // 4.0% Pensión
+  healthDeduction     Decimal @db.Decimal(12, 2) // Valor retenido salud
+  pensionDeduction    Decimal @db.Decimal(12, 2) // Valor retenido pensión
+  totalDeductions     Decimal @db.Decimal(12, 2) // Subtotal deducciones nómina
+
+  // Beneficios No Prestacionales y Rodamiento
+  fixedBonusNonSalary Decimal @default(0) @db.Decimal(12, 2) // Bonificación no salarial
+  vehicleAllowance    Decimal @default(0) @db.Decimal(12, 2) // Rodamiento (motorizado)
+
+  // Remuneración Final Libre a Retirar por el Guarda
+  netTakeHomePay Decimal @db.Decimal(12, 2) // Sueldo neto bancario
+
+  isActive Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  @@unique([tenantId, positionTitle, scheduleType])
+  @@index([tenantId, isActive])
+  @@map("position_salary_matrices")
+}
+
+/// Catálogo de valores agregados, dotación de puesto y beneficios en especie
+model ValueAddedCatalogItem {
+  id                   String             @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String
+  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+
+  name                  String // "Locker metálico 4 puestos", "Horno Microondas", "Apoyo Guarda 12h"
+  category              ValueAddedCategory
+  description           String?            @db.Text
+  internalReferenceCost Decimal            @db.Decimal(12, 2) // Costo interno para el P&L
+  isStandardBenefit     Boolean            @default(false)
+  defaultQuantity       Int                @default(1)
+  isActive              Boolean            @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  proposalValueAddedItems ProposalValueAddedItem[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, category])
+  @@map("value_added_catalog_items")
+}
+
+/// Identidad Visual Corporativa y resoluciones legales para PDFs
+model TenantDocumentSkin {
+  id                   String             @id @default(cuid(2))
+  tenantId             String             @unique
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String             @unique
+  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+
+  // Identidad Visual de Marca (Compatibilidad + Nuevos Acentos)
+  primaryBrandColorHex String               @default("#1E1B4B")
+  accentBrandColorHex  String               @default("#7C3AED")
+  secondaryColorHex    String?              @default("#F59E0B") // Alertas y badges
+  neutralDarkHex       String?              @default("#0F172A") // Textos principales
+  neutralLightHex      String?              @default("#F8FAFC") // Fondos de tablas
+  headerLayout         DocumentHeaderLayout @default(CLASSIC_MEMBRETE)
+  watermarkEnabled     Boolean              @default(false)
+  watermarkOpacity     Decimal              @default(0.06) @db.Decimal(3, 2)
+  watermarkS3Key       String?
+  logoS3Key            String?              // S3 Key en MediaAttachment
+  secondaryLogoS3Key   String?              // Logo alternativo / fondo oscuro
+
+  // Credenciales Legales y Resoluciones SVSP
+  companyLegalName         String
+  companyNit               String
+  commercialRegisterNum    String?
+  supervigilanciaLicense   String?
+  supervigilanciaLicDate   DateTime? @db.Date
+  supervigilanciaLicExpiry DateTime? @db.Date
+  minTicLicenseNum         String?
+  uniformsResolutionNum    String?
+  overtimeResolutionNum    String?
+  sstImplementationPct     Decimal?  @default(99.5) @db.Decimal(5, 2)
+
+  // Sellos y Certificaciones
+  hasIso9001Certified     Boolean @default(true)
+  hasBascCertified        Boolean @default(true)
+  hasPoliceSupportNetwork Boolean @default(true)
+  hasDijinEnterpriseFront Boolean @default(true)
+
+  // Configuración de Calidad ISO / BASC
+  isoDocumentCodePrefix   String? @default("CM-F")
+  defaultFooterDisclaimer String? @db.Text
+
+  // Firmantes Autorizados y Plantillas Dinámicas
+  signers      AuthorizedSigner[]
+  textSnippets DocumentTextSnippet[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  @@index([tenantId])
+  @@map("tenant_document_skins")
+}
+
+/// Firmantes Autorizados de la Empresa / Tenant
+model AuthorizedSigner {
+  id                  String             @id @default(cuid(2))
+  tenantId            String
+  tenant              Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documentSkinId      String
+  documentSkin        TenantDocumentSkin @relation(fields: [documentSkinId], references: [id], onDelete: Cascade)
+
+  fullName            String             @db.VarChar(150)
+  idNumber            String             @db.VarChar(50)  // Cédula o identificación
+  corporateTitle      String             @db.VarChar(120) // Ej: "Director Comercial"
+  email               String             @db.VarChar(150)
+  phone               String?            @db.VarChar(50)
+  roleScope           SignerRoleScope    @default(CUSTOM)
+
+  // Archivo de Firma Digitalizada Optimizado con sharp (< 18KB)
+  signatureImageS3Key String?
+  signatureUrl        String?            @db.Text
+  isDefaultCommercial Boolean            @default(false)
+  isDefaultLegal      Boolean            @default(false)
+  isActive            Boolean            @default(true)
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  createdById         String?
+  updatedById         String?
+
+  @@unique([tenantId, email])
+  @@index([tenantId, isActive])
+  @@map("authorized_signers")
+}
+
+/// Cláusulas y fragmentos de texto dinámico con variables
+model DocumentTextSnippet {
+  id                   String              @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String?
+  commercialSettings   CommercialSettings? @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+  documentSkinId       String?
+  documentSkin         TenantDocumentSkin? @relation(fields: [documentSkinId], references: [id], onDelete: Cascade)
+
+  key                String              // "COVER_LETTER_RESIDENTIAL", "LABOR_WELFARE_PARAGRAPH"
+  title              String              // "Carta de Presentación - Sector Residencial"
+  bodyTemplate       String              @db.Text // Variables: {{client_name}}, {{nit}}, etc.
+  category           String              // "LETTERS", "LEGAL_NOTES", "WELFARE", "SLA"
+  availableVariables Json                @default("[]") @db.JsonB
+  isDefault          Boolean             @default(false)
+  isActive           Boolean             @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  @@unique([tenantId, key])
+  @@index([tenantId, category])
+  @@map("document_text_snippets")
+}
+
+/// Destinatarios de la matriz de notificación de Orden de Servicio a las 9 áreas
+model ServiceOrderDistributionRecipient {
+  id                   String             @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  commercialSettingsId String
+  commercialSettings   CommercialSettings @relation(fields: [commercialSettingsId], references: [id], onDelete: Cascade)
+
+  department     InternalDepartment
+  recipientName  String
+  recipientEmail String
+  isActive       Boolean            @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  @@unique([tenantId, department])
+  @@index([tenantId, isActive])
+  @@map("service_order_distribution_recipients")
+}

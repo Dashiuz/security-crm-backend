@@ -124,7 +124,11 @@ export class NotificationsService {
 
     try {
       return await this.repository.markAsRead(id, userId, tenantId);
-    } catch {
+    } catch (err: any) {
+      this.logger.error(
+        `Error al marcar notificación [${id}] como leída: ${err?.message || err}`,
+        err?.stack,
+      );
       throw new NotFoundException(`Notificación [${id}] no encontrada`);
     }
   }

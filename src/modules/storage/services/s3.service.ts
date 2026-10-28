@@ -132,7 +132,23 @@ export class S3Service {
       return `tenants/${tenantId}/pqrs/${entityId}/${uniqueSuffix}`;
     }
 
-    // 7. Generic / Misc Documents
+    // 7. Brand Assets (Logos & Watermarks)
+    if (entityType === MediaTypeCategory.BRAND_LOGO) {
+      return `tenants/${tenantId}/brand/${entityId}/${uniqueSuffix}`;
+    }
+
+    // 8. Signer Signatures
+    if (entityType === MediaTypeCategory.SIGNER_SIGNATURE) {
+      return `tenants/${tenantId}/signers/${entityId}/${uniqueSuffix}`;
+    }
+
+    // 9. Compiled Documents
+    if (entityType === MediaTypeCategory.COMPILED_DOCUMENT) {
+      const docType = category || 'proposals';
+      return `tenants/${tenantId}/documents/${docType}/${entityId}/${uniqueSuffix}`;
+    }
+
+    // 10. Generic / Misc Documents
     const docCategory = category || 'misc';
     return `tenants/${tenantId}/documents/${docCategory}/${uniqueSuffix}`;
   }

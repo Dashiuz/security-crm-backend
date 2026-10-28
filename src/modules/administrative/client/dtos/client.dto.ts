@@ -8,6 +8,7 @@ import {
   IsBoolean,
   IsDateString,
   Min,
+  Max,
   ValidateIf,
   IsObject,
   IsNotEmpty,
@@ -128,6 +129,17 @@ export class CreateClientDto {
   @IsEnum(ClientSector, { message: 'Sector del cliente no válido.' })
   @IsOptional()
   sector?: ClientSector;
+
+  @ApiProperty({
+    example: 4,
+    required: false,
+    description: 'Estrato socioeconómico (1 al 6)',
+  })
+  @IsInt({ message: 'El estrato debe ser un número entero.' })
+  @Min(1, { message: 'El estrato mínimo permitido es 1.' })
+  @Max(6, { message: 'El estrato máximo permitido es 6.' })
+  @IsOptional()
+  stratum?: number;
 
   @ApiProperty({ example: 'cuid-employee-1', required: false })
   @IsString()
@@ -368,6 +380,17 @@ export class UpdateClientGeneralDto {
   @IsEnum(ClientSector, { message: 'Sector del cliente no válido.' })
   @IsOptional()
   sector?: ClientSector;
+
+  @ApiProperty({
+    example: 4,
+    required: false,
+    description: 'Estrato socioeconómico (1 al 6)',
+  })
+  @IsInt({ message: 'El estrato debe ser un número entero.' })
+  @Min(1, { message: 'El estrato mínimo permitido es 1.' })
+  @Max(6, { message: 'El estrato máximo permitido es 6.' })
+  @IsOptional()
+  stratum?: number;
 
   @ApiProperty({ example: 'cuid-employee-1', required: false })
   @IsString()

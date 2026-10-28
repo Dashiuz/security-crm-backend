@@ -1,0 +1,86 @@
+// =========================================================================
+// ENUMS: CRM COMERCIAL, CANALES Y MOTIVOS DE PÉRDIDA
+// =========================================================================
+
+enum LeadSourceChannel {
+  RESIDENT_REFERRAL        // Referido por residente de puesto activo
+  GUARD_REFERRAL           // Referido por guardia de seguridad
+  ADMINISTRATOR_REFERRAL   // Administrador de otra copropiedad
+  COMMERCIAL_PROSPECTION   // Gestión directa / puerta fría
+  PUBLIC_TENDER            // Licitación pública / términos de referencia
+  COMMERCIAL_ALLIANCE      // Alianza inmobiliaria / constructora
+  WEBSITE_INBOUND          // Formulario web o canales digitales
+  OTHER
+}
+
+enum InteractionChannel {
+  PHONE_CALL               // Llamada telefónica
+  WHATSAPP_MESSAGE         // Mensaje por WhatsApp
+  EMAIL                    // Correo electrónico
+  IN_PERSON_MEETING        // Reunión presencial
+  VIDEO_CONFERENCE         // Videollamada (Zoom, Meet, Teams)
+  TECHNICAL_VISIT          // Visita técnica de seguridad / riesgos
+}
+
+enum FollowUpMilestoneStatus {
+  PENDING                  // Seguimiento en curso
+  WON                      // Aceptada -> Pasa a Orden de Servicio
+  LOST                     // Oportunidad perdida ante competidor
+  REJECTED                 // Descartado por viabilidad legal / SARLAFT
+}
+
+enum DealLossReasonCategory {
+  COMPETITOR_PRICE         // Tarifa más baja del competidor
+  AUTOMATIC_RENEWAL        // Prórroga automática con empresa actual
+  PERMANENCE_CLAUSE        // Cláusula de permanencia vigente
+  HIGHER_VALUE_ADDED       // Competencia ofreció mayor reinversión / comodato
+  BUDGET_LIMITATION        // Presupuesto insuficiente en asamblea
+  PREFERS_CONCIERGE        // Prefieren conserjería sin credencial SVSP
+  NO_DECISION_CANCELLED    // Proceso suspendido o cancelado
+  FAILED_COMPLIANCE        // Antecedentes legales o listas restrictivas (SARLAFT)
+  OTHER
+}
+
+// =========================================================================
+// MODELO: LÍNEA DE TIEMPO CRM (BITÁCORA INMUTABLE)
+// =========================================================================
+
+/// Registro cronológico de interacciones comerciales e inteligencia de competidores
+model CommercialFollowUp {
+  id                      String                  @id @default(cuid(2))
+  tenantId                String
+  tenant                  Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId                String
+  client                  Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Datos de la Interacción
+  interactionDate         DateTime                @default(now())
+  contactChannel          InteractionChannel
+  contactPersonName       String                  @db.VarChar(150)
+  contactPersonRole       String?                 @db.VarChar(100) // "Administradora", "Presidente de Consejo"
+  managementSummary       String                  @db.Text
+
+  // Compromiso y Próximo Contacto
+  nextContactDate         DateTime?               @db.Date
+  statusAfterFollowUp     FollowUpMilestoneStatus @default(PENDING)
+
+  // Inteligencia de Mercado y Competencia (Obligatorio si status = LOST)
+  lossReasonCategory      DealLossReasonCategory?
+  lossReasonDescription   String?                 @db.Text
+  winningCompetitorName   String?                 @db.VarChar(150) // Empresa que ganó el contrato
+  competitorPriceQuoted   Decimal?                @db.Decimal(12, 2)
+  competitorGuardsSalary  Decimal?                @db.Decimal(12, 2)
+
+  // Comercial que gestiona
+  assignedCommercialId    String
+  assignedCommercial      User                    @relation("FollowUpCommercial", fields: [assignedCommercialId], references: [id], onDelete: Restrict)
+
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, interactionDate])
+  @@index([tenantId, statusAfterFollowUp])
+  @@map("commercial_follow_ups")
+}

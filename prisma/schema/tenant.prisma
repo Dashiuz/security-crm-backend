@@ -41,6 +41,28 @@ model Tenant {
   notifications                  Notification[]
   userClientAccesses             UserClientAccess[]
   signatureRequests              SignatureRequest[]
+  commercialSettings             CommercialSettings?
+  tariffPeriodConfigs            TariffPeriodConfig[]
+  securityServiceCatalogs        SecurityServiceCatalog[]
+  positionSalaryMatrices         PositionSalaryMatrix[]
+  valueAddedCatalogItems         ValueAddedCatalogItem[]
+  tenantDocumentSkin             TenantDocumentSkin?
+  documentTextSnippets           DocumentTextSnippet[]
+  authorizedSigners              AuthorizedSigner[]
+  serviceOrderDistributionRecipients ServiceOrderDistributionRecipient[]
+  commercialProposals            CommercialProposal[]
+  proposalServiceItems           ProposalServiceItem[]
+  proposalValueAddedItems        ProposalValueAddedItem[]
+  serviceOrders                  ServiceOrder[]
+  serviceOrderPositions          ServiceOrderPosition[]
+  serviceOrderEquipmentItems     ServiceOrderEquipmentItem[]
+  serviceOrderDispatchLogs       ServiceOrderDispatchLog[]
+  commercialFollowUps            CommercialFollowUp[]
+  clientInsurancePolicies        ClientInsurancePolicy[]
+  contractAddendums              ContractAddendum[]
+  clientAnsCommitments           ClientAnsCommitment[]
+  universalDocumentFormats       UniversalDocumentFormat[]
+  formatVariables                FormatVariable[]
 
   @@map("tenant")
 }

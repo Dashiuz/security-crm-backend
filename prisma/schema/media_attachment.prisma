@@ -31,6 +31,10 @@ model MediaAttachment {
   pqrsMessageId      String?
   pqrsMessage        PqrsMessage?                   @relation(fields: [pqrsMessageId], references: [id], onDelete: Cascade)
   signatureRequests  SignatureRequest[]
+  commercialProposal CommercialProposal?
+  serviceOrder       ServiceOrder?
+  clientInsurancePolicy ClientInsurancePolicy?
+  contractAddendum   ContractAddendum?
 
   uploadedById String
   createdAt    DateTime @default(now())

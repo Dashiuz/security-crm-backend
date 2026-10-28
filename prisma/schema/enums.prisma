@@ -146,3 +146,84 @@ enum OperationalCategory {
   ADMINISTRATIVE
   OTHER
 }
+
+enum CommercialSector {
+  COMMERCIAL_PUBLIC      // Sector Comercial y Público (8.8 SMMLV)
+  RESIDENTIAL_STRATA_4_6 // Residencial Estratos 4, 5 y 6 - Estrato A (8.6 SMMLV)
+  RESIDENTIAL_STRATA_1_3 // Residencial Estratos 1, 2 y 3 - Estrato B (7.66 SMMLV o autorizada)
+}
+
+enum WeaponModality {
+  NO_WEAPON              // Sin Arma (A&S: 8% comercial, 10% residencial)
+  LETHAL_WEAPON          // Con Arma de Fuego Letal (A&S: 10%)
+  NON_LETHAL_WEAPON      // Con Arma No Letal / Persuasión (A&S: 10%)
+  CANINE_SUPPORT         // Medio Canino (A&S: 11%)
+}
+
+enum ShiftScheduleType {
+  SCHEDULE_2X2X2         // 2 días diurnos, 2 días nocturnos, 2 días descanso
+  SCHEDULE_3X3X2
+  SCHEDULE_4X4X2
+  SCHEDULE_5X1
+  SCHEDULE_5X2
+  SCHEDULE_6X1
+  SCHEDULE_6X2
+  SCHEDULE_7X1
+  SPECIAL_CUSTOM
+}
+
+enum WorkingDaysModality {
+  DAYS_30_ALL_MONTH      // Lunes a Domingo (30 días)
+  DAYS_26_MON_SAT_HOL    // Lunes a Sábado con festivos (26 días)
+  DAYS_24_MON_SAT_NO_HOL // Lunes a Sábado sin festivos (24 días)
+  DAYS_22_MON_FRI_HOL    // Lunes a Viernes con festivos (22 días)
+  DAYS_20_MON_FRI_NO_HOL // Lunes a Viernes sin festivos (20 días)
+  DAYS_10_WEEKEND_HOL    // Sábados, Domingos y Festivos (10 días)
+  DAYS_8_WEEKEND_ONLY    // Sábados y Domingos (8 días)
+  DAYS_2_HOLIDAYS_ONLY   // Únicamente Festivos (2 días)
+}
+
+enum ValueAddedCategory {
+  POST_EQUIPMENT         // Lockers, hornos microondas, linternas, botiquines
+  SERVICE_SUPPORT        // Turnos adicionales de apoyo (12h diurno/nocturno)
+  TECHNOLOGY_COMODATO    // Cámaras 360°, DVR, monitoreo desde central
+  SECURITY_STUDY         // Estudio de seguridad física y electrónica
+  CASH_REINVESTMENT      // Adecuaciones físicas y bonos para eventos de copropiedad
+}
+
+enum InternalDepartment {
+  CONTRACTS
+  OPERATIONS
+  WAREHOUSE
+  MONITORING_CENTER
+  CUSTOMER_SERVICE
+  HUMAN_RESOURCES
+  QUALITY_ASSURANCE
+  ACCOUNTING
+  TREASURY
+}
+
+enum DocumentHeaderLayout {
+  CLASSIC_MEMBRETE       // Logo izquierda, datos normativos derecha
+  BANNER_CINTILLO        // Barra superior sólida en color primario
+  MINIMALIST_TECH        // Tipografía compacta y logo reducido
+  MODERN_SPLIT           // Doble columna asimétrica ejecutiva
+}
+
+enum SignerRoleScope {
+  COMMERCIAL_DIRECTOR    // Firma director comercial
+  LEGAL_REPRESENTATIVE   // Firma representante legal / gerencia general
+  OPERATIONS_DIRECTOR    // Firma director de operaciones
+  HUMAN_RESOURCES_HEAD   // Firma director de talento humano
+  QUALITY_OFFICER        // Firma oficial de cumplimiento / SIG
+  CUSTOM                 // Rol configurado a medida
+}
+
+enum SnippetCategory {
+  COMMERCIAL_PROPOSAL    // Cartas de presentación, notas de vigencia
+  LEGAL_CLAUSES          // Cláusulas de exoneración, confidencialidad, SARLAFT
+  OPERATIONAL_ORDERS     // Consignas de puesto, protocolos
+  HUMAN_RESOURCES        // Términos de contratación, acuerdos de confidencialidad
+  QUALITY_BASC           // Acuerdos de seguridad BASC, políticas de SG-SST
+}
+

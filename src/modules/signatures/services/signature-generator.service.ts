@@ -107,8 +107,9 @@ export class SignatureGeneratorService {
       signatureImage = await pdfDoc.embedPng(params.signaturePngBuffer);
     } catch (pngErr) {
       // Fallback si viene como JPEG u otro formato
-      this.logger.warn(
+      this.logger.error(
         `Firma no es PNG nativo, intentando decodificar como JPG: ${pngErr instanceof Error ? pngErr.message : pngErr}`,
+        pngErr instanceof Error ? pngErr.stack : undefined,
       );
       try {
         signatureImage = await pdfDoc.embedJpg(params.signaturePngBuffer);

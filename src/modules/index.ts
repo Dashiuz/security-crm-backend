@@ -79,3 +79,26 @@ export * from './signatures/signatures.module';
 export * from './signatures/services/signature-audit.service';
 export * from './signatures/services/signature-generator.service';
 export * from './signatures/services/signature-request.service';
+
+// Commercial: Settings, SVSP Tariff Engine & Chameleon Document Engine (SPEC-ADM-018 & SPEC-ADM-019)
+export * from './commercial/commercial.module';
+export * from './commercial/settings/services/commercial-settings.service';
+export * from './commercial/settings/services/tariff-calculation.service';
+export * from './commercial/settings/services/guard-salary-calculation.service';
+export * from './commercial/document-engine/services/chameleon-document.service';
+export * from './commercial/document-engine/services/asset-optimization.service';
+export * from './commercial/document-engine/services/snippet-interpolation.service';
+export * from './commercial/repositories/commercial-settings.repository';
+export * from './commercial/repositories/document-engine.repository';
+
+// Universal Format Engine & Dynamic Variables (SPEC-CORE-010)
+export * from './format-engine/format-engine.module';
+export * from './format-engine/services/format-engine.service';
+export * from './format-engine/services/document-parser.service';
+export * from './format-engine/services/system-catalog.service';
+export {
+  FormatInterpolationService,
+  type InterpolationResult as FormatInterpolationResult,
+} from './format-engine/services/format-interpolation.service';
+export * from './format-engine/controllers/format-engine.controller';
+export * from './format-engine/dtos';

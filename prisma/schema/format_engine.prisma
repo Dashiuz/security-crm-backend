@@ -1,0 +1,90 @@
+// ==========================================
+// ARCHIVO: prisma/schema/format_engine.prisma
+// MÓDULO CORE: MOTOR UNIVERSAL DE FORMATOS Y VARIABLES DINÁMICAS (ZERO-S3)
+// ==========================================
+
+enum FormatVisibilityScope {
+  GLOBAL   // Institucional (visible para toda la empresa / tenant con RBAC)
+  PERSONAL // Exclusivo del usuario creador
+}
+
+enum FormatCategory {
+  COMMERCIAL      // Cotizaciones, propuestas, ofertas técnicas
+  HUMAN_RESOURCES // Solicitud de vacaciones, contratos laborales, dotación, llamados de atención
+  OPERATIONS      // Minutas, consignas de puesto, actas de empalme, inventario armamento
+  QUALITY_HSEQ    // Circulares, no conformidades, actas de auditoría interna
+  LEGAL           // Acuerdos de confidencialidad, pagarés, otrosíes, compromisos ANS
+  GENERAL         // Formatos generales y memorandos
+}
+
+enum VariableSourceType {
+  STATIC_TEXT     // Texto plano o enriquecido fijo ingresado por el usuario
+  DATABASE_SYSTEM // Atributo mapeado en tiempo real a una entidad del sistema (Oracle Reports model)
+}
+
+/// Formato / Plantilla Universal (Estructura asimilada en PostgreSQL, 0 bytes en S3)
+model UniversalDocumentFormat {
+  id                String                @id @default(cuid(2))
+  tenantId          String
+  tenant            Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Metadatos
+  code              String                @db.VarChar(30)  // Ej: "CM-F-01", "TH-F-04"
+  title             String                @db.VarChar(180) // Ej: "Solicitud Oficial de Vacaciones"
+  description       String?               @db.Text
+  category          FormatCategory        @default(GENERAL)
+  scope             FormatVisibilityScope @default(PERSONAL)
+
+  // Autoría / Permisos
+  userId            String?               // Si es PERSONAL: ID del usuario creador
+  user              User?                 @relation("UniversalFormatsCreated", fields: [userId], references: [id], onDelete: Cascade)
+  isDefault         Boolean               @default(false)
+  isActive          Boolean               @default(true)
+
+  // -------------------------------------------------------------
+  // CONTENIDO ESTRUCTURAL (Asimilado de Word/Excel o creado en Web)
+  // -------------------------------------------------------------
+  bodyTemplate      String                @db.Text         // HTML con tablas nativas y {{tokens}}
+  sectionsConfig    Json                  @default("{}") @db.JsonB // Toggles "Piezas de Lego"
+  
+  // Caché de variables detectadas dentro del formato para validación rápida
+  detectedVariables Json                  @default("[]") @db.JsonB // Ej: ["empleado_nombre", "dias_vacaciones"]
+
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  createdById       String?
+  updatedById       String?
+
+  @@index([tenantId, category, scope])
+  @@index([tenantId, userId])
+  @@map("universal_document_formats")
+}
+
+/// Variables Dinámicas y Atajos Rápidos del Usuario / Sistema
+model FormatVariable {
+  id          String                @id @default(cuid(2))
+  tenantId    String
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  scope       FormatVisibilityScope @default(PERSONAL)
+  userId      String?
+  user        User?                 @relation("FormatVariablesCreated", fields: [userId], references: [id], onDelete: Cascade)
+
+  key         String                @db.VarChar(60)  // Input Izquierdo: Clave (ej. "MI_FIRMA", "CLIENTE_NIT")
+  label       String                @db.VarChar(120) // Nombre amigable (ej. "Mi Firma Digital", "NIT del Cliente")
+  category    String?               @default("GENERAL") @db.VarChar(50)
+  sourceType  VariableSourceType    @default(STATIC_TEXT)
+  
+  staticValue String?               @db.Text         // Input Derecho (si es texto fijo)
+  systemPath  String?               @db.VarChar(120) // Input Derecho (si es BD: ej. "employee.fullName")
+  
+  isActive    Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  createdById String?
+  updatedById String?
+
+  @@unique([tenantId, userId, key])
+  @@index([tenantId, scope])
+  @@map("format_variables")
+}
