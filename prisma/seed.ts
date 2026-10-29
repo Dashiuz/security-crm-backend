@@ -1,3 +1,4 @@
+import { seedPayroll } from './seed-payroll';
 import {
   PrismaClient,
   PlanTier,
@@ -568,6 +569,27 @@ async function main() {
       key: 'format:manage',
       desc: 'Diseñar, crear y actualizar formatos y variables transversales',
     },
+    // Payroll Foundations & Dependencies (SPEC-ADM-028)
+    {
+      id: 'payroll_settings_read_perm_id',
+      key: 'payroll:settings:read',
+      desc: 'Consultar parámetros legales, conceptos, cuentas PUC, festivos y catálogos de nómina',
+    },
+    {
+      id: 'payroll_settings_manage_perm_id',
+      key: 'payroll:settings:manage',
+      desc: 'Crear y actualizar parámetros legales, conceptos, tablas base, cuentas PUC y catálogos oficiales',
+    },
+    {
+      id: 'payroll_dependencies_read_perm_id',
+      key: 'payroll:dependencies:read',
+      desc: 'Consultar sucursales, centros de costo, dependencias (puestos), modalidades de turno y periodos',
+    },
+    {
+      id: 'payroll_dependencies_manage_perm_id',
+      key: 'payroll:dependencies:manage',
+      desc: 'Crear, actualizar y sincronizar sucursales, dependencias operativas, modalidades de turno y periodos de nómina',
+    },
   ];
 
   // 5. Departments
@@ -910,7 +932,20 @@ async function main() {
     seededRolesMap['p1vk4imb6ugp1z0flglw86pk:ADMIN'] ||
     'xv1937hvbe2zhh7a0slp2ug0';
 
-  const rolePermissions = [
+  // Query all ADMIN roles across tenants to ensure they get new permissions
+  const allAdminRoles = await prisma.role.findMany({
+    where: { name: 'ADMIN' },
+  });
+  const adminRoleIds = Array.from(
+    new Set([adminRoleId, ...allAdminRoles.map((r) => r.id)]),
+  );
+
+  const rolePermissions: Array<{
+    roleId: string;
+    permissionId: string;
+    assignedAt: Date;
+    assignedBy: string;
+  }> = [
     // GODLIKE gets all permissions including godlike:manage
     ...Object.values(seededPermissionsMap).map((permId) => ({
       roleId: godlikeRoleId,
@@ -918,16 +953,21 @@ async function main() {
       assignedAt: new Date(),
       assignedBy: 'system',
     })),
-    // ADMIN gets manage & crud permissions
-    ...Object.entries(seededPermissionsMap)
-      .filter(([key]) => key !== 'godlike:manage')
-      .map(([, permId]) => ({
-        roleId: adminRoleId,
-        permissionId: permId,
-        assignedAt: new Date(),
-        assignedBy: 'system',
-      })),
   ];
+
+  // All ADMIN roles get all non-godlike permissions
+  for (const rid of adminRoleIds) {
+    for (const [key, permId] of Object.entries(seededPermissionsMap)) {
+      if (key !== 'godlike:manage') {
+        rolePermissions.push({
+          roleId: rid,
+          permissionId: permId,
+          assignedAt: new Date(),
+          assignedBy: 'system',
+        });
+      }
+    }
+  }
 
   console.log('Seeding Role Permissions...');
   for (const item of rolePermissions) {
@@ -1051,7 +1091,13 @@ async function main() {
 
   // 12. Commercial Settings & SVSP 2026 Reference
   console.log('Seeding Commercial Settings for active tenants...');
-  const tenantsToSeed = ['p1vk4imb6ugp1z0flglw86pk', 'system'];
+  const activeTenants = await prisma.tenant.findMany({
+    where: { isActive: true },
+    select: { id: true },
+  });
+  const tenantsToSeed = Array.from(
+    new Set(['p1vk4imb6ugp1z0flglw86pk', 'system', ...activeTenants.map((t) => t.id)]),
+  );
   for (const tenantId of tenantsToSeed) {
     const commercialSetting = await prisma.commercialSettings.upsert({
       where: { tenantId },
@@ -1176,6 +1222,9 @@ async function main() {
   }
 
   console.log('✅ Commercial settings and SVSP 2026 reference seeded');
+
+  // 13. Payroll Foundations & Catalogs (SPEC-ADM-028)
+  await seedPayroll(prisma, tenantsToSeed);
 
   console.log('🎉 Seed completed successfully!');
 }

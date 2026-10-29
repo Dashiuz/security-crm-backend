@@ -56,6 +56,22 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientAnsCommitment',
               'UniversalDocumentFormat',
               'FormatVariable',
+              // SPEC-ADM-028: Payroll Models
+              'PayrollSettings',
+              'PayrollHoliday',
+              'PayrollConcept',
+              'PayrollEntity',
+              'PayrollBank',
+              'PayrollExitReason',
+              'PayrollCie10',
+              'PayrollHiringRequirement',
+              'PayrollSvspLevel',
+              'PayrollSecurityAcademy',
+              'PayrollBranch',
+              'PayrollShiftModality',
+              'PayrollModalityItem',
+              'PayrollDependency',
+              'PayrollPeriod',
             ];
             const multiTenantModels = [
               'User',
@@ -106,6 +122,22 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientAnsCommitment',
               'UniversalDocumentFormat',
               'FormatVariable',
+              // SPEC-ADM-028: Payroll Models
+              'PayrollSettings',
+              'PayrollHoliday',
+              'PayrollConcept',
+              'PayrollEntity',
+              'PayrollBank',
+              'PayrollExitReason',
+              'PayrollCie10',
+              'PayrollHiringRequirement',
+              'PayrollSvspLevel',
+              'PayrollSecurityAcademy',
+              'PayrollBranch',
+              'PayrollShiftModality',
+              'PayrollModalityItem',
+              'PayrollDependency',
+              'PayrollPeriod',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -144,6 +176,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientInsurancePolicy',
               'ContractAddendum',
               'ClientAnsCommitment',
+              'PayrollDependency',
             ];
             const isMultiClient = (multiClientModels as any[]).includes(model);
 
@@ -376,6 +409,22 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'ServiceOrderDistributionRecipient',
                 'UniversalDocumentFormat',
                 'FormatVariable',
+                // SPEC-ADM-028: Payroll Models
+                'PayrollSettings',
+                'PayrollHoliday',
+                'PayrollConcept',
+                'PayrollEntity',
+                'PayrollBank',
+                'PayrollExitReason',
+                'PayrollCie10',
+                'PayrollHiringRequirement',
+                'PayrollSvspLevel',
+                'PayrollSecurityAcademy',
+                'PayrollBranch',
+                'PayrollShiftModality',
+                'PayrollModalityItem',
+                'PayrollDependency',
+                'PayrollPeriod',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

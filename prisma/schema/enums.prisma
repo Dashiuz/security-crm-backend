@@ -227,3 +227,70 @@ enum SnippetCategory {
   QUALITY_BASC           // Acuerdos de seguridad BASC, políticas de SG-SST
 }
 
+// ============================================================================
+// SPEC-ADM-028: ENUMS PARA NÓMINA, LIQUIDACIÓN LABORAL Y VIGILANCIA PRIVADA
+// ============================================================================
+
+enum PayrollPaymentFrequency {
+  MONTHLY_WITH_ADVANCE   // Liquidación mensual (día 30) con anticipo quincenal (día 15) - Estándar Vigilancia
+  BIWEEKLY_PURE          // Liquidación quincenal pura (cortes día 15 y día 30)
+  MONTHLY_PURE           // Liquidación mensual única (sin anticipo)
+  WEEKLY                 // Liquidación semanal
+}
+
+enum PayrollAdvanceMode {
+  FIXED_AMOUNT           // Valor fijo parametrizado en hoja de vida o puesto
+  PERCENTAGE_OF_BASE     // Porcentaje sobre el sueldo básico / garantizado (ej. 40% o 50%)
+  PROPORTIONAL_DAYS      // Proporcional a los días efectivamente laborados en la 1ra quincena
+}
+
+enum PayrollConceptNature {
+  DEVENGO                // Rango 1 - 99: Pagos salariales y no salariales
+  LICENCIA               // Rango 100 - 110: Licencias y permisos remunerados
+  INCAPACIDAD            // Rango 100 - 110: Incapacidades médicas (EG, AT, EP)
+  DEDUCCION              // Rango 500 - 599: Descuentos, préstamos, ausencias no remuneradas
+  SEG_SOCIAL             // Rango 600+: Aportes a Salud, Pensión y FSP
+  PROVISION              // Provisiones patronales y parafiscales
+}
+
+enum PayrollProportionality {
+  DAYS                   // Proporcional a los días laborados (DIAS)
+  NON_PROPORTIONAL       // Valor fijo / no proporcional (NO PROP.)
+  HOURS                  // Calculado por cantidad de horas (HORAS)
+}
+
+enum SocialSecurityEntityType {
+  EPS                    // Entidad Promotora de Salud
+  AFP                    // Administradora de Fondos de Pensiones y Cesantías
+  CCF                    // Caja de Compensación Familiar
+  ARL                    // Administradora de Riesgos Laborales
+}
+
+enum ArlRiskClass {
+  RISK_I                 // Clase I: 0.522% (Administrativo)
+  RISK_II                // Clase II: 1.044%
+  RISK_III               // Clase III: 2.436%
+  RISK_IV                // Clase IV: 4.350% (Vigilancia sin arma / medios tecnológicos)
+  RISK_V                 // Clase V: 6.960% (Vigilancia armada / escoltas)
+}
+
+enum DependencySettlementType {
+  BY_AVERAGE_GUARANTEED  // Por Promedio (Salario Garantizado desglosado por Modalidad)
+  BY_SCHEDULE            // Por Programación Real (Horas reales laboradas en malla)
+  FIXED_ADMIN            // Fijo Administrativo (Sueldo básico contractual de hoja de vida)
+}
+
+enum ShiftModalityClass {
+  ROTATING               // Rotativo (Turnos diurnos y nocturnos, ej. 2X2X2 24H)
+  DAY_SHIFT              // Diurno exclusivo (ej. 12H Diurno)
+  NIGHT_SHIFT            // Nocturno exclusivo (ej. 12H Nocturno)
+  ADMINISTRATIVE         // Horario de oficina / administrativo
+}
+
+enum PayrollPeriodStatus {
+  OPEN                   // Abierto para registro de novedades y pre-nómina
+  CLOSED                 // Liquidado y cerrado para dispersión
+  LOCKED                 // Bloqueado definitivamente (impide alterar turnos/novedades)
+}
+
+

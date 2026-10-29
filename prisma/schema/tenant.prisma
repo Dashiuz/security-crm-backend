@@ -64,6 +64,23 @@ model Tenant {
   universalDocumentFormats       UniversalDocumentFormat[]
   formatVariables                FormatVariable[]
 
+  // Payroll Relations (SPEC-ADM-028)
+  payrollSettings                PayrollSettings?
+  payrollHolidays                PayrollHoliday[]
+  payrollConcepts                PayrollConcept[]
+  payrollEntities                PayrollEntity[]
+  payrollBanks                   PayrollBank[]
+  payrollExitReasons             PayrollExitReason[]
+  payrollCie10Codes              PayrollCie10[]
+  payrollHiringRequirements      PayrollHiringRequirement[]
+  payrollSvspLevels              PayrollSvspLevel[]
+  payrollSecurityAcademies       PayrollSecurityAcademy[]
+  payrollBranches                PayrollBranch[]
+  payrollShiftModalities         PayrollShiftModality[]
+  payrollModalityItems           PayrollModalityItem[]
+  payrollDependencies            PayrollDependency[]
+  payrollPeriods                 PayrollPeriod[]
+
   @@map("tenant")
 }
 
