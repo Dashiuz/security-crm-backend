@@ -14,6 +14,8 @@ import {
   UpdatePayrollExitReasonDto,
   CreatePayrollSvspLevelDto,
   UpdatePayrollSvspLevelDto,
+  CreatePayrollAcademyDto,
+  UpdatePayrollAcademyDto,
 } from '../dtos/payroll-catalog.dto';
 import { SocialSecurityEntityType, PayrollPeriodStatus } from '@prisma/client';
 
@@ -304,6 +306,75 @@ export class PayrollCatalogsService {
         `Error listing payroll periods for tenant ${tenantId}`,
         error.stack,
       );
+      throw error;
+    }
+  }
+
+  // 8. Security Academies (Pronos 5.2)
+  async listAcademies(tenantId: string) {
+    try {
+      return await this.prisma.payrollSecurityAcademy.findMany({
+        where: { tenantId, isActive: true },
+        orderBy: { code: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error listing security academies for tenant ${tenantId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async createAcademy(
+    tenantId: string,
+    dto: CreatePayrollAcademyDto,
+    userId?: string,
+  ) {
+    try {
+      const existing = await this.prisma.payrollSecurityAcademy.findUnique({
+        where: { tenantId_code: { tenantId, code: dto.code } },
+      });
+      if (existing) {
+        throw new BadRequestException(
+          `Ya existe una academia de seguridad con el código ${dto.code}`,
+        );
+      }
+
+      return await this.prisma.payrollSecurityAcademy.create({
+        data: { ...dto, tenantId, createdById: userId, updatedById: userId },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error creating security academy for tenant ${tenantId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async updateAcademy(
+    tenantId: string,
+    id: string,
+    dto: UpdatePayrollAcademyDto,
+    userId?: string,
+  ) {
+    try {
+      const existing = await this.prisma.payrollSecurityAcademy.findFirst({
+        where: { id, tenantId },
+      });
+      if (!existing) {
+        throw new NotFoundException(
+          `Academia de seguridad no encontrada (ID: ${id})`,
+        );
+      }
+
+      return await this.prisma.payrollSecurityAcademy.update({
+        where: { id },
+        data: { ...dto, updatedById: userId },
+      });
+    } catch (error) {
+      this.logger.error(`Error updating security academy ${id}`, error.stack);
       throw error;
     }
   }

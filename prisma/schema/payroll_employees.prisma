@@ -1,0 +1,211 @@
+// ============================================================================
+// SPEC-ADM-029: EXPEDIENTE LABORAL 360°, CUMPLIMIENTO SVSP Y CAP/SOMA
+// ============================================================================
+
+/// 1. Perfil Contractual, Salarial, PILA, Bancario y Demográfico del Empleado (Numerales 1.16, 2.1 y 2.2 Pronos)
+model EmployeePayrollProfile {
+  id                        String                   @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                String                   @unique
+  employee                  Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // 1.1 Asignación Operativa y Contractual (Numeral 1.16 Pronos)
+  branchId                  String?
+  branch                    PayrollBranch?           @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  primaryDependencyId       String?
+  primaryDependency         PayrollDependency?       @relation(fields: [primaryDependencyId], references: [id], onDelete: SetNull)
+
+  contractType              EmploymentContractType   @default(FIXED_TERM)
+  contractNumber            String?                  @db.VarChar(50)
+  contractEndDate           DateTime?                @db.Date // Fecha fin para alerta de preaviso (30 días antes)
+  probationEndDate          DateTime?                @db.Date
+
+  // 1.2 Esquema Salarial y Anticipo Quincenal
+  salaryMode                EmployeeSalaryMode       @default(BY_DEPENDENCY)
+  customBaseSalary          Decimal                  @default(1750905.00) @db.Decimal(14, 2)
+  hasTransportAllowance     Boolean                  @default(true)
+  customAdvanceValue        Decimal?                 @db.Decimal(14, 2) // Si define un anticipo fijo personalizado el día 15
+  isIntegralSalary          Boolean                  @default(false)
+
+  // 1.3 Afiliaciones a Seguridad Social PILA
+  pilaContributorType       String                   @default("01") @db.VarChar(5) // "01" Dependiente, "12" Aprendiz Lectiva, "19" Productiva
+  pilaContributorSubtype    String                   @default("00") @db.VarChar(5) // "00" Ninguno, "01" Dependiente pensionado activo
+  isPensioner               Boolean                  @default(false)
+  arlRiskClass              ArlRiskClass             @default(RISK_IV)
+
+  epsEntityId               String?
+  epsEntity                 PayrollEntity?           @relation("EmployeeEps", fields: [epsEntityId], references: [id], onDelete: SetNull)
+  afpEntityId               String?
+  afpEntity                 PayrollEntity?           @relation("EmployeeAfp", fields: [afpEntityId], references: [id], onDelete: SetNull)
+  cesantiasEntityId         String?
+  cesantiasEntity           PayrollEntity?           @relation("EmployeeCesantias", fields: [cesantiasEntityId], references: [id], onDelete: SetNull)
+  ccfEntityId               String?
+  ccfEntity                 PayrollEntity?           @relation("EmployeeCcf", fields: [ccfEntityId], references: [id], onDelete: SetNull)
+
+  // 1.4 Dispersión Bancaria ACH
+  bankId                    String?
+  bank                      PayrollBank?             @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankAccountType           BankAccountType          @default(SAVINGS)
+  bankAccountNumber         String?                  @db.VarChar(50)
+
+  // 1.5 Datos Demográficos DANE, Libreta Militar y Dotación (Numerales 2.1 y 2.2 Pronos)
+  daneBirthCityCode         String?                  @db.VarChar(10)
+  daneBirthCityName         String?                  @db.VarChar(100)
+  daneCityCode              String?                  @default("11001") @db.VarChar(10)
+  daneCityName              String?                  @default("BOGOTÁ D.C.") @db.VarChar(100)
+  neighborhood              String?                  @db.VarChar(120)
+  stratum                   Int?                     @default(2)
+  maritalStatus             MaritalStatus            @default(SINGLE)
+  bloodType                 String?                  @db.VarChar(10) // Ej: "O+", "A+", "B-"
+  educationLevel            EducationLevel           @default(HIGH_SCHOOL)
+  housingType               HousingType              @default(RENTED)
+  transportMeans            String?                  @db.VarChar(80) // Ej: "Transporte Público", "Motocicleta", "Bicicleta"
+
+  militaryCardNumber        String?                  @db.VarChar(40)
+  militaryCardClass         MilitaryCardClass        @default(NOT_APPLICABLE)
+  militaryDistrict          String?                  @db.VarChar(40)
+
+  shirtSize                 String?                  @db.VarChar(15) // Ej: "M", "L", "XL"
+  pantsSize                 String?                  @db.VarChar(15) // Ej: "32", "34"
+  footwearSize              String?                  @db.VarChar(15) // Ej: "40", "41"
+
+  // 1.6 Retiro y Base de Datos Negativa — B.D.N (Numeral 1.14 Pronos)
+  exitReasonId              String?
+  exitReason                PayrollExitReason?       @relation(fields: [exitReasonId], references: [id], onDelete: SetNull)
+  exitNotes                 String?                  @db.Text
+  isBlockedForRehire        Boolean                  @default(false)
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  createdById               String?
+  updatedById               String?
+
+  @@index([tenantId])
+  @@index([tenantId, primaryDependencyId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, contractEndDate])
+  @@map("employee_payroll_profiles")
+}
+
+/// 2. Grupo Familiar y Beneficiarios del Trabajador (Numeral 2.1 Pronos)
+model EmployeeFamilyMember {
+  id                        String                   @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                String
+  employee                  Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  fullName                  String                   @db.VarChar(160)
+  relationship              FamilyRelationship
+  documentType              String                   @default("TI") @db.VarChar(10) // RC, TI, CC, CE
+  document                  String?                  @db.VarChar(30)
+  birthdate                 DateTime?                @db.Date
+  gender                    String?                  @db.VarChar(20)
+  phone                     String?                  @db.VarChar(30)
+  isDependentForSubsidy     Boolean                  @default(true)  // Causa cuota monetaria en Caja de Compensación
+  isScholar                 Boolean                  @default(false) // Acredita certificado de escolaridad
+  notes                     String?                  @db.VarChar(250)
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  createdById               String?
+  updatedById               String?
+
+  @@index([tenantId, employeeId])
+  @@map("employee_family_members")
+}
+
+/// 3. Checklist Documental de Requisitos de Contratación (Numerales 1.5 y 1.16 Pronos)
+model EmployeeRequirementCheck {
+  id                        String                   @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                String
+  employee                  Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  requirementId             String
+  requirement               PayrollHiringRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  status                    HiringRequirementStatus  @default(PENDING)
+  issueDate                 DateTime?                @db.Date
+  expiryDate                DateTime?                @db.Date
+  verifiedAt                DateTime?
+  s3Key                     String?                  @db.VarChar(500)
+  fileName                  String?                  @db.VarChar(255)
+  notes                     String?                  @db.VarChar(300)
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  createdById               String?
+  updatedById               String?
+
+  @@unique([tenantId, employeeId, requirementId])
+  @@index([tenantId, employeeId])
+  @@map("employee_requirement_checks")
+}
+
+/// 4. Historial de Cursos de Vigilancia SVSP y Registro RENOVA (Numerales 2.3, 5.2 y 5.3 Pronos)
+model EmployeeSvspCourse {
+  id                        String                   @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                String
+  employee                  Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  svspLevelId               String
+  svspLevel                 PayrollSvspLevel         @relation(fields: [svspLevelId], references: [id], onDelete: Restrict)
+
+  academyId                 String
+  academy                   PayrollSecurityAcademy   @relation(fields: [academyId], references: [id], onDelete: Restrict)
+
+  nroCode                   String                   @db.VarChar(60) // Código NRO oficial asignado por SuperVigilancia
+  certificateNumber         String?                  @db.VarChar(60) // Acta / Diploma de grado de la academia
+  issueDate                 DateTime                 @db.Date        // Fecha de grado / acreditación
+  expiryDate                DateTime                 @db.Date        // Fecha de vencimiento (issueDate + validityDays, usualmente 365 días)
+  s3Key                     String?                  @db.VarChar(500)
+  fileName                  String?                  @db.VarChar(255)
+  isCurrent                 Boolean                  @default(true)
+  notes                     String?                  @db.VarChar(300)
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  createdById               String?
+  updatedById               String?
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, expiryDate])
+  @@map("employee_svsp_courses")
+}
+
+/// 5. Capacitaciones Internas Cap/SOMA (Numeral 2.4 Pronos)
+model EmployeeInternalTraining {
+  id                        String                   @id @default(cuid(2))
+  tenantId                  String
+  tenant                    Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                String
+  employee                  Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  title                     String                   @db.VarChar(180)
+  topic                     String                   @db.VarChar(120) // Ej: "Atención al Usuario", "Polígono", "SG-SST", "BASC / SARLAFT"
+  instructorName            String                   @db.VarChar(150)
+  trainingDate              DateTime                 @db.Date
+  durationHours             Decimal                  @default(2.00) @db.Decimal(5, 2)
+  score                     Decimal                  @default(5.00) @db.Decimal(3, 2) // Calificación escala Pronos 1.00 a 5.00
+  approved                  Boolean                  @default(true)
+  notes                     String?                  @db.VarChar(300)
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  createdById               String?
+  updatedById               String?
+
+  @@index([tenantId, employeeId])
+  @@map("employee_internal_trainings")
+}
+

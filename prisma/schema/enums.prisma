@@ -293,4 +293,75 @@ enum PayrollPeriodStatus {
   LOCKED                 // Bloqueado definitivamente (impide alterar turnos/novedades)
 }
 
+// ============================================================================
+// SPEC-ADM-029: ENUMS PARA EXPEDIENTE LABORAL 360°, CONTRATACIÓN Y SVSP
+// ============================================================================
+
+enum EmploymentContractType {
+  FIXED_TERM             // Contrato a Término Fijo (requiere control de preaviso 30 días Art. 46 CST)
+  INDEFINITE             // Contrato a Término Indefinido
+  WORK_OR_LABOR          // Contrato por Obra o Labor Contratada
+  APPRENTICE_LECTIVE     // Aprendiz SENA - Etapa Lectiva (Cotizante PILA 12)
+  APPRENTICE_PRODUCTIVE  // Aprendiz SENA - Etapa Productiva (Cotizante PILA 19)
+}
+
+enum EmployeeSalaryMode {
+  BY_DEPENDENCY          // Liquida según el Valor Pagado / Modalidad de la Dependencia donde labore
+  CUSTOM_FIXED           // Liquida según el Sueldo Básico Fijo pactado en la Hoja de Vida
+}
+
+enum BankAccountType {
+  SAVINGS                // Cuenta de Ahorros
+  CHECKING               // Cuenta Corriente
+  ELECTRONIC_DEPOSIT     // Depósito Electrónico (Nequi, Daviplata, Dale)
+  CASH_OR_CHECK          // Pago por Ventanilla / Efectivo / Cheque
+}
+
+enum MilitaryCardClass {
+  FIRST_CLASS            // Libreta Militar de Primera Clase
+  SECOND_CLASS           // Libreta Militar de Segunda Clase
+  PROVISIONAL            // Tarjeta Provisional
+  NOT_APPLICABLE         // No Aplica / Exento
+}
+
+enum MaritalStatus {
+  SINGLE                 // Soltero(a)
+  MARRIED                // Casado(a)
+  FREE_UNION             // Unión Libre / Compañero(a) Permanente
+  DIVORCED               // Divorciado(a) / Separado(a)
+  WIDOWED                // Viudo(a)
+}
+
+enum EducationLevel {
+  PRIMARY                // Básica Primaria
+  HIGH_SCHOOL            // Bachiller Académico / Técnico
+  TECHNICAL              // Técnico Profesional
+  TECHNOLOGIST           // Tecnólogo
+  PROFESSIONAL           // Profesional Universitario
+  POSTGRADUATE           // Especialización / Maestría
+}
+
+enum HousingType {
+  OWN                    // Propia
+  RENTED                 // Arrendada
+  FAMILY                 // Familiar
+  MORTGAGED              // En pago de hipoteca
+}
+
+enum FamilyRelationship {
+  SPOUSE                 // Cónyuge / Compañero(a) Permanente
+  CHILD                  // Hijo(a)
+  PARENT                 // Padre / Madre
+  SIBLING                // Hermano(a)
+  OTHER                  // Otro dependiente económico
+}
+
+enum HiringRequirementStatus {
+  PENDING                // Pendiente por entregar
+  VERIFIED               // Entregado, validado y vigente
+  EXPIRED                // Documento vencido (ej. Psicofísico o Antecedentes)
+  WAIVED                 // Exonerado / No aplica para este cargo
+}
+
+
 

@@ -173,6 +173,11 @@ model PayrollEntity {
   phone             String?                  @db.VarChar(50)
   isActive          Boolean                  @default(true)
 
+  epsProfiles       EmployeePayrollProfile[] @relation("EmployeeEps")
+  afpProfiles       EmployeePayrollProfile[] @relation("EmployeeAfp")
+  cesantiasProfiles EmployeePayrollProfile[] @relation("EmployeeCesantias")
+  ccfProfiles       EmployeePayrollProfile[] @relation("EmployeeCcf")
+
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   createdById       String?
@@ -195,6 +200,8 @@ model PayrollBank {
   exportFormat  String   @default("STANDARD_ACH") @db.VarChar(40) // PAB_BANCOLOMBIA, BCSC, DAVIVIENDA, BOGOTA
   isActive      Boolean  @default(true)
 
+  employeeProfiles EmployeePayrollProfile[]
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   createdById   String?
@@ -215,6 +222,8 @@ model PayrollExitReason {
   name        String   @db.VarChar(150) // "Renuncia Voluntaria", "Terminación por justa causa", etc.
   isJustCause Boolean  @default(false)  // Define si genera o no indemnización Art. 64 CST
   isActive    Boolean  @default(true)
+
+  employeeProfiles EmployeePayrollProfile[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -257,6 +266,8 @@ model PayrollHiringRequirement {
   hasExpiry   Boolean  @default(false)  // Si requiere control de vencimiento (ej. Psicofísico anual)
   isActive    Boolean  @default(true)
 
+  employeeChecks EmployeeRequirementCheck[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdById String?
@@ -276,6 +287,8 @@ model PayrollSvspLevel {
   name         String   @db.VarChar(180) // "FUNDAMENTACION VIGILANCIA", "REENTRENAMIENTO VIGILANCIA"
   validityDays Int      @default(365)    // Vigencia del curso en días (1 año por norma SVSP)
   isActive     Boolean  @default(true)
+
+  employeeCourses EmployeeSvspCourse[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -302,6 +315,8 @@ model PayrollSecurityAcademy {
   city               String?  @db.VarChar(100)
   isActive           Boolean  @default(true)
 
+  employeeCourses    EmployeeSvspCourse[]
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   createdById        String?
@@ -325,6 +340,7 @@ model PayrollBranch {
   isActive       Boolean             @default(true)
 
   dependencies   PayrollDependency[]
+  employeeProfiles EmployeePayrollProfile[]
 
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -426,6 +442,8 @@ model PayrollDependency {
   cotizanteTypeCode        String                   @default("01") @db.VarChar(10) // "01" Dependiente en PILA
   isVariable               Boolean                  @default(true)  // Permite generar devengos adicionales al garantizado
   isActive                 Boolean                  @default(true)
+
+  employeeProfiles         EmployeePayrollProfile[]
 
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt

@@ -24,6 +24,8 @@ import {
   UpdatePayrollBankDto,
   CreatePayrollExitReasonDto,
   CreatePayrollSvspLevelDto,
+  CreatePayrollAcademyDto,
+  UpdatePayrollAcademyDto,
 } from '../dtos/payroll-catalog.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
@@ -42,7 +44,12 @@ export class PayrollCatalogsController {
 
   // 1. Social Security Entities (EPS, AFP, CCF, ARL)
   @Get('entities')
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
+  )
   @ApiOperation({
     summary: 'Listar entidades de seguridad social (EPS, AFP, CCF, ARL)',
   })
@@ -87,7 +94,12 @@ export class PayrollCatalogsController {
 
   // 2. Banks
   @Get('banks')
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
+  )
   @ApiOperation({ summary: 'Listar catálogo de bancos para dispersión ACH' })
   @ApiOkResponse({ description: 'Lista de bancos comerciales de Colombia' })
   listBanks(@Request() req: any) {
@@ -128,6 +140,8 @@ export class PayrollCatalogsController {
   @RequirePermissions(
     'payroll:dependencies:read',
     'payroll:dependencies:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
   )
   @ApiOperation({ summary: 'Listar sucursales de la empresa' })
   @ApiOkResponse({ description: 'Lista de sucursales con códigos DANE y PILA' })
@@ -137,7 +151,12 @@ export class PayrollCatalogsController {
 
   // 4. Exit Reasons (Pronos 1.14)
   @Get('exit-reasons')
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
+  )
   @ApiOperation({
     summary: 'Listar motivos de retiro de personal (B.D.N Pronos)',
   })
@@ -165,7 +184,12 @@ export class PayrollCatalogsController {
 
   // 5. Hiring Requirements (Pronos 1.5)
   @Get('hiring-requirements')
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
+  )
   @ApiOperation({ summary: 'Listar requisitos documentales de contratación' })
   @ApiOkResponse({ description: 'Lista de requisitos de expediente laboral' })
   listHiringRequirements(@Request() req: any) {
@@ -174,7 +198,12 @@ export class PayrollCatalogsController {
 
   // 6. SVSP Levels (Pronos 5.3)
   @Get('svsp-levels')
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
+  )
   @ApiOperation({
     summary: 'Listar niveles y cursos de capacitación SuperVigilancia',
   })
@@ -200,6 +229,8 @@ export class PayrollCatalogsController {
   @RequirePermissions(
     'payroll:dependencies:read',
     'payroll:dependencies:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
   )
   @ApiOperation({
     summary: 'Listar periodos de nómina (quincenales y mensuales)',
@@ -208,5 +239,51 @@ export class PayrollCatalogsController {
   listPeriods(@Request() req: any, @Query('year') year?: string) {
     const parsedYear = year ? parseInt(year, 10) : undefined;
     return this.catalogsService.listPeriods(req.user.tenantId, parsedYear);
+  }
+
+  // 8. Security Academies (Pronos 5.2)
+  @Get('academies')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:employees:manage',
+  )
+  @ApiOperation({
+    summary:
+      'Listar academias de seguridad privada autorizadas por SuperVigilancia',
+  })
+  @ApiOkResponse({ description: 'Lista de academias de seguridad' })
+  listAcademies(@Request() req: any) {
+    return this.catalogsService.listAcademies(req.user.tenantId);
+  }
+
+  @Post('academies')
+  @RequirePermissions('payroll:settings:manage')
+  @ApiOperation({ summary: 'Crear academia de seguridad' })
+  @ApiCreatedResponse({ description: 'Academia creada' })
+  createAcademy(@Request() req: any, @Body() dto: CreatePayrollAcademyDto) {
+    return this.catalogsService.createAcademy(
+      req.user.tenantId,
+      dto,
+      req.user.id || req.user.sub,
+    );
+  }
+
+  @Patch('academies/:id')
+  @RequirePermissions('payroll:settings:manage')
+  @ApiOperation({ summary: 'Actualizar academia de seguridad' })
+  @ApiOkResponse({ description: 'Academia actualizada' })
+  updateAcademy(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdatePayrollAcademyDto,
+  ) {
+    return this.catalogsService.updateAcademy(
+      req.user.tenantId,
+      id,
+      dto,
+      req.user.id || req.user.sub,
+    );
   }
 }

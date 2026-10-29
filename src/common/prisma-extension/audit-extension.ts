@@ -72,6 +72,12 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollModalityItem',
               'PayrollDependency',
               'PayrollPeriod',
+              // SPEC-ADM-029: Payroll Phase 2 Models
+              'EmployeePayrollProfile',
+              'EmployeeFamilyMember',
+              'EmployeeRequirementCheck',
+              'EmployeeSvspCourse',
+              'EmployeeInternalTraining',
             ];
             const multiTenantModels = [
               'User',
@@ -138,6 +144,12 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollModalityItem',
               'PayrollDependency',
               'PayrollPeriod',
+              // SPEC-ADM-029: Payroll Phase 2 Models
+              'EmployeePayrollProfile',
+              'EmployeeFamilyMember',
+              'EmployeeRequirementCheck',
+              'EmployeeSvspCourse',
+              'EmployeeInternalTraining',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -425,6 +437,12 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'PayrollModalityItem',
                 'PayrollDependency',
                 'PayrollPeriod',
+                // SPEC-ADM-029: Payroll Phase 2 Models
+                'EmployeePayrollProfile',
+                'EmployeeFamilyMember',
+                'EmployeeRequirementCheck',
+                'EmployeeSvspCourse',
+                'EmployeeInternalTraining',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

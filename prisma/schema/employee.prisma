@@ -46,6 +46,13 @@ model Employee {
   visitorControls        VisitorEntryControl[]
   correspondenceControls CorrespondenceReceivedControl[]
 
+  // SPEC-ADM-029: Expediente Laboral 360° y Cumplimiento SVSP
+  payrollProfile         EmployeePayrollProfile?
+  familyMembers          EmployeeFamilyMember[]
+  requirementChecks      EmployeeRequirementCheck[]
+  svspCourses            EmployeeSvspCourse[]
+  internalTrainings      EmployeeInternalTraining[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

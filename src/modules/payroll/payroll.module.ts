@@ -10,6 +10,10 @@ import { PayrollSettingsController } from './controllers/payroll-settings.contro
 import { PayrollConceptsController } from './controllers/payroll-concepts.controller';
 import { PayrollDependenciesController } from './controllers/payroll-dependencies.controller';
 import { PayrollCatalogsController } from './controllers/payroll-catalogs.controller';
+import { PayrollEmployeesController } from './controllers/payroll-employees.controller';
+import { PayrollEmployeesService } from './services/payroll-employees.service';
+import { RenovaExcelExporterService } from './services/renova-excel-exporter.service';
+import { PayrollEmployeesRepository } from './repositories/payroll-employees.repository';
 
 @Module({
   imports: [PrismaModule],
@@ -18,6 +22,7 @@ import { PayrollCatalogsController } from './controllers/payroll-catalogs.contro
     PayrollConceptsController,
     PayrollDependenciesController,
     PayrollCatalogsController,
+    PayrollEmployeesController,
   ],
   providers: [
     ColombianHolidayEngine,
@@ -26,6 +31,9 @@ import { PayrollCatalogsController } from './controllers/payroll-catalogs.contro
     PayrollConceptsService,
     PayrollDependenciesService,
     PayrollCatalogsService,
+    PayrollEmployeesRepository,
+    RenovaExcelExporterService,
+    PayrollEmployeesService,
   ],
   exports: [
     ColombianHolidayEngine,
@@ -34,6 +42,8 @@ import { PayrollCatalogsController } from './controllers/payroll-catalogs.contro
     PayrollConceptsService,
     PayrollDependenciesService,
     PayrollCatalogsService,
+    PayrollEmployeesService,
+    RenovaExcelExporterService,
   ],
 })
 export class PayrollModule {}

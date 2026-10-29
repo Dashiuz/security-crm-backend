@@ -137,3 +137,54 @@ export class CreatePayrollSvspLevelDto {
 export class UpdatePayrollSvspLevelDto extends PartialType(
   CreatePayrollSvspLevelDto,
 ) {}
+
+export class CreatePayrollAcademyDto {
+  @ApiProperty({ example: 1, description: 'Código de la academia en Pronos' })
+  @IsNumber()
+  @IsNotEmpty()
+  code: number;
+
+  @ApiProperty({ example: 'ACADEMIA NACIONAL DE SEGURIDAD PRIVADA (ASONAL)' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ example: '860012345-1' })
+  @IsString()
+  @IsNotEmpty()
+  nit: string;
+
+  @ApiProperty({ example: 'CALLE 45 # 13-22', required: false })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiProperty({ example: '6013344556', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty({ example: 'contacto@academianacional.edu.co', required: false })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty({ example: 'DR. CARLOS MENDEZ', required: false })
+  @IsOptional()
+  @IsString()
+  legalRepName?: string;
+
+  @ApiProperty({ example: 'BOGOTA D.C.', required: false })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdatePayrollAcademyDto extends PartialType(
+  CreatePayrollAcademyDto,
+) {}

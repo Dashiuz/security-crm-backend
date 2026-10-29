@@ -277,6 +277,61 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
       });
     }
 
+    // 8.1 Academias de Seguridad Privada (Pronos 5.2)
+    const academies = [
+      {
+        code: 1,
+        name: 'ACADEMIA NACIONAL DE SEGURIDAD PRIVADA (ASONAL)',
+        nit: '860012345-1',
+        city: 'BOGOTA D.C.',
+        phone: '6013344556',
+        email: 'contacto@academianacional.edu.co',
+        legalRepName: 'DR. CARLOS MENDEZ',
+        address: 'CALLE 45 # 13-22',
+        isActive: true,
+      },
+      {
+        code: 2,
+        name: 'ACADEMIA COLOMBO LATINA DE SEGURIDAD',
+        nit: '800054321-2',
+        city: 'BOGOTA D.C.',
+        phone: '6017890123',
+        email: 'info@colombolatina.edu.co',
+        legalRepName: 'DRA. MARTHA ROA',
+        address: 'CARRERA 15 # 78-45',
+        isActive: true,
+      },
+      {
+        code: 3,
+        name: 'ESCUELA DE SEGURIDAD PRIVADA DEL ORIENTE',
+        nit: '890123456-3',
+        city: 'MEDELLIN',
+        phone: '6042123456',
+        email: 'capacitacion@seguridadoriente.com',
+        legalRepName: 'ING. HERNAN URIBE',
+        address: 'CALLE 50 # 42-10',
+        isActive: true,
+      },
+      {
+        code: 4,
+        name: 'CENTRO DE CAPACITACION EN SEGURIDAD PRIVADA ELITE',
+        nit: '900112233-4',
+        city: 'CALI',
+        phone: '6025544332',
+        email: 'contacto@seguridadelite.com',
+        legalRepName: 'DR. JAIRO VALENCIA',
+        address: 'AVENIDA 6N # 24N-15',
+        isActive: true,
+      },
+    ];
+    for (const acad of academies) {
+      await prisma.payrollSecurityAcademy.upsert({
+        where: { tenantId_code: { tenantId, code: acad.code } },
+        update: { name: acad.name, nit: acad.nit, city: acad.city },
+        create: { ...acad, tenantId },
+      });
+    }
+
     // 9. Standard Concepts (Pronos Catalogs with PUC, NIE & 10 Base Tables)
     const concepts = [
       {
@@ -855,6 +910,159 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
             settlementType: DependencySettlementType.BY_AVERAGE_GUARANTEED,
             modalityId: rotatingModality.id,
             arlRiskClass: ArlRiskClass.RISK_IV,
+          },
+        });
+      }
+    }
+
+    // 12. Phase 2: Employee Payroll Profiles & SVSP Courses (SPEC-ADM-029)
+    const employees = await prisma.employee.findMany({
+      where: { tenantId },
+      take: 20,
+    });
+
+    const eps = await prisma.payrollEntity.findFirst({
+      where: { tenantId, entityType: SocialSecurityEntityType.EPS },
+    });
+    const afp = await prisma.payrollEntity.findFirst({
+      where: { tenantId, entityType: SocialSecurityEntityType.AFP },
+    });
+    const ccf = await prisma.payrollEntity.findFirst({
+      where: { tenantId, entityType: SocialSecurityEntityType.CCF },
+    });
+    const bank = await prisma.payrollBank.findFirst({
+      where: { tenantId },
+    });
+    const defaultDep = await prisma.payrollDependency.findFirst({
+      where: { tenantId, code: 0 },
+    });
+    const svspLevel1101 = await prisma.payrollSvspLevel.findFirst({
+      where: { tenantId, code: '1101' },
+    });
+    const academy = await prisma.payrollSecurityAcademy.findFirst({
+      where: { tenantId },
+    });
+    const reqs = await prisma.payrollHiringRequirement.findMany({
+      where: { tenantId },
+      take: 4,
+    });
+
+    for (const emp of employees) {
+      // 12.1 Profile
+      const existingProfile = await prisma.employeePayrollProfile.findUnique({
+        where: { employeeId: emp.id },
+      });
+
+      const contractEnd = new Date();
+      contractEnd.setMonth(contractEnd.getMonth() + 6);
+
+      if (!existingProfile) {
+        await prisma.employeePayrollProfile.create({
+          data: {
+            tenantId,
+            employeeId: emp.id,
+            branchId: bogotaBranchId,
+            primaryDependencyId: defaultDep?.id || null,
+            contractType: 'FIXED_TERM',
+            contractNumber: `CTO-${emp.document}`,
+            contractEndDate: contractEnd,
+            salaryMode: 'BY_DEPENDENCY',
+            customBaseSalary: 1750905.0,
+            hasTransportAllowance: true,
+            epsEntityId: eps?.id || null,
+            afpEntityId: afp?.id || null,
+            ccfEntityId: ccf?.id || null,
+            cesantiasEntityId: afp?.id || null,
+            bankId: bank?.id || null,
+            bankAccountType: 'SAVINGS',
+            bankAccountNumber: `912${emp.document.slice(-6)}`,
+            daneCityCode: '11001',
+            daneCityName: 'BOGOTÁ D.C.',
+            neighborhood: 'Centro',
+            stratum: 2,
+            maritalStatus: 'SINGLE',
+            bloodType: 'O+',
+            educationLevel: 'HIGH_SCHOOL',
+            housingType: 'RENTED',
+            transportMeans: 'Transporte Público',
+            shirtSize: 'M',
+            pantsSize: '32',
+            footwearSize: '40',
+          },
+        });
+      }
+
+      // 12.2 SVSP Course (Fundamentación 1101 vigente)
+      if (svspLevel1101 && academy) {
+        const existingCourse = await prisma.employeeSvspCourse.findFirst({
+          where: { tenantId, employeeId: emp.id },
+        });
+
+        if (!existingCourse) {
+          const issueDate = new Date();
+          issueDate.setMonth(issueDate.getMonth() - 2); // Acreditado hace 2 meses
+          const expiryDate = new Date(issueDate.getTime());
+          expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Vence en 10 meses (VIGENTE)
+
+          await prisma.employeeSvspCourse.create({
+            data: {
+              tenantId,
+              employeeId: emp.id,
+              svspLevelId: svspLevel1101.id,
+              academyId: academy.id,
+              nroCode: `NRO-2026-${emp.document}`,
+              certificateNumber: `ACT-${emp.document.slice(-4)}`,
+              issueDate,
+              expiryDate,
+              isCurrent: true,
+            },
+          });
+        }
+      }
+
+      // 12.3 Hiring Requirement Checks
+      for (const req of reqs) {
+        const existingCheck = await prisma.employeeRequirementCheck.findUnique({
+          where: {
+            tenantId_employeeId_requirementId: {
+              tenantId,
+              employeeId: emp.id,
+              requirementId: req.id,
+            },
+          },
+        });
+
+        if (!existingCheck) {
+          await prisma.employeeRequirementCheck.create({
+            data: {
+              tenantId,
+              employeeId: emp.id,
+              requirementId: req.id,
+              status: 'VERIFIED',
+              verifiedAt: new Date(),
+              notes: 'Verificado y cotejado en físico de ingreso',
+            },
+          });
+        }
+      }
+
+      // 12.4 Internal Training
+      const existingTraining = await prisma.employeeInternalTraining.findFirst({
+        where: { tenantId, employeeId: emp.id },
+      });
+      if (!existingTraining) {
+        await prisma.employeeInternalTraining.create({
+          data: {
+            tenantId,
+            employeeId: emp.id,
+            title: 'Inducción General y Protocolos de Seguridad SVSP',
+            topic: 'Atención al Usuario y Control de Accesos',
+            instructorName: 'Capitán (R) Carlos Mendoza',
+            trainingDate: new Date(),
+            durationHours: 4.0,
+            score: 4.8,
+            approved: true,
+            notes: 'Aprobación satisfactoria con felicitaciones.',
           },
         });
       }

@@ -590,6 +590,22 @@ async function main() {
       key: 'payroll:dependencies:manage',
       desc: 'Crear, actualizar y sincronizar sucursales, dependencias operativas, modalidades de turno y periodos de nómina',
     },
+    // Payroll Employee Dossier & SVSP (SPEC-ADM-029)
+    {
+      id: 'payroll_employees_read_perm_id',
+      key: 'payroll:employees:read',
+      desc: 'Consultar expedientes laborales 360°, afiliaciones PILA, requisitos de ingreso, cursos SVSP y capacitaciones',
+    },
+    {
+      id: 'payroll_employees_manage_perm_id',
+      key: 'payroll:employees:manage',
+      desc: 'Administrar expedientes laborales 360°, afiliaciones PILA, cuentas bancarias, grupo familiar, checklist de ingreso, cursos SVSP y Cap/SOMA',
+    },
+    {
+      id: 'payroll_svsp_export_perm_id',
+      key: 'payroll:svsp:export',
+      desc: 'Generar y descargar la plantilla oficial en Excel de acreditaciones y cursos SVSP para RENOVA (SuperVigilancia)',
+    },
   ];
 
   // 5. Departments

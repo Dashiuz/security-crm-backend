@@ -98,6 +98,30 @@ describe('PayrollCatalogsService', () => {
           .fn()
           .mockResolvedValue([{ id: 'p-1', code: 409, year: 2026, month: 11 }]),
       },
+      payrollSecurityAcademy: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
+            { id: 'acad-1', code: 1, name: 'ASONAL', nit: '860012345-1' },
+          ]),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'acad-1',
+          code: 1,
+          name: 'ASONAL',
+          nit: '860012345-1',
+        }),
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: 'new-acad', ...data }),
+          ),
+        update: jest
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: 'acad-1', ...data }),
+          ),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -157,5 +181,15 @@ describe('PayrollCatalogsService', () => {
 
     const periods = await service.listPeriods('tenant-1', 2026);
     expect(periods).toHaveLength(1);
+
+    const academies = await service.listAcademies('tenant-1');
+    expect(academies).toHaveLength(1);
+
+    const createdAcad = await service.createAcademy(
+      'tenant-1',
+      { code: 2, name: 'COLOMBO LATINA', nit: '800054321-2' },
+      'user-1',
+    );
+    expect(createdAcad.code).toBe(2);
   });
 });

@@ -42,6 +42,9 @@ describe('PayrollCatalogsController', () => {
         .fn()
         .mockResolvedValue({ id: 'sv-1', code: '1101' }),
       listPeriods: jest.fn().mockResolvedValue([{ id: 'p-1', code: 409 }]),
+      listAcademies: jest.fn().mockResolvedValue([{ id: 'acad-1', code: 1 }]),
+      createAcademy: jest.fn().mockResolvedValue({ id: 'acad-1', code: 1 }),
+      updateAcademy: jest.fn().mockResolvedValue({ id: 'acad-1', code: 1 }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -98,5 +101,13 @@ describe('PayrollCatalogsController', () => {
     expect(await controller.listHiringRequirements(mockReq)).toBeDefined();
     expect(await controller.listSvspLevels(mockReq)).toBeDefined();
     expect(await controller.listPeriods(mockReq, '2026')).toBeDefined();
+    expect(await controller.listAcademies(mockReq)).toBeDefined();
+    expect(
+      await controller.createAcademy(mockReq, {
+        code: 1,
+        name: 'ASONAL',
+        nit: '860012345-1',
+      }),
+    ).toBeDefined();
   });
 });

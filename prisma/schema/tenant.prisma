@@ -81,6 +81,13 @@ model Tenant {
   payrollDependencies            PayrollDependency[]
   payrollPeriods                 PayrollPeriod[]
 
+  // Payroll Phase 2 Relations (SPEC-ADM-029)
+  employeePayrollProfiles        EmployeePayrollProfile[]
+  employeeFamilyMembers          EmployeeFamilyMember[]
+  employeeRequirementChecks      EmployeeRequirementCheck[]
+  employeeSvspCourses            EmployeeSvspCourse[]
+  employeeInternalTrainings      EmployeeInternalTraining[]
+
   @@map("tenant")
 }
 
