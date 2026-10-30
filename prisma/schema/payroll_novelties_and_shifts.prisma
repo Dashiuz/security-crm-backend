@@ -86,6 +86,7 @@ model PayrollLeaveAndAbsence {
 
   shiftRecords             PayrollShiftRecord[]
   settlementLines          PayrollSettlementLine[]
+  vacationSettlements      PayrollVacationSettlement[]
 
   createdAt                DateTime            @default(now())
   updatedAt                DateTime            @updatedAt

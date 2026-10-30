@@ -94,6 +94,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollPeriodSettlement',
               'PayrollSettlementLine',
               'PayrollBankDisbursementBatch',
+              // SPEC-ADM-032: Payroll Phase 5 Models
+              'PayrollVacationSettlement',
+              'PayrollSocialBenefitBatch',
+              'PayrollSocialBenefitItem',
+              'PayrollFinalContractSettlement',
             ];
             const multiTenantModels = [
               'User',
@@ -182,6 +187,11 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollPeriodSettlement',
               'PayrollSettlementLine',
               'PayrollBankDisbursementBatch',
+              // SPEC-ADM-032: Payroll Phase 5 Models
+              'PayrollVacationSettlement',
+              'PayrollSocialBenefitBatch',
+              'PayrollSocialBenefitItem',
+              'PayrollFinalContractSettlement',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -491,6 +501,11 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'PayrollPeriodSettlement',
                 'PayrollSettlementLine',
                 'PayrollBankDisbursementBatch',
+                // SPEC-ADM-032: Payroll Phase 5 Models
+                'PayrollVacationSettlement',
+                'PayrollSocialBenefitBatch',
+                'PayrollSocialBenefitItem',
+                'PayrollFinalContractSettlement',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

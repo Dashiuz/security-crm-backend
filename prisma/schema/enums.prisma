@@ -415,6 +415,7 @@ enum NoveltyOriginType {
   SHIFT_ENGINE                // Generada automáticamente desde la Malla de Turnos
   LEAVE_ENGINE                // Generada por el liquidador de incapacidades/licencias
   LOAN_ENGINE                 // Cuota generada por el motor de préstamos
+  BENEFITS_ENGINE             // Inyectada desde el motor de Prestaciones / Vacaciones (Fase 5)
 }
 
 enum DependencyAssignmentRole {
@@ -482,4 +483,23 @@ enum PayslipDeliveryStatus {
 enum PayrollDisbursementType {
   PAYROLL_PERIOD         // Dispersión de Nómina del Periodo
   FORTNIGHT_ADVANCE      // Dispersión de Anticipo Quincenal (Día 15)
+  SOCIAL_BENEFITS        // Dispersión de Prima de Servicios o Intereses de Cesantías
+  VACATION_SETTLEMENT    // Dispersión de Vacaciones
+  FINAL_LIQUIDATION      // Dispersión de Liquidación Definitiva de Contrato
+}
+
+// ============================================================================
+// SPEC-ADM-032: MOTOR DE PRESTACIONES SOCIALES, VACACIONES Y LIQUIDACIÓN TOTAL
+// ============================================================================
+
+enum VacationSettlementType {
+  ENJOYED_IN_TIME             // Vacaciones disfrutadas en tiempo (Sincroniza con Turnos y Novedades)
+  COMPENSATED_IN_CASH         // Vacaciones compensadas en dinero en vigencia del contrato (Art. 189 CST)
+}
+
+enum SocialBenefitType {
+  PRIMA_FIRST_SEMESTER        // Prima de Servicios 1er Semestre (Enero - Junio)
+  PRIMA_SECOND_SEMESTER       // Prima de Servicios 2do Semestre (Julio - Diciembre)
+  SEVERANCE_ANNUAL            // Cesantías Anuales (Enero - Diciembre)
+  SEVERANCE_INTERESTS         // Intereses sobre las Cesantías (12% Anual)
 }

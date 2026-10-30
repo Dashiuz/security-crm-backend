@@ -1,0 +1,248 @@
+// ============================================================================
+// SPEC-ADM-032: MOTOR DE PRESTACIONES SOCIALES, VACACIONES Y LIQUIDACIÓN TOTAL
+// ============================================================================
+
+/// 1. Liquidación y Libro de Vacaciones por Empleado (Numerales 3.4 y 3.11 Pronos)
+model PayrollVacationSettlement {
+  id                      String                  @id @default(cuid(2))
+  tenantId                String
+  tenant                  Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId              String
+  employee                Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  vacationType            VacationSettlementType  @default(ENJOYED_IN_TIME)
+  status                  PayrollSettlementStatus @default(DRAFT)
+
+  // Periodo Causado que se está disfrutando/compensando (ej. 2025-05-01 a 2026-04-30)
+  accrualStartDate        DateTime                @db.Date
+  accrualEndDate          DateTime                @db.Date
+
+  // Fechas de Salida, Fin y Regreso al Puesto
+  enjoymentStartDate      DateTime                @db.Date
+  enjoymentEndDate        DateTime                @db.Date
+  returnDate              DateTime                @db.Date // Día exacto en que regresa a turno
+
+  // Conteo de Días
+  businessDays            Decimal                 @default(15.00) @db.Decimal(6, 2) // Días hábiles descontados del libro (ej. 15)
+  nonWorkingDaysIncluded  Int                     @default(3)     // Domingos, festivos y sábados inhábiles intermedios
+  calendarDaysPaid        Int                     @default(18)    // Total días calendario pagados (businessDays + nonWorkingDays)
+  saturdayWasWorkingDay   Boolean                 @default(true)
+
+  // Bases Financieras (Art. 192 CST)
+  currentBasicSalary      Decimal                 @db.Decimal(14, 2)
+  averageVariableVacBase  Decimal                 @default(0.00) @db.Decimal(14, 2) // Promedio recargos último año (inVac = true)
+  totalVacationBase       Decimal                 @db.Decimal(14, 2)
+  dailyVacationRate       Decimal                 @db.Decimal(14, 2) // totalVacationBase / 30
+  grossVacationAmount     Decimal                 @db.Decimal(14, 2) // dailyVacationRate * calendarDaysPaid
+  healthDeductionAmount   Decimal                 @default(0.00) @db.Decimal(14, 2) // 4%
+  pensionDeductionAmount  Decimal                 @default(0.00) @db.Decimal(14, 2) // 4%
+  loansDeductionAmount    Decimal                 @default(0.00) @db.Decimal(14, 2)
+  netPayAmount            Decimal                 @db.Decimal(14, 2)
+
+  // Enlace de Sincronización con Novedades / Turnos e Inyección en Nómina
+  linkedLeaveId           String?
+  linkedLeave             PayrollLeaveAndAbsence? @relation(fields: [linkedLeaveId], references: [id], onDelete: SetNull)
+  injectedNoveltyId       String?
+  isInjectedToPayroll     Boolean                 @default(false)
+  paymentDate             DateTime?               @db.Date
+  notes                   String?                 @db.Text
+
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  createdById             String?
+  updatedById             String?
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, status])
+  @@map("payroll_vacation_settlements")
+}
+
+/// 2. Cabecera de Lote de Liquidación de Prestaciones Sociales: Prima, Cesantías e Intereses (Numerales 3.12 y 3.13 Pronos)
+model PayrollSocialBenefitBatch {
+  id                  String                         @id @default(cuid(2))
+  tenantId            String
+  tenant              Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  benefitType         SocialBenefitType
+  year                Int
+  label               String                         @db.VarChar(150) // Ej: "Prima 1er Semestre 2026", "Cesantías Anuales 2026"
+  periodStartDate     DateTime                       @db.Date         // 2026-01-01 o 2026-07-01
+  cutoffDate          DateTime                       @db.Date         // Fecha real de corte de acumulados (ej. 2026-05-31 o 2026-11-30)
+  projectionEndDate   DateTime                       @db.Date         // Fecha proyectada de cierre (2026-06-30 o 2026-12-31)
+  paymentDate         DateTime?                      @db.Date
+
+  status              PayrollSettlementStatus        @default(DRAFT)
+  totalEmployees      Int                            @default(0)
+  totalBenefitAmount  Decimal                        @default(0.00) @db.Decimal(16, 2)
+  totalInterestAmount Decimal                        @default(0.00) @db.Decimal(16, 2) // Para lotes de Cesantías que calculan el 12%
+  notes               String?                        @db.Text
+
+  items               PayrollSocialBenefitItem[]
+  achBatches          PayrollBankDisbursementBatch[]
+
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+  createdById         String?
+  updatedById         String?
+
+  @@unique([tenantId, benefitType, year])
+  @@index([tenantId, year, status])
+  @@map("payroll_social_benefit_batches")
+}
+
+/// 3. Detalle por Empleado de Liquidación de Prima, Cesantías e Intereses
+model PayrollSocialBenefitItem {
+  id                       String                    @id @default(cuid(2))
+  tenantId                 String
+  tenant                   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  batchId                  String
+  batch                    PayrollSocialBenefitBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  employeeId               String
+  employee                 Employee                  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dependencyId             String?
+  dependency               PayrollDependency?        @relation(fields: [dependencyId], references: [id], onDelete: SetNull)
+
+  // Fondo de Cesantías (cuando benefitType es SEVERANCE_ANNUAL)
+  cesantiasEntityId        String?
+  cesantiasEntity          PayrollEntity?            @relation("BenefitCesantiasFund", fields: [cesantiasEntityId], references: [id], onDelete: SetNull)
+
+  // Días del Semestre (máx 180) o del Año (máx 360)
+  hireDateSnapshot         DateTime                  @db.Date
+  grossDaysInPeriod        Int                       @default(180)
+  unpaidLeaveDaysDeducted  Int                       @default(0)
+  projectedDaysAdded       Int                       @default(0)
+  netDaysWorked            Int                       @default(180)
+
+  // Bases Promedio (inPri o inCes + Auxilio de Transporte si aplica)
+  basicSalaryMonthly       Decimal                   @db.Decimal(14, 2)
+  averageVariableEarnings  Decimal                   @default(0.00) @db.Decimal(14, 2)
+  transportAllowanceBase   Decimal                   @default(0.00) @db.Decimal(14, 2)
+  totalComputationBase     Decimal                   @db.Decimal(14, 2)
+
+  // Valores Liquidados
+  calculatedBenefitAmount  Decimal                   @db.Decimal(14, 2) // (totalComputationBase * netDaysWorked) / 360
+  approvedBenefitAmount    Decimal                   @db.Decimal(14, 2)
+  interestRatePct          Decimal                   @default(12.00) @db.Decimal(5, 2)
+  calculatedInterestAmount Decimal                   @default(0.00) @db.Decimal(14, 2) // (approvedBenefitAmount * netDaysWorked * 0.12) / 360
+  approvedInterestAmount   Decimal                   @default(0.00) @db.Decimal(14, 2)
+
+  // Snapshot Bancario e Inyección en Nómina
+  bankId                   String?
+  bank                     PayrollBank?              @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankAccountType          BankAccountType           @default(SAVINGS)
+  bankAccountNumber        String?                   @db.VarChar(50)
+  hasBankWarning           Boolean                   @default(false)
+
+  isManuallyEdited         Boolean                   @default(false)
+  isInjectedToPayroll      Boolean                   @default(false)
+  injectedPeriodId         String?
+  notes                    String?                   @db.VarChar(255)
+
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  createdById              String?
+  updatedById              String?
+
+  @@unique([batchId, employeeId])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, cesantiasEntityId])
+  @@map("payroll_social_benefit_items")
+}
+
+/// 4. Liquidación Definitiva de Contrato — "Liquidación Total" y Paz y Salvo (Numeral 3.10 Pronos)
+model PayrollFinalContractSettlement {
+  id                           String                         @id @default(cuid(2))
+  tenantId                     String
+  tenant                       Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                   String
+  employee                     Employee                       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  exitReasonId                 String
+  exitReason                   PayrollExitReason              @relation(fields: [exitReasonId], references: [id], onDelete: Restrict)
+
+  primaryDependencyId          String?
+  primaryDependency            PayrollDependency?             @relation(fields: [primaryDependencyId], references: [id], onDelete: SetNull)
+
+  status                       PayrollSettlementStatus        @default(DRAFT)
+  contractTypeSnapshot         EmploymentContractType         @default(FIXED_TERM)
+  hireDate                     DateTime                       @db.Date
+  retirementDate               DateTime                       @db.Date
+  contractEndDateSnapshot      DateTime?                      @db.Date
+  paymentDate                  DateTime?                      @db.Date
+
+  // Conteo de Tiempos Base 360
+  totalContractDays360         Int                            @default(0) // Días totales desde hireDate hasta retirementDate
+  unpaidLeaveDaysTotal         Int                            @default(0) // Días LNR/Sanción descontados
+  netServiceDaysTotal          Int                            @default(0)
+
+  // 1. Bases Promedio Independientes
+  lastBasicSalary              Decimal                        @db.Decimal(14, 2)
+  transportAllowanceApplicable Decimal                        @default(0.00) @db.Decimal(14, 2)
+  cesantiasAverageBase         Decimal                        @db.Decimal(14, 2)
+  primaAverageBase             Decimal                        @db.Decimal(14, 2)
+  vacationAverageBase          Decimal                        @db.Decimal(14, 2)
+
+  // 2. Liquidación Proporcional de Prestaciones Sociales
+  cesantiasPendingDays         Int                            @default(0) // Días del año actual pendientes de cesantías
+  cesantiasAmount              Decimal                        @default(0.00) @db.Decimal(14, 2)
+  interestsCesantiasAmount     Decimal                        @default(0.00) @db.Decimal(14, 2)
+  primaPendingDays             Int                            @default(0) // Días del semestre actual pendientes de prima
+  primaAmount                  Decimal                        @default(0.00) @db.Decimal(14, 2)
+  vacationTotalAccruedDays     Decimal                        @default(0.00) @db.Decimal(8, 2) // Total causados en toda la relación
+  vacationEnjoyedDays          Decimal                        @default(0.00) @db.Decimal(8, 2) // Ya disfrutados/compensados en libro
+  vacationPendingBusinessDays  Decimal                        @default(0.00) @db.Decimal(8, 2) // Días hábiles pendientes por pagar
+  vacationAmount               Decimal                        @default(0.00) @db.Decimal(14, 2)
+
+  // 3. Último Periodo de Sueldo Pendiente (Opcional)
+  includePendingPayroll        Boolean                        @default(true)
+  pendingPayrollDays           Int                            @default(0)
+  pendingBasicSalaryAmount     Decimal                        @default(0.00) @db.Decimal(14, 2)
+  pendingTransportAmount       Decimal                        @default(0.00) @db.Decimal(14, 2)
+  pendingOvertimeAmount        Decimal                        @default(0.00) @db.Decimal(14, 2)
+  pendingHealthDeduction       Decimal                        @default(0.00) @db.Decimal(14, 2)
+  pendingPensionDeduction      Decimal                        @default(0.00) @db.Decimal(14, 2)
+
+  // 4. Indemnización Art. 64 CST y Otros Devengos/Descuentos
+  applyIndemnification         Boolean                        @default(false)
+  indemnificationDays          Decimal                        @default(0.00) @db.Decimal(8, 2)
+  indemnificationAmount        Decimal                        @default(0.00) @db.Decimal(14, 2)
+  otherEarningsAmount          Decimal                        @default(0.00) @db.Decimal(14, 2)
+  otherEarningsConcept         String?                        @db.VarChar(180)
+
+  // 5. Cruce de Cartera (Préstamos Activos) y Deducciones de Retiro
+  loansDeductedAmount          Decimal                        @default(0.00) @db.Decimal(14, 2)
+  otherDeductionsAmount        Decimal                        @default(0.00) @db.Decimal(14, 2)
+  otherDeductionsConcept       String?                        @db.VarChar(180)
+
+  // 6. Totales Consolidados y Bloqueo B.D.N
+  totalBenefitsAndEarnings     Decimal                        @default(0.00) @db.Decimal(14, 2)
+  totalDeductions              Decimal                        @default(0.00) @db.Decimal(14, 2)
+  netPayAmount                 Decimal                        @default(0.00) @db.Decimal(14, 2)
+  blockForRehireBdn            Boolean                        @default(false)
+
+  // Snapshot Bancario
+  bankId                       String?
+  bank                         PayrollBank?                   @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankAccountType              BankAccountType                @default(SAVINGS)
+  bankAccountNumber            String?                        @db.VarChar(50)
+  hasBankWarning               Boolean                        @default(false)
+
+  notes                        String?                        @db.Text
+  achBatches                   PayrollBankDisbursementBatch[]
+
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
+  createdById                  String?
+  updatedById                  String?
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, status])
+  @@index([tenantId, retirementDate])
+  @@map("payroll_final_contract_settlements")
+}
+

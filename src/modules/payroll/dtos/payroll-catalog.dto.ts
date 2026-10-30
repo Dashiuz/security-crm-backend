@@ -8,7 +8,7 @@ import {
   IsNotEmpty,
   MaxLength,
 } from 'class-validator';
-import { SocialSecurityEntityType } from '@prisma/client';
+import { SocialSecurityEntityType, PayrollPeriodStatus } from '@prisma/client';
 
 export class CreatePayrollEntityDto {
   @ApiProperty({ example: 'EPS010' })
@@ -226,3 +226,69 @@ export class CreatePayrollCie10Dto {
 }
 
 export class UpdatePayrollCie10Dto extends PartialType(CreatePayrollCie10Dto) {}
+
+export class CreatePayrollPeriodDto {
+  @ApiProperty({ example: 401 })
+  @IsNumber()
+  code: number;
+
+  @ApiProperty({ example: 'Nómina Mensual Enero 2026' })
+  @IsString()
+  @IsNotEmpty()
+  label: string;
+
+  @ApiProperty({ example: 2026 })
+  @IsNumber()
+  year: number;
+
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  month: number;
+
+  @ApiPropertyOptional({ example: 1, default: 1 })
+  @IsOptional()
+  @IsNumber()
+  periodNumber?: number;
+
+  @ApiProperty({ example: '2026-01-01' })
+  @IsString()
+  @IsNotEmpty()
+  startDate: string;
+
+  @ApiProperty({ example: '2026-01-31' })
+  @IsString()
+  @IsNotEmpty()
+  endDate: string;
+
+  @ApiPropertyOptional({ example: '2026-01-30' })
+  @IsOptional()
+  @IsString()
+  paymentDate?: string;
+
+  @ApiPropertyOptional({
+    enum: PayrollPeriodStatus,
+    default: PayrollPeriodStatus.OPEN,
+  })
+  @IsOptional()
+  @IsEnum(PayrollPeriodStatus)
+  status?: PayrollPeriodStatus;
+
+  @ApiPropertyOptional({ example: 'Periodo ordinario mensual' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class GenerateYearPeriodsDto {
+  @ApiProperty({ example: 2026 })
+  @IsNumber()
+  year: number;
+
+  @ApiPropertyOptional({
+    example: 400,
+    description: 'Base consecutive code for month 1..12',
+  })
+  @IsOptional()
+  @IsNumber()
+  baseCode?: number;
+}

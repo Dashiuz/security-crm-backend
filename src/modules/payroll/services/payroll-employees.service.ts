@@ -333,6 +333,43 @@ export class PayrollEmployeesService {
           payslipEmailStatus: s.payslipEmailStatus,
           createdAt: s.createdAt,
         })),
+        vacationSettlements: ((employee as any).vacationSettlements || []).map(
+          (v: any) => ({
+            id: v.id,
+            settlementType: v.settlementType,
+            startDate: v.startDate
+              ? v.startDate.toISOString().split('T')[0]
+              : null,
+            endDate: v.endDate ? v.endDate.toISOString().split('T')[0] : null,
+            returnDate: v.returnDate
+              ? v.returnDate.toISOString().split('T')[0]
+              : null,
+            businessDaysTaken: v.businessDaysTaken,
+            calendarDaysTaken: v.calendarDaysTaken,
+            moneyDaysPaid: v.moneyDaysPaid,
+            baseSalary: Number(v.baseSalary),
+            totalGross: Number(v.totalGross),
+            totalDeductions: Number(v.totalDeductions),
+            netPay: Number(v.netPay),
+            status: v.status,
+            createdAt: v.createdAt,
+          }),
+        ),
+        finalSettlements: ((employee as any).finalSettlements || []).map(
+          (f: any) => ({
+            id: f.id,
+            terminationDate: f.terminationDate
+              ? f.terminationDate.toISOString().split('T')[0]
+              : null,
+            terminationReason: f.terminationReason,
+            isJustCause: f.isJustCause,
+            totalSettlement: Number(f.totalSettlement),
+            totalDeductions: Number(f.totalDeductions),
+            netLiquidation: Number(f.netLiquidation),
+            status: f.status,
+            createdAt: f.createdAt,
+          }),
+        ),
         svspStatus,
         svspDaysRemaining,
         contractAlertStatus,

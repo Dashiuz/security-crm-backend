@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PayrollDisbursementType } from '@prisma/client';
 
 export interface AchBeneficiaryItem {
   employeeId: string;
@@ -20,7 +21,7 @@ export interface AchBatchGeneratorInput {
     legalName: string;
     mainAccount?: string;
   };
-  disbursementType: 'PAYROLL_PERIOD' | 'FORTNIGHT_ADVANCE';
+  disbursementType: PayrollDisbursementType;
   year: number;
   month: number;
   exportFormat: string; // PAB_BANCOLOMBIA | DAVIVIENDA | BCSC | BOGOTA | STANDARD_ACH

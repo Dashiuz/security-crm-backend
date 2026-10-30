@@ -190,6 +190,7 @@ model PayrollEntity {
 
   leaves            PayrollLeaveAndAbsence[]
   loans             PayrollLoan[]
+  socialBenefitItems PayrollSocialBenefitItem[] @relation("BenefitCesantiasFund")
 
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
@@ -215,6 +216,8 @@ model PayrollBank {
 
   employeeProfiles EmployeePayrollProfile[]
   advanceItems     PayrollAdvanceItem[]
+  socialBenefitItems PayrollSocialBenefitItem[]
+  finalSettlements PayrollFinalContractSettlement[]
   periodSettlements PayrollPeriodSettlement[]
   achBatches       PayrollBankDisbursementBatch[]
 
@@ -237,6 +240,7 @@ model PayrollExitReason {
   code        Int      // 1..9 según numeral 1.14 B.D.N Pronos
   name        String   @db.VarChar(150) // "Renuncia Voluntaria", "Terminación por justa causa", etc.
   isJustCause Boolean  @default(false)  // Define si genera o no indemnización Art. 64 CST
+  finalSettlements PayrollFinalContractSettlement[]
   isActive    Boolean  @default(true)
 
   employeeProfiles EmployeePayrollProfile[]
@@ -469,6 +473,8 @@ model PayrollDependency {
   periodNovelties          PayrollPeriodNovelty[]
   shiftRecords             PayrollShiftRecord[]
   advanceItems             PayrollAdvanceItem[]
+  socialBenefitItems       PayrollSocialBenefitItem[]
+  finalSettlements         PayrollFinalContractSettlement[]
   periodSettlements        PayrollPeriodSettlement[]
   settlementLines          PayrollSettlementLine[]
 

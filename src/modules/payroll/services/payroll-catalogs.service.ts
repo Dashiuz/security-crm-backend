@@ -17,6 +17,8 @@ import {
   CreatePayrollAcademyDto,
   UpdatePayrollAcademyDto,
   CreatePayrollCie10Dto,
+  CreatePayrollPeriodDto,
+  GenerateYearPeriodsDto,
 } from '../dtos/payroll-catalog.dto';
 import { SocialSecurityEntityType, PayrollPeriodStatus } from '@prisma/client';
 
@@ -305,6 +307,132 @@ export class PayrollCatalogsService {
     } catch (error) {
       this.logger.error(
         `Error listing payroll periods for tenant ${tenantId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async createPeriod(
+    tenantId: string,
+    dto: CreatePayrollPeriodDto,
+    userId?: string,
+  ) {
+    try {
+      const existing = await this.prisma.payrollPeriod.findFirst({
+        where: {
+          tenantId,
+          OR: [
+            { code: dto.code },
+            {
+              year: dto.year,
+              month: dto.month,
+              periodNumber: dto.periodNumber ?? 1,
+            },
+          ],
+        },
+      });
+
+      if (existing) {
+        throw new BadRequestException(
+          `Ya existe un periodo con el código ${dto.code} o para el mes ${dto.month}/${dto.year} (Quincena/Nro ${dto.periodNumber ?? 1}).`,
+        );
+      }
+
+      return await this.prisma.payrollPeriod.create({
+        data: {
+          tenantId,
+          code: dto.code,
+          label: dto.label,
+          year: dto.year,
+          month: dto.month,
+          periodNumber: dto.periodNumber ?? 1,
+          startDate: new Date(dto.startDate),
+          endDate: new Date(dto.endDate),
+          paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : null,
+          status: dto.status ?? PayrollPeriodStatus.OPEN,
+          notes: dto.notes,
+          createdById: userId,
+          updatedById: userId,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error creating payroll period for tenant ${tenantId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async generateYearPeriods(
+    tenantId: string,
+    dto: GenerateYearPeriodsDto,
+    userId?: string,
+  ) {
+    try {
+      const year = dto.year;
+      const monthNames = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
+
+      const createdPeriods: any[] = [];
+
+      for (let m = 1; m <= 12; m++) {
+        const periodCode = dto.baseCode
+          ? dto.baseCode + m
+          : (year % 100) * 100 + m;
+        const monthLabel = `Nómina Mensual ${monthNames[m - 1]} ${year}`;
+        const lastDay = new Date(Date.UTC(year, m, 0)).getUTCDate();
+        const startIso = `${year}-${String(m).padStart(2, '0')}-01`;
+        const endIso = `${year}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        const existing = await this.prisma.payrollPeriod.findFirst({
+          where: {
+            tenantId,
+            OR: [{ code: periodCode }, { year, month: m, periodNumber: 1 }],
+          },
+        });
+
+        if (existing) {
+          createdPeriods.push(existing);
+        } else {
+          const created = await this.prisma.payrollPeriod.create({
+            data: {
+              tenantId,
+              code: periodCode,
+              label: monthLabel,
+              year,
+              month: m,
+              periodNumber: 1,
+              startDate: new Date(startIso),
+              endDate: new Date(endIso),
+              paymentDate: new Date(endIso),
+              status: PayrollPeriodStatus.OPEN,
+              notes: `Generación automática anual para ${year}`,
+              createdById: userId,
+              updatedById: userId,
+            },
+          });
+          createdPeriods.push(created);
+        }
+      }
+
+      return createdPeriods;
+    } catch (error) {
+      this.logger.error(
+        `Error generating year periods for tenant ${tenantId}`,
         error.stack,
       );
       throw error;

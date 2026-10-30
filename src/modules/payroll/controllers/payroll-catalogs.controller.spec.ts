@@ -42,6 +42,8 @@ describe('PayrollCatalogsController', () => {
         .fn()
         .mockResolvedValue({ id: 'sv-1', code: '1101' }),
       listPeriods: jest.fn().mockResolvedValue([{ id: 'p-1', code: 409 }]),
+      createPeriod: jest.fn().mockResolvedValue({ id: 'p-1', code: 409 }),
+      generateYearPeriods: jest.fn().mockResolvedValue([{ id: 'p-1' }]),
       listAcademies: jest.fn().mockResolvedValue([{ id: 'acad-1', code: 1 }]),
       createAcademy: jest.fn().mockResolvedValue({ id: 'acad-1', code: 1 }),
       updateAcademy: jest.fn().mockResolvedValue({ id: 'acad-1', code: 1 }),
@@ -126,5 +128,30 @@ describe('PayrollCatalogsController', () => {
     const created = await controller.createCie10(mockReq, dto);
     expect(created).toBeDefined();
     expect(service.createCie10).toHaveBeenCalledWith('tenant-1', dto, 'user-1');
+  });
+
+  it('should create individual and year periods', async () => {
+    const periodDto = {
+      code: 409,
+      label: 'Nómina Enero 2026',
+      year: 2026,
+      month: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    };
+    await controller.createPeriod(mockReq, periodDto);
+    expect(service.createPeriod).toHaveBeenCalledWith(
+      'tenant-1',
+      periodDto,
+      'user-1',
+    );
+
+    const yearDto = { year: 2026, baseCode: 2600 };
+    await controller.generateYearPeriods(mockReq, yearDto);
+    expect(service.generateYearPeriods).toHaveBeenCalledWith(
+      'tenant-1',
+      yearDto,
+      'user-1',
+    );
   });
 });

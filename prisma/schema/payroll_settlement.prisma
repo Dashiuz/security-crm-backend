@@ -228,6 +228,10 @@ model PayrollSettlementLine {
   inIbcArl               Boolean                 @default(false)
   inIbcCcf               Boolean                 @default(false)
   inUgpp40Pct            Boolean                 @default(false)
+  inPri                  Boolean                 @default(false)
+  inCes                  Boolean                 @default(false)
+  inVac                  Boolean                 @default(false)
+  inLiq                  Boolean                 @default(false)
 
   loanId                 String?
   loan                   PayrollLoan?            @relation(fields: [loanId], references: [id], onDelete: SetNull)
@@ -262,6 +266,12 @@ model PayrollBankDisbursementBatch {
 
   advanceSettlementId        String?
   advanceSettlement          PayrollAdvanceSettlement? @relation(fields: [advanceSettlementId], references: [id], onDelete: SetNull)
+
+  socialBenefitBatchId       String?
+  socialBenefitBatch         PayrollSocialBenefitBatch? @relation(fields: [socialBenefitBatchId], references: [id], onDelete: SetNull)
+
+  finalSettlementId          String?
+  finalSettlement            PayrollFinalContractSettlement? @relation(fields: [finalSettlementId], references: [id], onDelete: SetNull)
 
   bankId                     String?
   bank                       PayrollBank?              @relation(fields: [bankId], references: [id], onDelete: SetNull)

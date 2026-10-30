@@ -15,6 +15,8 @@ import { PayrollNoveltiesService } from './services/payroll-novelties.service';
 import { PayrollShiftsService } from './services/payroll-shifts.service';
 import { PayrollPayslipPdfService } from './services/payroll-payslip-pdf.service';
 import { PayrollSettlementService } from './services/payroll-settlement.service';
+import { PayrollBenefitsPdfService } from './services/payroll-benefits-pdf.service';
+import { PayrollBenefitsService } from './services/payroll-benefits.service';
 import { PayrollEmployeesRepository } from './repositories/payroll-employees.repository';
 import { PayrollSettingsController } from './controllers/payroll-settings.controller';
 import { PayrollConceptsController } from './controllers/payroll-concepts.controller';
@@ -24,6 +26,7 @@ import { PayrollEmployeesController } from './controllers/payroll-employees.cont
 import { PayrollNoveltiesController } from './controllers/payroll-novelties.controller';
 import { PayrollShiftsController } from './controllers/payroll-shifts.controller';
 import { PayrollSettlementController } from './controllers/payroll-settlement.controller';
+import { PayrollBenefitsController } from './controllers/payroll-benefits.controller';
 
 @Module({
   imports: [PrismaModule],
@@ -36,6 +39,7 @@ import { PayrollSettlementController } from './controllers/payroll-settlement.co
     PayrollNoveltiesController,
     PayrollShiftsController,
     PayrollSettlementController,
+    PayrollBenefitsController,
   ],
   providers: [
     ColombianHolidayEngine,
@@ -44,6 +48,8 @@ import { PayrollSettlementController } from './controllers/payroll-settlement.co
     PayrollLiquidationEngine,
     BankAchGeneratorEngine,
     PayrollPayslipPdfService,
+    PayrollBenefitsPdfService,
+    PayrollBenefitsService,
     PayrollSettingsService,
     PayrollConceptsService,
     PayrollDependenciesService,
@@ -71,6 +77,8 @@ import { PayrollSettlementController } from './controllers/payroll-settlement.co
     PayrollNoveltiesService,
     PayrollShiftsService,
     PayrollSettlementService,
+    PayrollBenefitsPdfService,
+    PayrollBenefitsService,
   ],
 })
 export class PayrollModule {}

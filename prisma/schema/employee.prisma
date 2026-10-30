@@ -67,6 +67,11 @@ model Employee {
   periodSettlements      PayrollPeriodSettlement[]
   settlementLines        PayrollSettlementLine[]
 
+  // SPEC-ADM-032: Prestaciones Sociales, Vacaciones y Liquidación Definitiva
+  vacationSettlements    PayrollVacationSettlement[]
+  socialBenefitItems     PayrollSocialBenefitItem[]
+  finalSettlements       PayrollFinalContractSettlement[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

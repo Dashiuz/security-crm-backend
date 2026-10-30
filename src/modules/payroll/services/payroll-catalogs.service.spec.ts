@@ -97,6 +97,12 @@ describe('PayrollCatalogsService', () => {
         findMany: jest
           .fn()
           .mockResolvedValue([{ id: 'p-1', code: 409, year: 2026, month: 11 }]),
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: 'new-p', ...data }),
+          ),
       },
       payrollSecurityAcademy: {
         findMany: jest
@@ -234,5 +240,33 @@ describe('PayrollCatalogsService', () => {
         'user-1',
       ),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should create a new payroll period', async () => {
+    const created = await service.createPeriod(
+      'tenant-1',
+      {
+        code: 410,
+        label: 'Nómina Diciembre 2026',
+        year: 2026,
+        month: 12,
+        periodNumber: 1,
+        startDate: '2026-12-01',
+        endDate: '2026-12-31',
+      },
+      'user-1',
+    );
+    expect(created.code).toBe(410);
+    expect(prisma.payrollPeriod.create).toHaveBeenCalled();
+  });
+
+  it('should generate 12 periods for a given year', async () => {
+    prisma.payrollPeriod.findFirst.mockResolvedValue(null);
+    const periods = await service.generateYearPeriods(
+      'tenant-1',
+      { year: 2026, baseCode: 2600 },
+      'user-1',
+    );
+    expect(periods).toHaveLength(12);
   });
 });

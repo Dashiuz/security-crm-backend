@@ -47,7 +47,16 @@ export class PayrollConceptsController {
   // ==========================================
 
   @Get()
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:employees:read',
+    'payroll:dependencies:read',
+    'payroll:novelties:read',
+    'payroll:shifts:read',
+    'payroll:settlement:read',
+    'payroll:benefits:read',
+  )
   @ApiOperation({ summary: 'Listar catálogo de conceptos de nómina y PUC' })
   @ApiOkResponse({ description: 'Lista de conceptos filtrada' })
   listConcepts(

@@ -1506,6 +1506,101 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
         }
       }
     }
+
+    // SPEC-ADM-032: Phase 5 Benefits & Vacation Seeds
+    if (firstEmp) {
+      // 1. Vacation Settlement Sample
+      const existingVacation = await prisma.payrollVacationSettlement.findFirst({
+        where: { tenantId, employeeId: firstEmp.id },
+      });
+
+      if (!existingVacation) {
+        await prisma.payrollVacationSettlement.create({
+          data: {
+            tenantId,
+            employeeId: firstEmp.id,
+            vacationType: 'ENJOYED_IN_TIME',
+            status: 'APPROVED',
+            accrualStartDate: new Date('2025-01-01'),
+            accrualEndDate: new Date('2025-12-31'),
+            enjoymentStartDate: new Date('2026-06-01'),
+            enjoymentEndDate: new Date('2026-06-18'),
+            returnDate: new Date('2026-06-19'),
+            businessDays: 15.0,
+            nonWorkingDaysIncluded: 3,
+            calendarDaysPaid: 18,
+            saturdayWasWorkingDay: true,
+            currentBasicSalary: 1500000.0,
+            averageVariableVacBase: 120000.0,
+            totalVacationBase: 1620000.0,
+            dailyVacationRate: 54000.0,
+            grossVacationAmount: 972000.0,
+            healthDeductionAmount: 38880.0,
+            pensionDeductionAmount: 38880.0,
+            loansDeductionAmount: 0.0,
+            netPayAmount: 894240.0,
+            paymentDate: new Date('2026-05-30'),
+            notes: 'Vacaciones ordinarias primer año causadas y disfrutadas.',
+          },
+        });
+      }
+
+      // 2. Social Benefit Batch Sample (Prima 1er Semestre 2026)
+      const existingPrimaBatch = await prisma.payrollSocialBenefitBatch.findUnique({
+        where: {
+          tenantId_benefitType_year: {
+            tenantId,
+            benefitType: 'PRIMA_FIRST_SEMESTER',
+            year: 2026,
+          },
+        },
+      });
+
+      if (!existingPrimaBatch) {
+        const batch = await prisma.payrollSocialBenefitBatch.create({
+          data: {
+            tenantId,
+            benefitType: 'PRIMA_FIRST_SEMESTER',
+            year: 2026,
+            label: 'Prima de Servicios 1er Semestre 2026',
+            periodStartDate: new Date('2026-01-01'),
+            cutoffDate: new Date('2026-05-31'),
+            projectionEndDate: new Date('2026-06-30'),
+            paymentDate: new Date('2026-06-15'),
+            status: 'APPROVED',
+            totalEmployees: 1,
+            totalBenefitAmount: 850000.0,
+            totalInterestAmount: 0.0,
+            notes: 'Liquidación oficial semestral con corte al 31 de mayo.',
+          },
+        });
+
+        await prisma.payrollSocialBenefitItem.create({
+          data: {
+            tenantId,
+            batchId: batch.id,
+            employeeId: firstEmp.id,
+            hireDateSnapshot: new Date('2025-01-01'),
+            grossDaysInPeriod: 180,
+            unpaidLeaveDaysDeducted: 0,
+            projectedDaysAdded: 30,
+            netDaysWorked: 180,
+            basicSalaryMonthly: 1500000.0,
+            averageVariableEarnings: 0.0,
+            transportAllowanceBase: 200000.0,
+            totalComputationBase: 1700000.0,
+            calculatedBenefitAmount: 850000.0,
+            approvedBenefitAmount: 850000.0,
+            interestRatePct: 0.0,
+            calculatedInterestAmount: 0.0,
+            approvedInterestAmount: 0.0,
+            bankAccountType: 'SAVINGS',
+            bankAccountNumber: '987654321',
+            hasBankWarning: false,
+          },
+        });
+      }
+    }
   }
 
   console.log('✅ Payroll Foundations & Catalogs seeded successfully!');

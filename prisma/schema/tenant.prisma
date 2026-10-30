@@ -106,6 +106,12 @@ model Tenant {
   payrollSettlementLines         PayrollSettlementLine[]
   payrollBankDisbursementBatches PayrollBankDisbursementBatch[]
 
+  // Payroll Phase 5 Relations (SPEC-ADM-032)
+  payrollVacationSettlements     PayrollVacationSettlement[]
+  payrollSocialBenefitBatches    PayrollSocialBenefitBatch[]
+  payrollSocialBenefitItems      PayrollSocialBenefitItem[]
+  payrollFinalSettlements        PayrollFinalContractSettlement[]
+
   @@map("tenant")
 }
 

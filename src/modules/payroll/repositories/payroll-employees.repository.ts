@@ -147,6 +147,14 @@ export class PayrollEmployeesRepository {
             orderBy: { createdAt: 'desc' },
             take: 24,
           },
+          vacationSettlements: {
+            orderBy: { createdAt: 'desc' },
+            take: 24,
+          },
+          finalSettlements: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+          },
         },
       });
 

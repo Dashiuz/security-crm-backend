@@ -638,6 +638,17 @@ async function main() {
       key: 'payroll:settlement:manage',
       desc: 'Ejecutar liquidación de nómina, edición manual de renglones, cálculo de anticipos día 15, cierre/reapertura de periodos, dispersión ACH y envío de desprendibles',
     },
+    // Payroll Phase 5: Social Benefits, Vacations & Final Liquidation (SPEC-ADM-032)
+    {
+      id: 'payroll_benefits_read_perm_id',
+      key: 'payroll:benefits:read',
+      desc: 'Consultar Libro de Vacaciones, lotes de Prima, Cesantías e Intereses 12% y actas de liquidación definitiva de contrato',
+    },
+    {
+      id: 'payroll_benefits_manage_perm_id',
+      key: 'payroll:benefits:manage',
+      desc: 'Otorgar y liquidar vacaciones con sincronización 3-en-1, generar lotes de prestaciones, inyectar a nómina y aprobar liquidaciones definitivas con paz y salvo',
+    },
   ];
 
   // 5. Departments

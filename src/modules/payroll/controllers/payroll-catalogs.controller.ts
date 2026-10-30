@@ -27,6 +27,8 @@ import {
   CreatePayrollAcademyDto,
   UpdatePayrollAcademyDto,
   CreatePayrollCie10Dto,
+  CreatePayrollPeriodDto,
+  GenerateYearPeriodsDto,
 } from '../dtos/payroll-catalog.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
@@ -50,6 +52,11 @@ export class PayrollCatalogsController {
     'payroll:settings:manage',
     'payroll:employees:read',
     'payroll:employees:manage',
+    'payroll:dependencies:read',
+    'payroll:novelties:read',
+    'payroll:shifts:read',
+    'payroll:settlement:read',
+    'payroll:benefits:read',
   )
   @ApiOperation({
     summary: 'Listar entidades de seguridad social (EPS, AFP, CCF, ARL)',
@@ -100,6 +107,11 @@ export class PayrollCatalogsController {
     'payroll:settings:manage',
     'payroll:employees:read',
     'payroll:employees:manage',
+    'payroll:dependencies:read',
+    'payroll:novelties:read',
+    'payroll:shifts:read',
+    'payroll:settlement:read',
+    'payroll:benefits:read',
   )
   @ApiOperation({ summary: 'Listar catálogo de bancos para dispersión ACH' })
   @ApiOkResponse({ description: 'Lista de bancos comerciales de Colombia' })
@@ -157,6 +169,11 @@ export class PayrollCatalogsController {
     'payroll:settings:manage',
     'payroll:employees:read',
     'payroll:employees:manage',
+    'payroll:dependencies:read',
+    'payroll:novelties:read',
+    'payroll:shifts:read',
+    'payroll:settlement:read',
+    'payroll:benefits:read',
   )
   @ApiOperation({
     summary: 'Listar motivos de retiro de personal (B.D.N Pronos)',
@@ -228,10 +245,20 @@ export class PayrollCatalogsController {
   // 7. Periods (Pronos 1.13)
   @Get('periods')
   @RequirePermissions(
-    'payroll:dependencies:read',
-    'payroll:dependencies:manage',
+    'payroll:settings:read',
+    'payroll:settings:manage',
     'payroll:employees:read',
     'payroll:employees:manage',
+    'payroll:dependencies:read',
+    'payroll:dependencies:manage',
+    'payroll:novelties:read',
+    'payroll:novelties:manage',
+    'payroll:shifts:read',
+    'payroll:shifts:manage',
+    'payroll:settlement:read',
+    'payroll:settlement:manage',
+    'payroll:benefits:read',
+    'payroll:benefits:manage',
   )
   @ApiOperation({
     summary: 'Listar periodos de nómina (quincenales y mensuales)',
@@ -240,6 +267,35 @@ export class PayrollCatalogsController {
   listPeriods(@Request() req: any, @Query('year') year?: string) {
     const parsedYear = year ? parseInt(year, 10) : undefined;
     return this.catalogsService.listPeriods(req.user.tenantId, parsedYear);
+  }
+
+  @Post('periods')
+  @RequirePermissions('payroll:settings:manage', 'payroll:settlement:manage')
+  @ApiOperation({ summary: 'Crear periodo de nómina individual' })
+  @ApiCreatedResponse({ description: 'Periodo de nómina creado' })
+  createPeriod(@Request() req: any, @Body() dto: CreatePayrollPeriodDto) {
+    return this.catalogsService.createPeriod(
+      req.user.tenantId,
+      dto,
+      req.user.id || req.user.sub,
+    );
+  }
+
+  @Post('periods/generate-year')
+  @RequirePermissions('payroll:settings:manage', 'payroll:settlement:manage')
+  @ApiOperation({
+    summary: 'Generar automáticamente los 12 periodos mensuales de un año',
+  })
+  @ApiCreatedResponse({ description: 'Periodos anuales generados' })
+  generateYearPeriods(
+    @Request() req: any,
+    @Body() dto: GenerateYearPeriodsDto,
+  ) {
+    return this.catalogsService.generateYearPeriods(
+      req.user.tenantId,
+      dto,
+      req.user.id || req.user.sub,
+    );
   }
 
   // 8. Security Academies (Pronos 5.2)
