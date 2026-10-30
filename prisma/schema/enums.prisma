@@ -365,3 +365,75 @@ enum HiringRequirementStatus {
 
 
 
+
+// ============================================================================
+// SPEC-ADM-030: GESTIÓN DE NOVEDADES, TURNOS, INCAPACIDADES Y PRÉSTAMOS
+// ============================================================================
+
+enum LeaveAndAbsenceType {
+  SICK_LEAVE_EG               // Incapacidad Enfermedad General (Concepto 100 - Días 1-2 Empresa, 3+ EPS)
+  WORK_ACCIDENT_AT            // Accidente de Trabajo / Enfermedad Laboral (Concepto 101 - 100% ARL desde día 1)
+  MATERNITY_PATERNITY_LMA     // Licencia Maternidad / Paternidad (Concepto 102 - 100% EPS)
+  PAID_LEAVE_LR               // Licencia Remunerada / Luto / Calamidad / Día Familia 110 (Concepto 103/110 - 100% Empresa)
+  UNPAID_LEAVE_LNR            // Licencia No Remunerada (Afecta días trabajados e IBC según bandera LNR)
+  DISCIPLINARY_SUSPENSION_SAN // Sanción Disciplinaria (Concepto 505 - Descuenta día y séptimo día)
+  UNJUSTIFIED_ABSENCE_AUS     // Ausencia Injustificada / Turno No Laborado (Concepto 504 - Descuenta día y séptimo día)
+  VACATION_TIME_VAC           // Vacaciones Disfrutadas en Tiempo (Concepto 105)
+}
+
+enum EpsClaimStatus {
+  NOT_APPLICABLE              // No requiere recobro (ej. <= 2 días EG, Luto, Ausencia, Sanción)
+  PENDING_FILING              // Pendiente de radicar ante EPS / ARL
+  FILED_IN_AUDIT              // Radicada en auditoría médica / transcripción
+  APPROVED_PENDING_PAYMENT    // Reconocida / Autorizada pendiente de giro
+  PAID_RECOVERED              // Pagada por la EPS / ARL (Recobro exitoso)
+  REJECTED                    // Negada / Glosada por la entidad
+}
+
+enum PayrollLoanStatus {
+  ACTIVE                      // Vigente descontando en nómina
+  PAUSED                      // Suspendido temporalmente para el próximo periodo
+  PAID_OFF                    // Pagado en su totalidad (Saldo = 0)
+  CANCELLED                   // Anulado
+}
+
+enum NoveltyPeriodicityRule {
+  FIRST_FORTNIGHT             // Aplicar solo en 1ra Quincena / Anticipo
+  SECOND_FORTNIGHT            // Aplicar solo en 2da Quincena / Cierre de Mes
+  ALL_PERIODS                 // Aplicar en cada liquidación (Quincenal o Mensual)
+}
+
+enum PermanentConceptScope {
+  BY_EMPLOYEE                 // Asignado directamente a un trabajador específico
+  BY_DEPENDENCY               // Asignado a un puesto/dependencia (se liquida proporcional a días en ese puesto)
+}
+
+enum NoveltyOriginType {
+  MANUAL                      // Digitada manualmente por analista
+  CSV_IMPORT                  // Cargada mediante importador masivo
+  SHIFT_ENGINE                // Generada automáticamente desde la Malla de Turnos
+  LEAVE_ENGINE                // Generada por el liquidador de incapacidades/licencias
+  LOAN_ENGINE                 // Cuota generada por el motor de préstamos
+}
+
+enum DependencyAssignmentRole {
+  TITULAR                     // Guarda fijo / titular del puesto
+  RELEVANTE                   // Guarda relevante / descansero (cubre descansos)
+  SUPERVISOR                  // Supervisor / Coordinador asignado
+  REFUERZO                    // Guarda enviado como refuerzo temporal o adicional
+}
+
+enum ShiftDayCode {
+  D                           // Turno Diurno (ej. 06:00 a 18:00 - 12h)
+  N                           // Turno Nocturno (ej. 18:00 a 06:00 - 12h)
+  X                           // Descanso programado remunerado
+  R                           // Turno de Refuerzo / Apoyo adicional (Facturable / Extra)
+  INC                         // Incapacidad Enfermedad General
+  AT                          // Incapacidad Accidente de Trabajo
+  LMA                         // Licencia Maternidad / Paternidad
+  LR                          // Licencia Remunerada / Día de la Familia
+  LNR                         // Licencia No Remunerada
+  SAN                         // Sanción Disciplinaria
+  AUS                         // Ausencia Injustificada (Turno No Laborado 504)
+  VAC                         // Vacaciones en tiempo
+}

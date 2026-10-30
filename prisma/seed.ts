@@ -606,6 +606,27 @@ async function main() {
       key: 'payroll:svsp:export',
       desc: 'Generar y descargar la plantilla oficial en Excel de acreditaciones y cursos SVSP para RENOVA (SuperVigilancia)',
     },
+    // Payroll Phase 3: Novelties, Incapacities, Loans & Shifts (SPEC-ADM-030)
+    {
+      id: 'payroll_novelties_read_perm_id',
+      key: 'payroll:novelties:read',
+      desc: 'Consultar incapacidades CIE-10, licencias, ausentismos, préstamos, conceptos fijos y novedades variables',
+    },
+    {
+      id: 'payroll_novelties_manage_perm_id',
+      key: 'payroll:novelties:manage',
+      desc: 'Administrar incapacidades CIE-10, recobro EPS/ARL, préstamos, libranzas, cuotas, conceptos fijos y cargue masivo de novedades',
+    },
+    {
+      id: 'payroll_shifts_read_perm_id',
+      key: 'payroll:shifts:read',
+      desc: 'Consultar rotación de puestos, secuencias operativas y malla de turnos 24/7',
+    },
+    {
+      id: 'payroll_shifts_manage_perm_id',
+      key: 'payroll:shifts:manage',
+      desc: 'Administrar rotación de guardas por puesto, proyectar secuencias y editar celdas de turnos y refuerzos',
+    },
   ];
 
   // 5. Departments

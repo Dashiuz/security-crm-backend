@@ -1067,6 +1067,180 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
         });
       }
     }
+
+    // 13. SPEC-ADM-030: Shift Sequences & Phase 3 Sample Data
+    const sequences = [
+      {
+        code: '2X2X2',
+        name: 'Secuencia 2 Diurnos, 2 Nocturnos, 2 Descansos (12H)',
+        patternJson: ['D', 'D', 'N', 'N', 'X', 'X'],
+        cycleDaysLength: 6,
+        dayShiftHours: 12,
+        nightShiftHours: 12,
+      },
+      {
+        code: '4X2',
+        name: 'Secuencia 4 Días Trabajo, 2 Descansos (12H)',
+        patternJson: ['D', 'D', 'D', 'D', 'X', 'X'],
+        cycleDaysLength: 6,
+        dayShiftHours: 12,
+        nightShiftHours: 12,
+      },
+      {
+        code: '5X2',
+        name: 'Secuencia 5 Días Lunes a Viernes, Sábado y Domingo Descanso',
+        patternJson: ['D', 'D', 'D', 'D', 'D', 'X', 'X'],
+        cycleDaysLength: 7,
+        dayShiftHours: 8,
+        nightShiftHours: 0,
+      },
+      {
+        code: '6X1',
+        name: 'Secuencia 6 Días Lunes a Sábado, Domingo Descanso',
+        patternJson: ['D', 'D', 'D', 'D', 'D', 'D', 'X'],
+        cycleDaysLength: 7,
+        dayShiftHours: 8,
+        nightShiftHours: 0,
+      },
+    ];
+
+    for (const seq of sequences) {
+      await prisma.payrollShiftSequence.upsert({
+        where: { tenantId_code: { tenantId, code: seq.code } },
+        update: { name: seq.name, patternJson: seq.patternJson },
+        create: { ...seq, tenantId },
+      });
+    }
+
+    // Sample Loan & Incapacity for first employee
+    const firstEmp = employees[0];
+    if (firstEmp && defaultDep) {
+      // 13.1 Dependency Assignment
+      const existingAssign = await prisma.employeeDependencyAssignment.findFirst({
+        where: { tenantId, employeeId: firstEmp.id },
+      });
+      if (!existingAssign) {
+        await prisma.employeeDependencyAssignment.create({
+          data: {
+            tenantId,
+            employeeId: firstEmp.id,
+            dependencyId: defaultDep.id,
+            branchId: bogotaBranchId,
+            assignmentRole: 'TITULAR',
+            startDate: new Date('2026-01-01'),
+            isPrimary: true,
+            notes: 'Asignación titular desde inicio de año',
+          },
+        });
+      }
+
+      // 13.2 Sample Loan
+      const loanConcept = await prisma.payrollConcept.findFirst({
+        where: { tenantId, code: 510 },
+      });
+      if (loanConcept) {
+        const existingLoan = await prisma.payrollLoan.findFirst({
+          where: { tenantId, employeeId: firstEmp.id },
+        });
+        if (!existingLoan) {
+          const newLoan = await prisma.payrollLoan.create({
+            data: {
+              tenantId,
+              employeeId: firstEmp.id,
+              conceptId: loanConcept.id,
+              loanCode: `PR-2026-${firstEmp.document.slice(-4)}`,
+              description: 'Préstamo Calamidad Doméstica y Salud',
+              disbursementDate: new Date('2026-02-01'),
+              startDeductionDate: new Date('2026-02-15'),
+              principalAmount: 600000.0,
+              installmentAmount: 100000.0,
+              totalInstallments: 6,
+              paidInstallments: 1,
+              totalPaidAmount: 100000.0,
+              remainingBalance: 500000.0,
+              deductionRule: 'ALL_PERIODS',
+              status: 'ACTIVE',
+            },
+          });
+
+          await prisma.payrollLoanInstallment.create({
+            data: {
+              tenantId,
+              loanId: newLoan.id,
+              installmentNumber: 1,
+              paymentDate: new Date('2026-02-28'),
+              amount: 100000.0,
+              balanceAfter: 500000.0,
+              paymentMethod: 'PAYROLL_DEDUCTION',
+              notes: 'Descuento aplicado en nómina de febrero',
+            },
+          });
+        }
+      }
+
+      // 13.3 Sample Incapacity (CIE-10 J00)
+      const cie10J00 = await prisma.payrollCie10.findFirst({
+        where: { tenantId, code: 'J00' },
+      });
+      const egConcept = await prisma.payrollConcept.findFirst({
+        where: { tenantId, code: 100 },
+      });
+      const existingLeave = await prisma.payrollLeaveAndAbsence.findFirst({
+        where: { tenantId, employeeId: firstEmp.id },
+      });
+      if (!existingLeave && cie10J00 && egConcept) {
+        const leaveStart = new Date('2026-03-10');
+        const leaveEnd = new Date('2026-03-12'); // 3 días
+        await prisma.payrollLeaveAndAbsence.create({
+          data: {
+            tenantId,
+            employeeId: firstEmp.id,
+            leaveType: 'SICK_LEAVE_EG',
+            conceptId: egConcept.id,
+            cie10Id: cie10J00.id,
+            startDate: leaveStart,
+            endDate: leaveEnd,
+            totalDays: 3,
+            employerDays: 2,
+            entityDays: 1,
+            baseSalaryMonthly: 1750905.0,
+            ibcDailyValue: 58363.5,
+            employerRecognizedAmount: 116727.0, // 2 días al 100% o 66.67% respetando piso
+            entityRecognizedAmount: 38909.0, // 1 día EPS
+            totalLiquidatedAmount: 155636.0,
+            claimStatus: 'FILED_IN_AUDIT',
+            certificateNumber: 'MED-2026-8812',
+            filingDate: new Date('2026-03-15'),
+            notes: 'Incapacidad médica por afección respiratoria radicada ante EPS Sanitas',
+          },
+        });
+      }
+
+      // 13.4 Sample Permanent Concept
+      const bonConcept = await prisma.payrollConcept.findFirst({
+        where: { tenantId, code: 1 }, // Sueldo básico o similar
+      });
+      if (bonConcept) {
+        const existingPerm = await prisma.payrollPermanentConcept.findFirst({
+          where: { tenantId, employeeId: firstEmp.id },
+        });
+        if (!existingPerm) {
+          await prisma.payrollPermanentConcept.create({
+            data: {
+              tenantId,
+              scope: 'BY_EMPLOYEE',
+              employeeId: firstEmp.id,
+              conceptId: bonConcept.id,
+              amount: 150000.0,
+              isProportionalToDays: false,
+              applicationRule: 'ALL_PERIODS',
+              isActive: true,
+              notes: 'Auxilio voluntario no constitutivo de salario',
+            },
+          });
+        }
+      }
+    }
   }
 
   console.log('✅ Payroll Foundations & Catalogs seeded successfully!');

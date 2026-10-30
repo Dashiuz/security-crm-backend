@@ -1,0 +1,314 @@
+// ============================================================================
+// SPEC-ADM-030: ROTACIÓN DE PUESTOS, TURNOS, INCAPACIDADES, PRÉSTAMOS Y NOVEDADES
+// ============================================================================
+
+/// 1. Historial y Rotación de Puestos (Dependencias) por Empleado (Numeral 4.1 Pronos)
+model EmployeeDependencyAssignment {
+  id             String                   @id @default(cuid(2))
+  tenantId       String
+  tenant         Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId     String
+  employee       Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dependencyId   String
+  dependency     PayrollDependency        @relation(fields: [dependencyId], references: [id], onDelete: Restrict)
+
+  branchId       String?
+  branch         PayrollBranch?           @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  assignmentRole DependencyAssignmentRole @default(TITULAR)
+  startDate      DateTime                 @db.Date
+  endDate        DateTime?                @db.Date // null = asignación vigente activa
+  isPrimary      Boolean                  @default(true)
+  isActive       Boolean                  @default(true)
+  notes          String?                  @db.Text
+
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  createdById    String?
+  updatedById    String?
+
+  @@index([tenantId, employeeId, startDate])
+  @@index([tenantId, dependencyId, isActive])
+  @@map("employee_dependency_assignments")
+}
+
+/// 2. Registro y Liquidación de Incapacidades (CIE-10), Licencias, Sanciones y Ausentismos (Numerales 3.3 y 4.11 Pronos)
+model PayrollLeaveAndAbsence {
+  id                       String              @id @default(cuid(2))
+  tenantId                 String
+  tenant                   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId               String
+  employee                 Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  periodId                 String?
+  period                   PayrollPeriod?      @relation(fields: [periodId], references: [id], onDelete: SetNull)
+
+  leaveType                LeaveAndAbsenceType
+  conceptId                String
+  concept                  PayrollConcept      @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+
+  // Diagnóstico Médico CIE-10 y Prórrogas (Aplica para EG, AT, LMA)
+  cie10Id                  String?
+  cie10                    PayrollCie10?       @relation(fields: [cie10Id], references: [id], onDelete: SetNull)
+  isExtension              Boolean             @default(false) // true = Prórroga (no reinicia días 1-2 empresa)
+  parentLeaveId            String?
+  accumulatedPriorDays     Int                 @default(0)     // Días acumulados previos en caso de prórroga
+
+  // Fechas y Conteo de Días
+  startDate                DateTime            @db.Date
+  endDate                  DateTime            @db.Date
+  totalDays                Int                 @default(1)
+  employerDays             Int                 @default(0)     // Días a cargo de la empresa (ej. días 1 y 2 EG o LR)
+  entityDays               Int                 @default(0)     // Días a cargo de EPS / ARL (ej. día 3 en adelante)
+
+  // Valores Matemáticos de Liquidación (al centavo)
+  baseSalaryMonthly        Decimal             @default(1750905.00) @db.Decimal(14, 2) // Salario / IBC base mensual
+  ibcDailyValue            Decimal             @default(58363.50) @db.Decimal(12, 2)   // IBC diario = baseSalaryMonthly / 30
+  employerRecognizedAmount Decimal             @default(0.00) @db.Decimal(14, 2)       // Valor pagado/asumido por empresa
+  entityRecognizedAmount   Decimal             @default(0.00) @db.Decimal(14, 2)       // Valor a cargo de EPS / ARL
+  totalLiquidatedAmount    Decimal             @default(0.00) @db.Decimal(14, 2)       // Total devengado (o descontado si es AUS/SAN)
+  affectsSeventhDay        Boolean             @default(false)                         // Si descuenta dominical (Art. 173 CST)
+
+  // Gestión de Recobro / Cartera ante EPS o ARL (Numeral 4.11 Pronos)
+  entityId                 String?
+  entity                   PayrollEntity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  certificateNumber        String?             @db.VarChar(60) // Nro. incapacidad o radicado médico
+  claimStatus              EpsClaimStatus      @default(NOT_APPLICABLE)
+  filingDate               DateTime?           @db.Date        // Fecha de cobro / radicación
+  paymentDate              DateTime?           @db.Date        // Fecha de pago efectivo por EPS/ARL
+  reimbursedAmount         Decimal             @default(0.00) @db.Decimal(14, 2) // Valor efectivamente recobrado
+  s3SupportKey             String?             @db.VarChar(500)
+  fileName                 String?             @db.VarChar(255)
+  notes                    String?             @db.Text
+
+  shiftRecords             PayrollShiftRecord[]
+
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+  createdById              String?
+  updatedById              String?
+
+  @@index([tenantId, employeeId, startDate])
+  @@index([tenantId, leaveType])
+  @@index([tenantId, claimStatus])
+  @@map("payroll_leaves_and_absences")
+}
+
+/// 3. Préstamos, Libranzas, Embargos y Descuentos por Cuotas (Numeral 3.1 Pronos)
+model PayrollLoan {
+  id                  String                 @id @default(cuid(2))
+  tenantId            String
+  tenant              Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId          String
+  employee            Employee               @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  conceptId           String
+  concept             PayrollConcept         @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+
+  creditorEntityId    String?
+  creditorEntity      PayrollEntity?         @relation(fields: [creditorEntityId], references: [id], onDelete: SetNull)
+
+  loanCode            String                 @db.VarChar(40)  // Ej: "PR-2026-001"
+  description         String                 @db.VarChar(180) // Ej: "Préstamo Calamidad" o "Libranza Cooperativa"
+  disbursementDate    DateTime               @db.Date
+  startDeductionDate  DateTime               @db.Date
+
+  principalAmount     Decimal                @db.Decimal(14, 2) // Monto total prestado
+  installmentAmount   Decimal                @db.Decimal(14, 2) // Valor cuota fija por periodo
+  totalInstallments   Int                    @default(1)        // Número total de cuotas pactadas
+  paidInstallments    Int                    @default(0)        // Cuotas ya descontadas
+  totalPaidAmount     Decimal                @default(0.00) @db.Decimal(14, 2)
+  remainingBalance    Decimal                @db.Decimal(14, 2) // Saldo pendiente actual
+
+  deductionRule       NoveltyPeriodicityRule @default(ALL_PERIODS)
+  status              PayrollLoanStatus      @default(ACTIVE)
+  notes               String?                @db.Text
+
+  installments        PayrollLoanInstallment[]
+
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  createdById         String?
+  updatedById         String?
+
+  @@unique([tenantId, loanCode])
+  @@index([tenantId, employeeId, status])
+  @@map("payroll_loans")
+}
+
+/// Historial de Cuotas Descontadas o Abonadas de un Préstamo
+model PayrollLoanInstallment {
+  id                String         @id @default(cuid(2))
+  tenantId          String
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  loanId            String
+  loan              PayrollLoan    @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  periodId          String?
+  period            PayrollPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
+
+  installmentNumber Int
+  paymentDate       DateTime       @db.Date
+  amount            Decimal        @db.Decimal(14, 2)
+  balanceAfter      Decimal        @db.Decimal(14, 2)
+  paymentMethod     String         @default("PAYROLL_DEDUCTION") @db.VarChar(40) // PAYROLL_DEDUCTION | MANUAL_PAYMENT
+  notes             String?        @db.VarChar(255)
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  createdById       String?
+  updatedById       String?
+
+  @@index([tenantId, loanId])
+  @@map("payroll_loan_installments")
+}
+
+/// 4. Conceptos Fijos / Permanentes por Empleado o por Dependencia (Numerales 3.2 y 3.7 Pronos)
+model PayrollPermanentConcept {
+  id                   String                 @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  scope                PermanentConceptScope  @default(BY_EMPLOYEE)
+
+  employeeId           String?
+  employee             Employee?              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dependencyId         String?
+  dependency           PayrollDependency?     @relation(fields: [dependencyId], references: [id], onDelete: Cascade)
+
+  conceptId            String
+  concept              PayrollConcept         @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+
+  amount               Decimal                @db.Decimal(14, 2) // Valor mensual o fijo
+  isProportionalToDays Boolean                @default(true)     // Si true, calcula (amount / 30) * días trabajados
+  applicationRule      NoveltyPeriodicityRule @default(ALL_PERIODS)
+  validFrom            DateTime?              @db.Date
+  validUntil           DateTime?              @db.Date
+  isActive             Boolean                @default(true)
+  notes                String?                @db.VarChar(255)
+
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  createdById          String?
+  updatedById          String?
+
+  @@index([tenantId, scope, isActive])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, dependencyId])
+  @@map("payroll_permanent_concepts")
+}
+
+/// 5. Novedades Variables del Periodo, Horas Extras Manuales e Importación Masiva (Numerales 3.4 y 3.5 Pronos)
+model PayrollPeriodNovelty {
+  id           String             @id @default(cuid(2))
+  tenantId     String
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  periodId     String
+  period       PayrollPeriod      @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  employeeId   String
+  employee     Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dependencyId String?
+  dependency   PayrollDependency? @relation(fields: [dependencyId], references: [id], onDelete: SetNull)
+
+  conceptId    String
+  concept      PayrollConcept     @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+
+  noveltyDate  DateTime           @db.Date
+  quantity     Decimal            @default(1.00) @db.Decimal(10, 2) // Horas o Días
+  unitValue    Decimal            @default(0.00) @db.Decimal(14, 2)
+  totalValue   Decimal            @db.Decimal(14, 2)
+  origin       NoveltyOriginType  @default(MANUAL)
+  isProcessed  Boolean            @default(false)
+  notes        String?            @db.VarChar(255)
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  createdById  String?
+  updatedById  String?
+
+  @@index([tenantId, periodId, employeeId])
+  @@index([tenantId, conceptId])
+  @@map("payroll_period_novelties")
+}
+
+/// 6. Catálogo de Secuencias de Turno (Numeral 4.2 Pronos: 2X2X2, 4X2, 5X2, 6X1)
+model PayrollShiftSequence {
+  id                  String   @id @default(cuid(2))
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code                String   @db.VarChar(30)  // Ej: "2X2X2", "4X2", "5X2", "6X1_D"
+  name                String   @db.VarChar(120) // Ej: "Secuencia 2 Diurnos, 2 Nocturnos, 2 Descansos (12H)"
+  patternJson         Json     @db.JsonB        // Ej: ["D", "D", "N", "N", "X", "X"]
+  cycleDaysLength     Int      @default(6)      // Longitud del ciclo en días
+  dayShiftHours       Int      @default(12)     // Horas por turno D
+  nightShiftHours     Int      @default(12)     // Horas por turno N
+  defaultDayStartTime String   @default("06:00") @db.VarChar(10)
+  defaultNightStartTime String @default("18:00") @db.VarChar(10)
+  isActive            Boolean  @default(true)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  createdById         String?
+  updatedById         String?
+
+  @@unique([tenantId, code])
+  @@index([tenantId, isActive])
+  @@map("payroll_shift_sequences")
+}
+
+/// 7. Registro Diario de Malla de Turnos y Refuerzos (Numerales 4.4, 4.6 y 4.7 Pronos)
+model PayrollShiftRecord {
+  id                   String                  @id @default(cuid(2))
+  tenantId             String
+  tenant               Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId           String
+  employee             Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dependencyId         String
+  dependency           PayrollDependency       @relation(fields: [dependencyId], references: [id], onDelete: Restrict)
+
+  shiftDate            DateTime                @db.Date
+  year                 Int
+  month                Int                     // 1..12
+  dayOfMonth           Int                     // 1..31
+
+  shiftCode            ShiftDayCode            @default(D)
+  isReinforcement      Boolean                 @default(false) // true = Refuerzo facturable al cliente / turno adicional
+  isHolidayOrSunday    Boolean                 @default(false)
+
+  // Desglose de Horas Calculadas del Día
+  ordinaryDayHours     Decimal                 @default(0.00) @db.Decimal(5, 2)
+  nightSurchargeHours  Decimal                 @default(0.00) @db.Decimal(5, 2) // RN (35%)
+  sundayHolidayHours   Decimal                 @default(0.00) @db.Decimal(5, 2) // Dom/Fest (80%)
+  overtimeDayHours     Decimal                 @default(0.00) @db.Decimal(5, 2) // HED (125%)
+  overtimeNightHours   Decimal                 @default(0.00) @db.Decimal(5, 2) // HEN (175%)
+  overtimeHolidayDayHours Decimal              @default(0.00) @db.Decimal(5, 2) // HEFD (205%)
+  overtimeHolidayNightHours Decimal            @default(0.00) @db.Decimal(5, 2) // HEFN (255%)
+
+  leaveId              String?
+  leave                PayrollLeaveAndAbsence? @relation(fields: [leaveId], references: [id], onDelete: SetNull)
+
+  notes                String?                 @db.VarChar(255)
+
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  createdById          String?
+  updatedById          String?
+
+  @@unique([tenantId, employeeId, shiftDate, isReinforcement])
+  @@index([tenantId, dependencyId, year, month])
+  @@index([tenantId, employeeId, year, month])
+  @@map("payroll_shift_records")
+}
+

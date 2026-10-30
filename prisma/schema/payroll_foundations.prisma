@@ -68,6 +68,11 @@ model PayrollSettings {
   senaPct                   Decimal                 @default(2.00) @db.Decimal(5, 2)
   icbfPct                   Decimal                 @default(3.00) @db.Decimal(5, 2)
 
+  // Porcentajes de Reconocimiento de Incapacidad Enfermedad General (Decreto 2943/2013 y Política Empresa)
+  employerSickLeaveRatePct       Decimal                 @default(66.67) @db.Decimal(5, 2) // Días 1 y 2 a cargo empresa (66.67% ley o 100% política)
+  epsSickLeaveRateDays3To90Pct   Decimal                 @default(66.67) @db.Decimal(5, 2) // Días 3 a 90 a cargo EPS (66.67% con piso 1 SMMLV)
+  epsSickLeaveRateDays91To180Pct Decimal                 @default(50.00) @db.Decimal(5, 2) // Días 91 a 180 a cargo EPS (50.00% con piso 1 SMMLV)
+
   createdAt                 DateTime                @default(now())
   updatedAt                 DateTime                @updatedAt
   createdById               String?
@@ -144,6 +149,10 @@ model PayrollConcept {
   isActive                 Boolean                @default(true)
 
   modalityItems            PayrollModalityItem[]
+  leaves                   PayrollLeaveAndAbsence[]
+  loans                    PayrollLoan[]
+  permanentConcepts        PayrollPermanentConcept[]
+  periodNovelties          PayrollPeriodNovelty[]
 
   createdAt                DateTime               @default(now())
   updatedAt                DateTime               @updatedAt
@@ -177,6 +186,9 @@ model PayrollEntity {
   afpProfiles       EmployeePayrollProfile[] @relation("EmployeeAfp")
   cesantiasProfiles EmployeePayrollProfile[] @relation("EmployeeCesantias")
   ccfProfiles       EmployeePayrollProfile[] @relation("EmployeeCcf")
+
+  leaves            PayrollLeaveAndAbsence[]
+  loans             PayrollLoan[]
 
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
@@ -244,6 +256,8 @@ model PayrollCie10 {
   familyCode  String?  @db.VarChar(10)  // Familia de 3 caracteres
   name        String   @db.VarChar(255) // Descripción clínica de la patología
   isActive    Boolean  @default(true)
+
+  leaves      PayrollLeaveAndAbsence[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -341,6 +355,7 @@ model PayrollBranch {
 
   dependencies   PayrollDependency[]
   employeeProfiles EmployeePayrollProfile[]
+  dependencyAssignments EmployeeDependencyAssignment[]
 
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -444,6 +459,10 @@ model PayrollDependency {
   isActive                 Boolean                  @default(true)
 
   employeeProfiles         EmployeePayrollProfile[]
+  assignments              EmployeeDependencyAssignment[]
+  permanentConcepts        PayrollPermanentConcept[]
+  periodNovelties          PayrollPeriodNovelty[]
+  shiftRecords             PayrollShiftRecord[]
 
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
@@ -473,6 +492,10 @@ model PayrollPeriod {
   paymentDate   DateTime?           @db.Date
   status        PayrollPeriodStatus @default(OPEN)
   notes         String?             @db.Text
+
+  leaves           PayrollLeaveAndAbsence[]
+  loanInstallments PayrollLoanInstallment[]
+  periodNovelties  PayrollPeriodNovelty[]
 
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt

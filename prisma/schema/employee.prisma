@@ -53,6 +53,14 @@ model Employee {
   svspCourses            EmployeeSvspCourse[]
   internalTrainings      EmployeeInternalTraining[]
 
+  // SPEC-ADM-030: Rotación de Puestos, Turnos, Novedades e Incapacidades
+  dependencyAssignments  EmployeeDependencyAssignment[]
+  leavesAndAbsences      PayrollLeaveAndAbsence[]
+  payrollLoans           PayrollLoan[]
+  permanentConcepts      PayrollPermanentConcept[]
+  periodNovelties        PayrollPeriodNovelty[]
+  shiftRecords           PayrollShiftRecord[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

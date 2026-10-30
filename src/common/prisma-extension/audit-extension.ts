@@ -78,6 +78,15 @@ export const auditExtension = (contextService: RequestContextService) => {
               'EmployeeRequirementCheck',
               'EmployeeSvspCourse',
               'EmployeeInternalTraining',
+              // SPEC-ADM-030: Payroll Phase 3 Models
+              'EmployeeDependencyAssignment',
+              'PayrollLeaveAndAbsence',
+              'PayrollLoan',
+              'PayrollLoanInstallment',
+              'PayrollPermanentConcept',
+              'PayrollPeriodNovelty',
+              'PayrollShiftSequence',
+              'PayrollShiftRecord',
             ];
             const multiTenantModels = [
               'User',
@@ -150,6 +159,15 @@ export const auditExtension = (contextService: RequestContextService) => {
               'EmployeeRequirementCheck',
               'EmployeeSvspCourse',
               'EmployeeInternalTraining',
+              // SPEC-ADM-030: Payroll Phase 3 Models
+              'EmployeeDependencyAssignment',
+              'PayrollLeaveAndAbsence',
+              'PayrollLoan',
+              'PayrollLoanInstallment',
+              'PayrollPermanentConcept',
+              'PayrollPeriodNovelty',
+              'PayrollShiftSequence',
+              'PayrollShiftRecord',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -443,6 +461,15 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'EmployeeRequirementCheck',
                 'EmployeeSvspCourse',
                 'EmployeeInternalTraining',
+                // SPEC-ADM-030: Payroll Phase 3 Models
+                'EmployeeDependencyAssignment',
+                'PayrollLeaveAndAbsence',
+                'PayrollLoan',
+                'PayrollLoanInstallment',
+                'PayrollPermanentConcept',
+                'PayrollPeriodNovelty',
+                'PayrollShiftSequence',
+                'PayrollShiftRecord',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

@@ -88,6 +88,16 @@ model Tenant {
   employeeSvspCourses            EmployeeSvspCourse[]
   employeeInternalTrainings      EmployeeInternalTraining[]
 
+  // Payroll Phase 3 Relations (SPEC-ADM-030)
+  employeeDependencyAssignments  EmployeeDependencyAssignment[]
+  payrollLeavesAndAbsences       PayrollLeaveAndAbsence[]
+  payrollLoans                   PayrollLoan[]
+  payrollLoanInstallments        PayrollLoanInstallment[]
+  payrollPermanentConcepts       PayrollPermanentConcept[]
+  payrollPeriodNovelties         PayrollPeriodNovelty[]
+  payrollShiftSequences          PayrollShiftSequence[]
+  payrollShiftRecords            PayrollShiftRecord[]
+
   @@map("tenant")
 }
 
