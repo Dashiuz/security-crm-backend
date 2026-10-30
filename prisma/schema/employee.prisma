@@ -61,6 +61,12 @@ model Employee {
   periodNovelties        PayrollPeriodNovelty[]
   shiftRecords           PayrollShiftRecord[]
 
+  // SPEC-ADM-031: Liquidación de Nómina, Historial Salarial y Anticipos
+  salaryHistories        EmployeeSalaryHistory[]
+  advanceItems           PayrollAdvanceItem[]
+  periodSettlements      PayrollPeriodSettlement[]
+  settlementLines        PayrollSettlementLine[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

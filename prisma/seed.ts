@@ -627,6 +627,17 @@ async function main() {
       key: 'payroll:shifts:manage',
       desc: 'Administrar rotación de guardas por puesto, proyectar secuencias y editar celdas de turnos y refuerzos',
     },
+    // Payroll Phase 4: Settlement Engine, Advances, ACH & Payslips (SPEC-ADM-031)
+    {
+      id: 'payroll_settlement_read_perm_id',
+      key: 'payroll:settlement:read',
+      desc: 'Consultar liquidación de nómina (pre-nómina), desprendibles PDF, anticipos quincenales y lotes ACH',
+    },
+    {
+      id: 'payroll_settlement_manage_perm_id',
+      key: 'payroll:settlement:manage',
+      desc: 'Ejecutar liquidación de nómina, edición manual de renglones, cálculo de anticipos día 15, cierre/reapertura de periodos, dispersión ACH y envío de desprendibles',
+    },
   ];
 
   // 5. Departments

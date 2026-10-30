@@ -122,6 +122,23 @@ describe('PayrollCatalogsService', () => {
             Promise.resolve({ id: 'acad-1', ...data }),
           ),
       },
+      payrollCie10: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'cie-1',
+            code: 'J00',
+            name: 'Rinofaringitis aguda (resfriado común)',
+            familyCode: 'J00-J99',
+            isActive: true,
+          },
+        ]),
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: 'new-cie', ...data }),
+          ),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -191,5 +208,31 @@ describe('PayrollCatalogsService', () => {
       'user-1',
     );
     expect(createdAcad.code).toBe(2);
+  });
+
+  it('should list and create CIE-10 diagnosis codes', async () => {
+    const list = await service.listCie10('tenant-1', 'resfriado');
+    expect(list).toHaveLength(1);
+    expect(prisma.payrollCie10.findMany).toHaveBeenCalled();
+
+    const created = await service.createCie10(
+      'tenant-1',
+      {
+        code: 'M545',
+        name: 'Lumbago no especificado',
+        familyCode: 'M00-M99',
+      },
+      'user-1',
+    );
+    expect(created.code).toBe('M545');
+
+    prisma.payrollCie10.findUnique.mockResolvedValueOnce({ id: 'existing' });
+    await expect(
+      service.createCie10(
+        'tenant-1',
+        { code: 'M545', name: 'Lumbago no especificado' },
+        'user-1',
+      ),
+    ).rejects.toThrow(BadRequestException);
   });
 });

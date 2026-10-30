@@ -87,6 +87,13 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollPeriodNovelty',
               'PayrollShiftSequence',
               'PayrollShiftRecord',
+              // SPEC-ADM-031: Payroll Phase 4 Models
+              'EmployeeSalaryHistory',
+              'PayrollAdvanceSettlement',
+              'PayrollAdvanceItem',
+              'PayrollPeriodSettlement',
+              'PayrollSettlementLine',
+              'PayrollBankDisbursementBatch',
             ];
             const multiTenantModels = [
               'User',
@@ -168,6 +175,13 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollPeriodNovelty',
               'PayrollShiftSequence',
               'PayrollShiftRecord',
+              // SPEC-ADM-031: Payroll Phase 4 Models
+              'EmployeeSalaryHistory',
+              'PayrollAdvanceSettlement',
+              'PayrollAdvanceItem',
+              'PayrollPeriodSettlement',
+              'PayrollSettlementLine',
+              'PayrollBankDisbursementBatch',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -470,6 +484,13 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'PayrollPeriodNovelty',
                 'PayrollShiftSequence',
                 'PayrollShiftRecord',
+                // SPEC-ADM-031: Payroll Phase 4 Models
+                'EmployeeSalaryHistory',
+                'PayrollAdvanceSettlement',
+                'PayrollAdvanceItem',
+                'PayrollPeriodSettlement',
+                'PayrollSettlementLine',
+                'PayrollBankDisbursementBatch',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

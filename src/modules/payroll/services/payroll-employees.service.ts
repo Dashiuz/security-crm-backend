@@ -1,9 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PayrollEmployeesRepository } from '../repositories/payroll-employees.repository';
 import {
   RenovaExcelExporterService,
   RenovaExportItem,
 } from './renova-excel-exporter.service';
+import { PayrollPayslipPdfService } from './payroll-payslip-pdf.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import {
   UpsertPayrollProfileDto,
   CreateFamilyMemberDto,
@@ -11,6 +13,7 @@ import {
   CreateSvspCourseDto,
   CreateInternalTrainingDto,
   QueryPayrollEmployeesDto,
+  ApplySalaryAdjustmentDto,
 } from '../dtos/payroll-employee-dossier.dto';
 
 export interface EmployeeWithCalculatedFields {
@@ -43,6 +46,8 @@ export class PayrollEmployeesService {
   constructor(
     private readonly repository: PayrollEmployeesRepository,
     private readonly renovaExporter: RenovaExcelExporterService,
+    private readonly payslipPdfService: PayrollPayslipPdfService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private calculateSvspStatus(
@@ -309,6 +314,25 @@ export class PayrollEmployeesService {
         requirementMatrix: mergedRequirements,
         svspCourses: employee.svspCourses,
         internalTrainings: employee.internalTrainings,
+        salaryHistories: employee.salaryHistories || [],
+        periodSettlements: (employee.periodSettlements || []).map((s: any) => ({
+          id: s.id,
+          periodId: s.periodId,
+          periodLabel: s.period?.label || 'Periodo',
+          startDate: s.period?.startDate
+            ? s.period.startDate.toISOString().split('T')[0]
+            : '',
+          endDate: s.period?.endDate
+            ? s.period.endDate.toISOString().split('T')[0]
+            : '',
+          status: s.status,
+          workedDays: s.workedDays,
+          totalEarnings: Number(s.totalEarnings),
+          totalDeductions: Number(s.totalDeductions),
+          netPayAmount: Number(s.netPayAmount),
+          payslipEmailStatus: s.payslipEmailStatus,
+          createdAt: s.createdAt,
+        })),
         svspStatus,
         svspDaysRemaining,
         contractAlertStatus,
@@ -529,6 +553,102 @@ export class PayrollEmployeesService {
     } catch (err: any) {
       this.logger.error(
         `Error exportando archivo RENOVA [tenantId=${tenantId}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+  }
+
+  async applySalaryAdjustment(
+    tenantId: string,
+    employeeId: string,
+    dto: ApplySalaryAdjustmentDto,
+    userId?: string,
+  ) {
+    try {
+      return await this.repository.applySalaryAdjustment(
+        tenantId,
+        employeeId,
+        dto,
+        userId,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Error aplicando ajuste salarial a empleado [${employeeId}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+  }
+
+  async getPayslipPdf(
+    tenantId: string,
+    employeeId: string,
+    settlementId: string,
+    groupOvertime = false,
+  ): Promise<Buffer> {
+    try {
+      const settlement = await this.repository.findSettlementForPayslip(
+        tenantId,
+        employeeId,
+        settlementId,
+      );
+
+      const settings = await this.prisma.payrollSettings.findUnique({
+        where: { tenantId },
+      });
+
+      const renderItem = {
+        settlementId: settlement.id,
+        periodLabel: settlement.period?.label || 'Periodo de Nómina',
+        startDate: settlement.period?.startDate
+          ? settlement.period.startDate.toISOString().split('T')[0]
+          : '',
+        endDate: settlement.period?.endDate
+          ? settlement.period.endDate.toISOString().split('T')[0]
+          : '',
+        paymentDate: settlement.period?.paymentDate
+          ? settlement.period.paymentDate.toISOString().split('T')[0]
+          : null,
+        company: {
+          legalName: settings?.companyLegalName || 'EMPRESA DE SEGURIDAD',
+          nit: settings?.companyNit || '900000000',
+          dv: settings?.companyDv || '1',
+          city: settings?.daneCityName || 'BOGOTÁ D.C.',
+          signatureName: settings?.signatureName1 || 'PAGADOR AUTORIZADO',
+          signatureRole: settings?.signatureRole1 || 'Dirección Financiera',
+        },
+        employee: {
+          documentType: settlement.employee.documentType,
+          document: settlement.employee.document,
+          fullName: settlement.employee.fullName,
+          positionName: 'Personal Operativo',
+          branchName: settlement.branch?.name || 'Principal',
+          dependencyName: settlement.primaryDependency?.name || 'OPERACIONES',
+          baseSalaryMonthly: Number(settlement.baseSalaryMonthly),
+          bankName: settlement.bank?.name || 'Por ventanilla',
+          accountNumber: settlement.bankAccountNumber || 'N/A',
+          epsName: 'EPS Afiliada',
+          afpName: 'AFP Afiliada',
+        },
+        workedDays: settlement.workedDays,
+        totalEarnings: Number(settlement.totalEarnings),
+        totalDeductions: Number(settlement.totalDeductions),
+        netPayAmount: Number(settlement.netPayAmount),
+        lines: settlement.lines.map((l: any) => ({
+          conceptCode: l.concept.code,
+          conceptName: l.concept.name,
+          nature: l.nature,
+          quantity: Number(l.quantity),
+          totalValue: Number(l.totalValue),
+        })),
+        groupOvertime,
+      };
+
+      return await this.payslipPdfService.generatePayslipsPdf([renderItem]);
+    } catch (err: any) {
+      this.logger.error(
+        `Error generando desprendible PDF para empleado [${employeeId}], liquidación [${settlementId}]: ${err?.message || err}`,
         err?.stack,
       );
       throw err;

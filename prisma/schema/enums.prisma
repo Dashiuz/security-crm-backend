@@ -307,6 +307,7 @@ enum EmploymentContractType {
 
 enum EmployeeSalaryMode {
   BY_DEPENDENCY          // Liquida según el Valor Pagado / Modalidad de la Dependencia donde labore
+  MINIMUM_WAGE           // Liquida con 1 SMMLV vigente y se actualiza automáticamente al modificar el SMMLV general
   CUSTOM_FIXED           // Liquida según el Sueldo Básico Fijo pactado en la Hoja de Vida
 }
 
@@ -436,4 +437,49 @@ enum ShiftDayCode {
   SAN                         // Sanción Disciplinaria
   AUS                         // Ausencia Injustificada (Turno No Laborado 504)
   VAC                         // Vacaciones en tiempo
+}
+
+// ============================================================================
+// SPEC-ADM-031: MOTOR DE LIQUIDACIÓN DE NÓMINA, ANTICIPOS, PDF Y BANCOS ACH
+// ============================================================================
+
+enum SalaryAdjustmentOrigin {
+  INITIAL_CONTRACT       // Asignación salarial al crear o configurar el contrato
+  INDIVIDUAL_INCREASE    // Aumento o ajuste salarial individual (% o valor fijo)
+  SMMLV_GLOBAL_UPDATE    // Nivelación automática por actualización de SMMLV en Configuración Legal
+}
+
+enum PayrollSettlementStatus {
+  DRAFT                  // Pre-nómina en borrador (editable y reliquidable)
+  APPROVED               // Aprobada lista para dispersión bancaria
+  PAID                   // Cerrada, pagada y bloqueada
+  ANNULLED               // Anulada
+}
+
+enum PayrollLineOrigin {
+  DEPENDENCY_SPAN        // Sueldo básico proporcional por tramo de puesto
+  MODALITY_GUARANTEED    // Desglose porcentual de modalidad de turno garantizada
+  SHIFT_SCHEDULE         // Horas reales de recargos/extras desde malla 1..31
+  REINFORCEMENT          // Turnos adicionales de refuerzo (R)
+  TRANSPORT_ALLOWANCE    // Auxilio de transporte legal proporcional
+  SEVENTH_DAY_DEDUCTION  // Descuento dominical por sanción o ausencia (Art. 173 CST)
+  LEAVE_OR_INCAPACITY    // Incapacidad CIE-10, licencia o vacaciones disfrutadas
+  PERMANENT_CONCEPT      // Concepto fijo por empleado o por dependencia
+  PERIOD_NOVELTY         // Novedad variable puntual o importada por CSV
+  LOAN_INSTALLMENT       // Cuota descontada de préstamo o libranza
+  FORTNIGHT_ADVANCE      // Descuento de anticipo quincenal del día 15 (Concepto 509)
+  SOCIAL_SECURITY        // Aporte Salud, Pensión, FSP o Retención en la Fuente
+  MANUAL_OVERRIDE        // Ajuste manual aplicado por el analista en Pre-Nómina
+}
+
+enum PayslipDeliveryStatus {
+  NOT_SENT               // Pendiente de envío por correo
+  SENT                   // Enviado exitosamente con PDF adjunto
+  FAILED                 // Falló el despacho al correo
+  NO_EMAIL               // El empleado no tiene correo electrónico registrado
+}
+
+enum PayrollDisbursementType {
+  PAYROLL_PERIOD         // Dispersión de Nómina del Periodo
+  FORTNIGHT_ADVANCE      // Dispersión de Anticipo Quincenal (Día 15)
 }

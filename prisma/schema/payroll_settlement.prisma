@@ -1,0 +1,286 @@
+// ============================================================================
+// SPEC-ADM-031: MOTOR DE LIQUIDACIÓN DE NÓMINA, HISTORIAL SALARIAL, ANTICIPOS Y BANCOS
+// ============================================================================
+
+/// 1. Historial de Aumentos y Ajustes Salariales por Empleado
+model EmployeeSalaryHistory {
+  id              String                 @id @default(cuid(2))
+  tenantId        String
+  tenant          Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId      String
+  employee        Employee               @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  salaryMode      EmployeeSalaryMode     @default(CUSTOM_FIXED)
+  previousSalary  Decimal                @db.Decimal(14, 2)
+  newSalary       Decimal                @db.Decimal(14, 2)
+  variationPct    Decimal                @default(0.00) @db.Decimal(6, 2) // Porcentaje de incremento (ej. 9.50%)
+  effectiveDate   DateTime               @db.Date
+  origin          SalaryAdjustmentOrigin @default(INDIVIDUAL_INCREASE)
+  reason          String                 @db.VarChar(255) // Ej: "Ascenso a Supervisor", "Nivelación IPC", "Actualización SMMLV 2026"
+
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  createdById     String?
+  updatedById     String?
+
+  @@index([tenantId, employeeId, effectiveDate])
+  @@map("employee_salary_histories")
+}
+
+/// 2. Cabecera de Liquidación de Anticipos Quincenales (Día 15 — Numeral 3.6 Pronos)
+model PayrollAdvanceSettlement {
+  id              String                  @id @default(cuid(2))
+  tenantId        String
+  tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  year            Int
+  month           Int                     // 1..12
+  cutoffDate      DateTime                @db.Date // Usualmente día 15 del mes
+  paymentDate     DateTime?               @db.Date
+  status          PayrollSettlementStatus @default(DRAFT)
+  totalEmployees  Int                     @default(0)
+  totalAmount     Decimal                 @default(0.00) @db.Decimal(16, 2)
+  notes           String?                 @db.Text
+
+  items           PayrollAdvanceItem[]
+  achBatches      PayrollBankDisbursementBatch[]
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  createdById     String?
+  updatedById     String?
+
+  @@unique([tenantId, year, month])
+  @@index([tenantId, status])
+  @@map("payroll_advance_settlements")
+}
+
+/// 3. Detalle por Empleado de Anticipo Quincenal (Día 15)
+model PayrollAdvanceItem {
+  id                       String                   @id @default(cuid(2))
+  tenantId                 String
+  tenant                   Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  advanceSettlementId      String
+  advanceSettlement        PayrollAdvanceSettlement @relation(fields: [advanceSettlementId], references: [id], onDelete: Cascade)
+
+  employeeId               String
+  employee                 Employee                 @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  dependencyId             String?
+  dependency               PayrollDependency?       @relation(fields: [dependencyId], references: [id], onDelete: SetNull)
+
+  baseSalary               Decimal                  @db.Decimal(14, 2)
+  advancePctApplied        Decimal                  @default(0.40) @db.Decimal(5, 4)
+  workedDaysFirstFortnight Int                      @default(15) // 0..15
+  absenceDaysDeducted      Int                      @default(0)
+  calculatedAmount         Decimal                  @db.Decimal(14, 2)
+  approvedAmount           Decimal                  @db.Decimal(14, 2) // Editable por analista
+  isManuallyEdited         Boolean                  @default(false)
+  isDeductedInPayroll      Boolean                  @default(false) // true cuando se cruza en el cierre mensual (Concepto 509)
+
+  bankId                   String?
+  bank                     PayrollBank?             @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankAccountType          BankAccountType          @default(SAVINGS)
+  bankAccountNumber        String?                  @db.VarChar(50)
+  hasBankWarning           Boolean                  @default(false)
+  notes                    String?                  @db.VarChar(255)
+
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  createdById              String?
+  updatedById              String?
+
+  @@unique([advanceSettlementId, employeeId])
+  @@index([tenantId, employeeId])
+  @@map("payroll_advance_items")
+}
+
+/// 4. Cabecera de Liquidación de Nómina por Empleado en un Periodo (Numerales 3.8 y 3.9 Pronos)
+model PayrollPeriodSettlement {
+  id                          String                  @id @default(cuid(2))
+  tenantId                    String
+  tenant                      Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  periodId                    String
+  period                      PayrollPeriod           @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  employeeId                  String
+  employee                    Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  primaryDependencyId         String?
+  primaryDependency           PayrollDependency?      @relation(fields: [primaryDependencyId], references: [id], onDelete: SetNull)
+
+  branchId                    String?
+  branch                      PayrollBranch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  status                      PayrollSettlementStatus @default(DRAFT)
+  salaryModeSnapshot          EmployeeSalaryMode      @default(BY_DEPENDENCY)
+  baseSalaryMonthly           Decimal                 @default(1750905.00) @db.Decimal(14, 2)
+
+  // Conteo de Días del Periodo (Normalizado a Base 30 Días Comerciales)
+  workedDays                  Int                     @default(30)
+  paidLeaveDays               Int                     @default(0)
+  incapacityDays              Int                     @default(0)
+  vacationDays                Int                     @default(0)
+  unpaidAbsenceDays           Int                     @default(0)
+  seventhDaysLost             Int                     @default(0)
+
+  // Totales de Devengos
+  basicSalaryEarned           Decimal                 @default(0.00) @db.Decimal(14, 2)
+  transportAllowanceAmount    Decimal                 @default(0.00) @db.Decimal(14, 2)
+  overtimeAndSurchargesAmount Decimal                 @default(0.00) @db.Decimal(14, 2)
+  leavesAndIncapacitiesAmount Decimal                 @default(0.00) @db.Decimal(14, 2)
+  bonusesNonSalarialAmount    Decimal                 @default(0.00) @db.Decimal(14, 2)
+  otherEarningsAmount         Decimal                 @default(0.00) @db.Decimal(14, 2)
+  totalEarnings               Decimal                 @default(0.00) @db.Decimal(14, 2)
+
+  // Regla del 40% UGPP (Art. 30 Ley 1393 de 2010)
+  ugppTotalRemuneration       Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ugppLimit40Pct              Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ugppNonSalarialTotal        Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ugppExcessAmount            Decimal                 @default(0.00) @db.Decimal(14, 2)
+
+  // Ingreso Base de Cotización (IBCs)
+  ibcEps                      Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ibcAfp                      Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ibcArl                      Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ibcCcf                      Decimal                 @default(0.00) @db.Decimal(14, 2)
+
+  // Deducciones y Retenciones del Trabajador
+  healthEmployeeAmount        Decimal                 @default(0.00) @db.Decimal(14, 2) // 4%
+  pensionEmployeeAmount       Decimal                 @default(0.00) @db.Decimal(14, 2) // 4%
+  fspAmount                   Decimal                 @default(0.00) @db.Decimal(14, 2) // 1% a 2% (>= 4 SMMLV)
+  withholdingTaxAmount        Decimal                 @default(0.00) @db.Decimal(14, 2) // Retefuente Art. 383 E.T.
+  loansDeductionAmount        Decimal                 @default(0.00) @db.Decimal(14, 2)
+  advanceDeductionAmount      Decimal                 @default(0.00) @db.Decimal(14, 2) // Anticipo día 15
+  otherDeductionsAmount       Decimal                 @default(0.00) @db.Decimal(14, 2)
+  totalDeductions             Decimal                 @default(0.00) @db.Decimal(14, 2)
+  netPayAmount                Decimal                 @default(0.00) @db.Decimal(14, 2) // Neto a pagar
+
+  // Aportes Patronales y Parafiscales Causados (Ley 1607 Art. 114-1 E.T.)
+  isExoneratedLaw1607         Boolean                 @default(true)
+  employerHealthAmount        Decimal                 @default(0.00) @db.Decimal(14, 2)
+  employerPensionAmount       Decimal                 @default(0.00) @db.Decimal(14, 2)
+  employerArlAmount           Decimal                 @default(0.00) @db.Decimal(14, 2)
+  employerCcfAmount           Decimal                 @default(0.00) @db.Decimal(14, 2)
+  employerSenaAmount          Decimal                 @default(0.00) @db.Decimal(14, 2)
+  employerIcbfAmount          Decimal                 @default(0.00) @db.Decimal(14, 2)
+  totalEmployerCost           Decimal                 @default(0.00) @db.Decimal(14, 2)
+
+  // Snapshot Bancario y Trazabilidad de Desprendible PDF
+  bankId                      String?
+  bank                        PayrollBank?            @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankAccountType             BankAccountType         @default(SAVINGS)
+  bankAccountNumber           String?                 @db.VarChar(50)
+  hasBankWarning              Boolean                 @default(false)
+
+  payslipEmailStatus          PayslipDeliveryStatus   @default(NOT_SENT)
+  payslipSentAt               DateTime?
+  isManuallyEdited            Boolean                 @default(false)
+  notes                       String?                 @db.Text
+
+  lines                       PayrollSettlementLine[]
+
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
+  createdById                 String?
+  updatedById                 String?
+
+  @@unique([tenantId, periodId, employeeId])
+  @@index([tenantId, periodId, status])
+  @@index([tenantId, employeeId])
+  @@map("payroll_period_settlements")
+}
+
+/// 5. Renglones Detallados de Liquidación por Concepto y Dependencia
+model PayrollSettlementLine {
+  id                     String                  @id @default(cuid(2))
+  tenantId               String
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  settlementId           String
+  settlement             PayrollPeriodSettlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+
+  periodId               String
+  period                 PayrollPeriod           @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  employeeId             String
+  employee               Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  conceptId              String
+  concept                PayrollConcept          @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+
+  dependencyId           String?
+  dependency             PayrollDependency?      @relation(fields: [dependencyId], references: [id], onDelete: SetNull)
+
+  nature                 PayrollConceptNature
+  origin                 PayrollLineOrigin       @default(DEPENDENCY_SPAN)
+  quantity               Decimal                 @default(1.00) @db.Decimal(10, 2) // Días u Horas
+  unitValue              Decimal                 @default(0.00) @db.Decimal(14, 2)
+  totalValue             Decimal                 @default(0.00) @db.Decimal(14, 2)
+
+  // Snapshot de Banderas Base para Recálculo Instantáneo
+  isConstitutiveOfSalary Boolean                 @default(true)
+  isDeletable            Boolean                 @default(true)
+  inIbcEpsAfp            Boolean                 @default(false)
+  inIbcArl               Boolean                 @default(false)
+  inIbcCcf               Boolean                 @default(false)
+  inUgpp40Pct            Boolean                 @default(false)
+
+  loanId                 String?
+  loan                   PayrollLoan?            @relation(fields: [loanId], references: [id], onDelete: SetNull)
+
+  leaveId                String?
+  leave                  PayrollLeaveAndAbsence? @relation(fields: [leaveId], references: [id], onDelete: SetNull)
+
+  isManualOverride       Boolean                 @default(false)
+  notes                  String?                 @db.VarChar(255)
+
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  createdById            String?
+  updatedById            String?
+
+  @@index([tenantId, settlementId])
+  @@index([tenantId, periodId, dependencyId])
+  @@index([tenantId, employeeId])
+  @@map("payroll_settlement_lines")
+}
+
+/// 6. Historial de Lotes de Dispersión Bancaria ACH (Numeral 7.1 Pronos)
+model PayrollBankDisbursementBatch {
+  id                         String                    @id @default(cuid(2))
+  tenantId                   String
+  tenant                     Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  disbursementType           PayrollDisbursementType   @default(PAYROLL_PERIOD)
+
+  periodId                   String?
+  period                     PayrollPeriod?            @relation(fields: [periodId], references: [id], onDelete: SetNull)
+
+  advanceSettlementId        String?
+  advanceSettlement          PayrollAdvanceSettlement? @relation(fields: [advanceSettlementId], references: [id], onDelete: SetNull)
+
+  bankId                     String?
+  bank                       PayrollBank?              @relation(fields: [bankId], references: [id], onDelete: SetNull)
+
+  exportFormat               String                    @default("STANDARD_ACH") @db.VarChar(40)
+  fileName                   String                    @db.VarChar(180)
+  totalRecords               Int                       @default(0)
+  totalAmount                Decimal                   @default(0.00) @db.Decimal(16, 2)
+  skippedMissingAccountCount Int                       @default(0)
+  generatedAt                DateTime                  @default(now())
+  notes                      String?                   @db.VarChar(255)
+
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  createdById                String?
+  updatedById                String?
+
+  @@index([tenantId, periodId])
+  @@index([tenantId, advanceSettlementId])
+  @@map("payroll_bank_disbursement_batches")
+}
+

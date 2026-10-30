@@ -1,4 +1,4 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsNumber,
   IsNotEmpty,
+  MaxLength,
 } from 'class-validator';
 import { SocialSecurityEntityType } from '@prisma/client';
 
@@ -188,3 +189,40 @@ export class CreatePayrollAcademyDto {
 export class UpdatePayrollAcademyDto extends PartialType(
   CreatePayrollAcademyDto,
 ) {}
+
+// 9. CIE-10 Medical Diagnosis Codes
+export class CreatePayrollCie10Dto {
+  @ApiProperty({
+    example: 'J00',
+    description: 'Código alfanumérico CIE-10 (3 o 4 caracteres)',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(10)
+  code: string;
+
+  @ApiProperty({
+    example: 'Rinofaringitis aguda (resfriado común)',
+    description: 'Descripción clínica de la patología',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  name: string;
+
+  @ApiPropertyOptional({
+    example: 'J00-J99',
+    description: 'Familia o capítulo de 3 caracteres CIE-10',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  familyCode?: string;
+
+  @ApiPropertyOptional({ example: true, default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdatePayrollCie10Dto extends PartialType(CreatePayrollCie10Dto) {}

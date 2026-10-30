@@ -153,6 +153,7 @@ model PayrollConcept {
   loans                    PayrollLoan[]
   permanentConcepts        PayrollPermanentConcept[]
   periodNovelties          PayrollPeriodNovelty[]
+  settlementLines          PayrollSettlementLine[]
 
   createdAt                DateTime               @default(now())
   updatedAt                DateTime               @updatedAt
@@ -213,6 +214,9 @@ model PayrollBank {
   isActive      Boolean  @default(true)
 
   employeeProfiles EmployeePayrollProfile[]
+  advanceItems     PayrollAdvanceItem[]
+  periodSettlements PayrollPeriodSettlement[]
+  achBatches       PayrollBankDisbursementBatch[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -356,6 +360,7 @@ model PayrollBranch {
   dependencies   PayrollDependency[]
   employeeProfiles EmployeePayrollProfile[]
   dependencyAssignments EmployeeDependencyAssignment[]
+  periodSettlements PayrollPeriodSettlement[]
 
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -463,6 +468,9 @@ model PayrollDependency {
   permanentConcepts        PayrollPermanentConcept[]
   periodNovelties          PayrollPeriodNovelty[]
   shiftRecords             PayrollShiftRecord[]
+  advanceItems             PayrollAdvanceItem[]
+  periodSettlements        PayrollPeriodSettlement[]
+  settlementLines          PayrollSettlementLine[]
 
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
@@ -496,6 +504,9 @@ model PayrollPeriod {
   leaves           PayrollLeaveAndAbsence[]
   loanInstallments PayrollLoanInstallment[]
   periodNovelties  PayrollPeriodNovelty[]
+  periodSettlements PayrollPeriodSettlement[]
+  settlementLines  PayrollSettlementLine[]
+  achBatches       PayrollBankDisbursementBatch[]
 
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt

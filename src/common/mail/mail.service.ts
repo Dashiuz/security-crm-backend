@@ -46,13 +46,23 @@ export class MailService {
         return true;
       }
 
-      const { error } = await this.resendClient.emails.send({
+      const sendPayload: any = {
         from: this.fromAddress,
         to: Array.isArray(options.to) ? options.to : [options.to],
         subject: options.subject,
         html: options.html,
         text: options.text,
-      });
+      };
+
+      if (options.attachments && options.attachments.length > 0) {
+        sendPayload.attachments = options.attachments.map((att) => ({
+          filename: att.filename,
+          content: att.content,
+          contentType: att.contentType,
+        }));
+      }
+
+      const { error } = await this.resendClient.emails.send(sendPayload);
 
       if (error) {
         this.logger.error(

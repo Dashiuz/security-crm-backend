@@ -33,6 +33,7 @@ import {
   CreateSvspCourseDto,
   CreateInternalTrainingDto,
   QueryPayrollEmployeesDto,
+  ApplySalaryAdjustmentDto,
 } from '../dtos/payroll-employee-dossier.dto';
 
 @ApiTags('Payroll: Employee Dossier & SVSP')
@@ -313,6 +314,72 @@ export class PayrollEmployeesController {
     } catch (err: any) {
       this.logger.error(
         `Error eliminando capacitación [${id}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+  }
+
+  @Post(':id/salary-adjustment')
+  @RequirePermissions('payroll:employees:manage')
+  @ApiOperation({
+    summary: 'Aplicar aumento o ajuste salarial individual al trabajador',
+  })
+  @ApiOkResponse({
+    description: 'Ajuste salarial aplicado y registrado en historial',
+  })
+  async applySalaryAdjustment(
+    @Req() req: any,
+    @Param('id') employeeId: string,
+    @Body() dto: ApplySalaryAdjustmentDto,
+  ) {
+    try {
+      return await this.service.applySalaryAdjustment(
+        req.user.tenantId,
+        employeeId,
+        dto,
+        req.user.sub,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Error aplicando ajuste salarial a empleado [${employeeId}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+  }
+
+  @Get(':id/payslips/:settlementId/pdf')
+  @RequirePermissions('payroll:employees:read')
+  @ApiOperation({
+    summary: 'Descargar desprendible de pago en PDF de un periodo',
+  })
+  @ApiOkResponse({ description: 'Archivo binario PDF del desprendible' })
+  async downloadPayslipPdf(
+    @Req() req: any,
+    @Param('id') employeeId: string,
+    @Param('settlementId') settlementId: string,
+    @Query('groupOvertime') groupOvertime: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const isGrouped = groupOvertime === 'true';
+      const pdfBuffer = await this.service.getPayslipPdf(
+        req.user.tenantId,
+        employeeId,
+        settlementId,
+        isGrouped,
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="desprendible_${employeeId}_${settlementId}.pdf"`,
+      );
+      return res.send(pdfBuffer);
+    } catch (err: any) {
+      this.logger.error(
+        `Error descargando desprendible PDF [settlementId=${settlementId}]: ${err?.message || err}`,
         err?.stack,
       );
       throw err;

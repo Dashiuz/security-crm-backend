@@ -26,6 +26,7 @@ import {
   CreatePayrollSvspLevelDto,
   CreatePayrollAcademyDto,
   UpdatePayrollAcademyDto,
+  CreatePayrollCie10Dto,
 } from '../dtos/payroll-catalog.dto';
 import { JwtAuthGuard } from '../../regulation/auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../regulation/access-control/permissions.guard';
@@ -34,7 +35,7 @@ import { FeatureGuard } from '../../regulation/access-control/feature.guard';
 import { RequireFeature } from '../../regulation/access-control/feature.decorator';
 import { SocialSecurityEntityType } from '@prisma/client';
 
-@ApiTags('Payroll: Catalogs & Pronos Masters')
+@ApiTags('Payroll: Catalogs')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, PermissionsGuard, FeatureGuard)
 @RequireFeature('payroll')
@@ -282,6 +283,36 @@ export class PayrollCatalogsController {
     return this.catalogsService.updateAcademy(
       req.user.tenantId,
       id,
+      dto,
+      req.user.id || req.user.sub,
+    );
+  }
+
+  // 9. CIE-10 Medical Diagnosis Codes
+  @Get('cie10')
+  @RequirePermissions(
+    'payroll:novelties:read',
+    'payroll:novelties:manage',
+    'payroll:settings:read',
+    'payroll:settings:manage',
+  )
+  @ApiOperation({
+    summary: 'Listar catálogo de códigos de diagnóstico médico CIE-10',
+  })
+  @ApiOkResponse({
+    description: 'Lista de códigos de patologías médicas CIE-10',
+  })
+  listCie10(@Request() req: any, @Query('search') search?: string) {
+    return this.catalogsService.listCie10(req.user.tenantId, search);
+  }
+
+  @Post('cie10')
+  @RequirePermissions('payroll:novelties:manage', 'payroll:settings:manage')
+  @ApiOperation({ summary: 'Crear código de diagnóstico médico CIE-10' })
+  @ApiCreatedResponse({ description: 'Código CIE-10 creado' })
+  createCie10(@Request() req: any, @Body() dto: CreatePayrollCie10Dto) {
+    return this.catalogsService.createCie10(
+      req.user.tenantId,
       dto,
       req.user.id || req.user.sub,
     );

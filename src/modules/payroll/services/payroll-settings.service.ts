@@ -56,7 +56,93 @@ export class PayrollSettingsService {
         },
       });
 
-      return updated;
+      let leveledEmployeesCount = 0;
+      let leveledDependenciesCount = 0;
+
+      if (
+        dto.smmlv &&
+        Number(dto.smmlv) > 0 &&
+        Number(dto.smmlv) !== Number(existing.smmlv)
+      ) {
+        const newSmmlv = Number(dto.smmlv);
+        const oldSmmlv = Number(existing.smmlv);
+
+        // Find employees to level
+        const profilesToLevel =
+          await this.prisma.employeePayrollProfile.findMany({
+            where: {
+              tenantId,
+              OR: [
+                { salaryMode: 'MINIMUM_WAGE' },
+                { customBaseSalary: { lt: newSmmlv } },
+              ],
+            },
+          });
+
+        for (const prof of profilesToLevel) {
+          const prevSalary = Number(prof.customBaseSalary);
+          await this.prisma.employeePayrollProfile.update({
+            where: { id: prof.id },
+            data: {
+              customBaseSalary: newSmmlv,
+              salaryMode:
+                prof.salaryMode === 'BY_DEPENDENCY'
+                  ? 'BY_DEPENDENCY'
+                  : 'MINIMUM_WAGE',
+              updatedById: userId,
+            },
+          });
+
+          // Insert Salary History
+          const variationPct =
+            prevSalary > 0
+              ? Math.round(((newSmmlv - prevSalary) / prevSalary) * 10000) / 100
+              : 0;
+          await this.prisma.employeeSalaryHistory.create({
+            data: {
+              tenantId,
+              employeeId: prof.employeeId,
+              salaryMode: prof.salaryMode,
+              previousSalary: prevSalary,
+              newSalary: newSmmlv,
+              variationPct,
+              effectiveDate: new Date(),
+              origin: 'SMMLV_GLOBAL_UPDATE',
+              reason: `Nivelación legal automática por actualización de SMMLV ($${oldSmmlv.toLocaleString('es-CO')} -> $${newSmmlv.toLocaleString('es-CO')})`,
+              createdById: userId,
+              updatedById: userId,
+            },
+          });
+          leveledEmployeesCount++;
+        }
+
+        // Level dependencies below new SMMLV
+        const depsToLevel = await this.prisma.payrollDependency.findMany({
+          where: {
+            tenantId,
+            monthlyPaidValue: { lt: newSmmlv },
+          },
+        });
+
+        for (const dep of depsToLevel) {
+          await this.prisma.payrollDependency.update({
+            where: { id: dep.id },
+            data: {
+              monthlyPaidValue: newSmmlv,
+              prestacionalAmount: newSmmlv,
+              dailyValue: Math.round((newSmmlv / 30.0) * 100) / 100,
+              updatedById: userId,
+            },
+          });
+          leveledDependenciesCount++;
+        }
+      }
+
+      return {
+        ...updated,
+        leveledEmployeesCount,
+        leveledDependenciesCount,
+      };
     } catch (error) {
       this.logger.error(
         `Error updating payroll settings for tenant ${tenantId}`,

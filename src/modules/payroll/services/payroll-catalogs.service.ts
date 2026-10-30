@@ -16,6 +16,7 @@ import {
   UpdatePayrollSvspLevelDto,
   CreatePayrollAcademyDto,
   UpdatePayrollAcademyDto,
+  CreatePayrollCie10Dto,
 } from '../dtos/payroll-catalog.dto';
 import { SocialSecurityEntityType, PayrollPeriodStatus } from '@prisma/client';
 
@@ -375,6 +376,68 @@ export class PayrollCatalogsService {
       });
     } catch (error) {
       this.logger.error(`Error updating security academy ${id}`, error.stack);
+      throw error;
+    }
+  }
+
+  // 9. CIE-10 Medical Diagnosis Codes
+  async listCie10(tenantId: string, search?: string) {
+    try {
+      const where: any = { tenantId, isActive: true };
+      if (search && search.trim()) {
+        const query = search.trim();
+        where.OR = [
+          { code: { contains: query, mode: 'insensitive' } },
+          { name: { contains: query, mode: 'insensitive' } },
+        ];
+      }
+      return await this.prisma.payrollCie10.findMany({
+        where,
+        orderBy: { code: 'asc' },
+        take: 100,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error listing CIE-10 codes for tenant ${tenantId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async createCie10(
+    tenantId: string,
+    dto: CreatePayrollCie10Dto,
+    userId?: string,
+  ) {
+    try {
+      const normalizedCode = dto.code.trim().toUpperCase();
+      const existing = await this.prisma.payrollCie10.findUnique({
+        where: { tenantId_code: { tenantId, code: normalizedCode } },
+      });
+      if (existing) {
+        throw new BadRequestException(
+          `Ya existe un código CIE-10 registrado con el código ${normalizedCode}`,
+        );
+      }
+      return await this.prisma.payrollCie10.create({
+        data: {
+          tenantId,
+          code: normalizedCode,
+          familyCode: dto.familyCode
+            ? dto.familyCode.trim().toUpperCase()
+            : null,
+          name: dto.name.trim(),
+          isActive: dto.isActive !== undefined ? dto.isActive : true,
+          createdById: userId,
+          updatedById: userId,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error creating CIE-10 code for tenant ${tenantId}`,
+        error.stack,
+      );
       throw error;
     }
   }

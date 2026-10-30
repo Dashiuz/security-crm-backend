@@ -45,6 +45,8 @@ describe('PayrollCatalogsController', () => {
       listAcademies: jest.fn().mockResolvedValue([{ id: 'acad-1', code: 1 }]),
       createAcademy: jest.fn().mockResolvedValue({ id: 'acad-1', code: 1 }),
       updateAcademy: jest.fn().mockResolvedValue({ id: 'acad-1', code: 1 }),
+      listCie10: jest.fn().mockResolvedValue([{ id: 'cie-1', code: 'J00' }]),
+      createCie10: jest.fn().mockResolvedValue({ id: 'cie-1', code: 'J00' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -109,5 +111,20 @@ describe('PayrollCatalogsController', () => {
         nit: '860012345-1',
       }),
     ).toBeDefined();
+  });
+
+  it('should list and create CIE-10 diagnosis codes', async () => {
+    const list = await controller.listCie10(mockReq, 'J00');
+    expect(list).toBeDefined();
+    expect(service.listCie10).toHaveBeenCalledWith('tenant-1', 'J00');
+
+    const dto = {
+      code: 'J00',
+      name: 'Rinofaringitis aguda (resfriado común)',
+      familyCode: 'J00-J99',
+    };
+    const created = await controller.createCie10(mockReq, dto);
+    expect(created).toBeDefined();
+    expect(service.createCie10).toHaveBeenCalledWith('tenant-1', dto, 'user-1');
   });
 });

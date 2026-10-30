@@ -33,6 +33,17 @@ describe('PayrollSettingsService', () => {
           .fn()
           .mockImplementation(({ create }) => Promise.resolve(create)),
       },
+      employeePayrollProfile: {
+        findMany: jest.fn().mockResolvedValue([]),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      payrollDependency: {
+        findMany: jest.fn().mockResolvedValue([]),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      employeeSalaryHistory: {
+        create: jest.fn().mockResolvedValue({}),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({

@@ -139,6 +139,14 @@ export class PayrollEmployeesRepository {
           internalTrainings: {
             orderBy: { trainingDate: 'desc' },
           },
+          salaryHistories: {
+            orderBy: { effectiveDate: 'desc' },
+          },
+          periodSettlements: {
+            include: { period: true },
+            orderBy: { createdAt: 'desc' },
+            take: 24,
+          },
         },
       });
 
@@ -490,6 +498,145 @@ export class PayrollEmployeesRepository {
     } catch (err: any) {
       this.logger.error(
         `Error consultando datos para exportación RENOVA [tenantId=${tenantId}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+  }
+
+  async applySalaryAdjustment(
+    tenantId: string,
+    employeeId: string,
+    dto: {
+      salaryMode: any;
+      adjustmentType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+      increasePct?: number;
+      newSalary?: number;
+      effectiveDate: string;
+      reason: string;
+    },
+    userId?: string,
+  ) {
+    try {
+      const profile = await this.prisma.employeePayrollProfile.findUnique({
+        where: { employeeId },
+      });
+
+      if (!profile) {
+        throw new NotFoundException(
+          `Perfil laboral del empleado [${employeeId}] no encontrado.`,
+        );
+      }
+
+      const settings = await this.prisma.payrollSettings.findUnique({
+        where: { tenantId },
+      });
+      const smmlv = Number(settings?.smmlv || 1750905.0);
+
+      const previousSalary = Number(profile.customBaseSalary);
+      let calculatedNewSalary = previousSalary;
+
+      if (dto.salaryMode === 'MINIMUM_WAGE') {
+        calculatedNewSalary = smmlv;
+      } else if (
+        dto.adjustmentType === 'PERCENTAGE' &&
+        dto.increasePct !== undefined
+      ) {
+        calculatedNewSalary =
+          Math.round(previousSalary * (1 + dto.increasePct / 100) * 100) / 100;
+      } else if (
+        dto.adjustmentType === 'FIXED_AMOUNT' &&
+        dto.newSalary !== undefined
+      ) {
+        calculatedNewSalary = Number(dto.newSalary);
+      }
+
+      if (calculatedNewSalary < smmlv && dto.salaryMode !== 'BY_DEPENDENCY') {
+        calculatedNewSalary = smmlv;
+      }
+
+      const variationPct =
+        previousSalary > 0
+          ? Math.round(
+              ((calculatedNewSalary - previousSalary) / previousSalary) * 10000,
+            ) / 100
+          : 0;
+
+      // Update profile
+      const updatedProfile = await this.prisma.employeePayrollProfile.update({
+        where: { id: profile.id },
+        data: {
+          salaryMode: dto.salaryMode,
+          customBaseSalary: calculatedNewSalary,
+          updatedById: userId,
+        },
+      });
+
+      // Create history record
+      const history = await this.prisma.employeeSalaryHistory.create({
+        data: {
+          tenantId,
+          employeeId,
+          salaryMode: dto.salaryMode,
+          previousSalary,
+          newSalary: calculatedNewSalary,
+          variationPct,
+          effectiveDate: new Date(dto.effectiveDate),
+          origin: 'INDIVIDUAL_INCREASE',
+          reason: dto.reason,
+          createdById: userId,
+          updatedById: userId,
+        },
+      });
+
+      return {
+        updatedProfile,
+        history,
+      };
+    } catch (err: any) {
+      this.logger.error(
+        `Error aplicando ajuste salarial a empleado [${employeeId}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+  }
+
+  async findSettlementForPayslip(
+    tenantId: string,
+    employeeId: string,
+    settlementId: string,
+  ) {
+    try {
+      const settlement = await this.prisma.payrollPeriodSettlement.findFirst({
+        where: {
+          id: settlementId,
+          employeeId,
+          tenantId,
+        },
+        include: {
+          period: true,
+          employee: true,
+          primaryDependency: true,
+          branch: true,
+          bank: true,
+          lines: {
+            include: { concept: true },
+            orderBy: [{ nature: 'asc' }, { conceptId: 'asc' }],
+          },
+        },
+      });
+
+      if (!settlement) {
+        throw new NotFoundException(
+          `Liquidación [${settlementId}] no encontrada para el empleado.`,
+        );
+      }
+
+      return settlement;
+    } catch (err: any) {
+      this.logger.error(
+        `Error buscando liquidación para desprendible [${settlementId}]: ${err?.message || err}`,
         err?.stack,
       );
       throw err;

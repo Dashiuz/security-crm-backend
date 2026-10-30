@@ -257,6 +257,29 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
       });
     }
 
+    // 7.1 CIE-10 Medical Diagnosis Codes
+    const cie10Codes = [
+      { code: 'J00', familyCode: 'J00-J99', name: 'Rinofaringitis aguda (resfriado común)' },
+      { code: 'J069', familyCode: 'J00-J99', name: 'Infección aguda de las vías respiratorias superiores, no especificada' },
+      { code: 'A09X', familyCode: 'A00-B99', name: 'Gastroenteritis y colitis de origen no especificado' },
+      { code: 'M545', familyCode: 'M00-M99', name: 'Lumbago no especificado (Lumbalgia mecánica)' },
+      { code: 'M544', familyCode: 'M00-M99', name: 'Lumbago con ciática' },
+      { code: 'S820', familyCode: 'S00-T98', name: 'Fractura de la rótula' },
+      { code: 'S934', familyCode: 'S00-T98', name: 'Esguince y desgarro del tobillo' },
+      { code: 'K297', familyCode: 'K00-K93', name: 'Gastritis, no especificada' },
+      { code: 'B349', familyCode: 'A00-B99', name: 'Infección viral, no especificada' },
+      { code: 'R51X', familyCode: 'R00-R99', name: 'Cefalea y dolor de cabeza intenso' },
+      { code: 'Z000', familyCode: 'Z00-Z99', name: 'Examen médico general' },
+      { code: 'U071', familyCode: 'U00-U49', name: 'COVID-19, virus identificado' },
+    ];
+    for (const cie of cie10Codes) {
+      await prisma.payrollCie10.upsert({
+        where: { tenantId_code: { tenantId, code: cie.code } },
+        update: { name: cie.name, familyCode: cie.familyCode, isActive: true },
+        create: { ...cie, tenantId, isActive: true },
+      });
+    }
+
     // 8. SVSP Levels (Pronos 5.3)
     const svspLevels = [
       { code: '1101', name: 'FUNDAMENTACION VIGILANCIA', validityDays: 365 },
@@ -1237,6 +1260,248 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
               isActive: true,
               notes: 'Auxilio voluntario no constitutivo de salario',
             },
+          });
+        }
+      }
+
+      // 14. SPEC-ADM-031: Payroll Settlement, Advances & Bank ACH Seeds
+      // 14.1 Sample Salary History
+      const existingHistory = await prisma.employeeSalaryHistory.findFirst({
+        where: { tenantId, employeeId: firstEmp.id },
+      });
+      if (!existingHistory) {
+        await prisma.employeeSalaryHistory.create({
+          data: {
+            tenantId,
+            employeeId: firstEmp.id,
+            salaryMode: 'MINIMUM_WAGE',
+            previousSalary: 1600000.0,
+            newSalary: 1750905.0,
+            variationPct: 9.43,
+            effectiveDate: new Date('2026-01-01'),
+            origin: 'SMMLV_GLOBAL_UPDATE',
+            reason: 'Ajuste anual estatutario SMMLV 2026',
+          },
+        });
+      }
+
+      // 14.2 Sample Fortnight Advance (Día 15)
+      const octAdvance = await prisma.payrollAdvanceSettlement.upsert({
+        where: {
+          tenantId_year_month: {
+            tenantId,
+            year: 2026,
+            month: 10,
+          },
+        },
+        update: {},
+        create: {
+          tenantId,
+          year: 2026,
+          month: 10,
+          cutoffDate: new Date('2026-10-15'),
+          paymentDate: new Date('2026-10-15'),
+          status: 'APPROVED',
+          totalEmployees: 1,
+          totalAmount: 700362.0,
+          notes: 'Anticipo quincenal ordinario 40% del salario',
+        },
+      });
+
+      await prisma.payrollAdvanceItem.upsert({
+        where: {
+          advanceSettlementId_employeeId: {
+            advanceSettlementId: octAdvance.id,
+            employeeId: firstEmp.id,
+          },
+        },
+        update: {},
+        create: {
+          tenantId,
+          advanceSettlementId: octAdvance.id,
+          employeeId: firstEmp.id,
+          baseSalary: 1750905.0,
+          advancePctApplied: 0.40,
+          workedDaysFirstFortnight: 15,
+          absenceDaysDeducted: 0,
+          calculatedAmount: 700362.0,
+          approvedAmount: 700362.0,
+          isManuallyEdited: false,
+          isDeductedInPayroll: false,
+          bankAccountType: 'SAVINGS',
+          bankAccountNumber: '9876543210',
+          hasBankWarning: false,
+        },
+      });
+
+      // 14.3 Sample Payroll Period Settlement
+      const octPeriod = await prisma.payrollPeriod.findFirst({
+        where: { tenantId, year: 2026, month: 10 },
+      });
+
+      if (octPeriod) {
+        const sampleSettlement = await prisma.payrollPeriodSettlement.upsert({
+          where: {
+            tenantId_periodId_employeeId: {
+              tenantId,
+              periodId: octPeriod.id,
+              employeeId: firstEmp.id,
+            },
+          },
+          update: {},
+          create: {
+            tenantId,
+            periodId: octPeriod.id,
+            employeeId: firstEmp.id,
+            status: 'DRAFT',
+            salaryModeSnapshot: 'MINIMUM_WAGE',
+            baseSalaryMonthly: 1750905.0,
+            workedDays: 30,
+            paidLeaveDays: 0,
+            incapacityDays: 0,
+            vacationDays: 0,
+            unpaidAbsenceDays: 0,
+            seventhDaysLost: 0,
+            basicSalaryEarned: 1750905.0,
+            transportAllowanceAmount: 249095.0,
+            overtimeAndSurchargesAmount: 185000.0,
+            leavesAndIncapacitiesAmount: 0.0,
+            bonusesNonSalarialAmount: 0.0,
+            otherEarningsAmount: 0.0,
+            totalEarnings: 2185000.0,
+            ugppTotalRemuneration: 1935905.0,
+            ugppLimit40Pct: 774362.0,
+            ugppNonSalarialTotal: 0.0,
+            ugppExcessAmount: 0.0,
+            ibcEps: 1935905.0,
+            ibcAfp: 1935905.0,
+            ibcArl: 1935905.0,
+            ibcCcf: 1935905.0,
+            healthEmployeeAmount: 77436.0,
+            pensionEmployeeAmount: 77436.0,
+            fspAmount: 0.0,
+            withholdingTaxAmount: 0.0,
+            loansDeductionAmount: 0.0,
+            advanceDeductionAmount: 700362.0,
+            otherDeductionsAmount: 0.0,
+            totalDeductions: 855234.0,
+            netPayAmount: 1329766.0,
+            isExoneratedLaw1607: true,
+            employerHealthAmount: 0.0,
+            employerPensionAmount: 232309.0,
+            employerArlAmount: 47042.0,
+            employerCcfAmount: 77436.0,
+            employerSenaAmount: 0.0,
+            employerIcbfAmount: 0.0,
+            totalEmployerCost: 356787.0,
+            bankAccountType: 'SAVINGS',
+            bankAccountNumber: '9876543210',
+            hasBankWarning: false,
+            payslipEmailStatus: 'NOT_SENT',
+            isManuallyEdited: false,
+          },
+        });
+
+        // Lines for basic, transport, surcharge, health, pension, advance
+        const basicConcept = await prisma.payrollConcept.findFirst({ where: { tenantId, code: 1 } });
+        const transConcept = await prisma.payrollConcept.findFirst({ where: { tenantId, code: 10 } });
+        const healthConcept = await prisma.payrollConcept.findFirst({ where: { tenantId, code: 601 } });
+        const pensionConcept = await prisma.payrollConcept.findFirst({ where: { tenantId, code: 602 } });
+        const advConcept = await prisma.payrollConcept.findFirst({ where: { tenantId, code: 509 } });
+
+        const existingLines = await prisma.payrollSettlementLine.count({
+          where: { tenantId, settlementId: sampleSettlement.id },
+        });
+
+        if (existingLines === 0 && basicConcept && transConcept) {
+          await prisma.payrollSettlementLine.createMany({
+            data: [
+              {
+                tenantId,
+                settlementId: sampleSettlement.id,
+                periodId: octPeriod.id,
+                employeeId: firstEmp.id,
+                conceptId: basicConcept.id,
+                nature: 'DEVENGO',
+                origin: 'DEPENDENCY_SPAN',
+                quantity: 30,
+                unitValue: 58363.5,
+                totalValue: 1750905.0,
+                isConstitutiveOfSalary: true,
+                isDeletable: false,
+                inIbcEpsAfp: true,
+                inIbcArl: true,
+                inIbcCcf: true,
+              },
+              {
+                tenantId,
+                settlementId: sampleSettlement.id,
+                periodId: octPeriod.id,
+                employeeId: firstEmp.id,
+                conceptId: transConcept.id,
+                nature: 'DEVENGO',
+                origin: 'LEGAL_TRANSPORT',
+                quantity: 30,
+                unitValue: 8303.17,
+                totalValue: 249095.0,
+                isConstitutiveOfSalary: false,
+                isDeletable: false,
+              },
+              ...(healthConcept
+                ? [
+                    {
+                      tenantId,
+                      settlementId: sampleSettlement.id,
+                      periodId: octPeriod.id,
+                      employeeId: firstEmp.id,
+                      conceptId: healthConcept.id,
+                      nature: 'SEG_SOCIAL' as any,
+                      origin: 'LEGAL_HEALTH' as any,
+                      quantity: 1,
+                      unitValue: 77436.0,
+                      totalValue: 77436.0,
+                      isConstitutiveOfSalary: false,
+                      isDeletable: false,
+                    },
+                  ]
+                : []),
+              ...(pensionConcept
+                ? [
+                    {
+                      tenantId,
+                      settlementId: sampleSettlement.id,
+                      periodId: octPeriod.id,
+                      employeeId: firstEmp.id,
+                      conceptId: pensionConcept.id,
+                      nature: 'SEG_SOCIAL' as any,
+                      origin: 'LEGAL_PENSION' as any,
+                      quantity: 1,
+                      unitValue: 77436.0,
+                      totalValue: 77436.0,
+                      isConstitutiveOfSalary: false,
+                      isDeletable: false,
+                    },
+                  ]
+                : []),
+              ...(advConcept
+                ? [
+                    {
+                      tenantId,
+                      settlementId: sampleSettlement.id,
+                      periodId: octPeriod.id,
+                      employeeId: firstEmp.id,
+                      conceptId: advConcept.id,
+                      nature: 'DEDUCCION' as any,
+                      origin: 'FORTNIGHT_ADVANCE' as any,
+                      quantity: 1,
+                      unitValue: 700362.0,
+                      totalValue: 700362.0,
+                      isConstitutiveOfSalary: false,
+                      isDeletable: true,
+                    },
+                  ]
+                : []),
+            ],
           });
         }
       }

@@ -98,6 +98,14 @@ model Tenant {
   payrollShiftSequences          PayrollShiftSequence[]
   payrollShiftRecords            PayrollShiftRecord[]
 
+  // Payroll Phase 4 Relations (SPEC-ADM-031)
+  employeeSalaryHistories        EmployeeSalaryHistory[]
+  payrollAdvanceSettlements      PayrollAdvanceSettlement[]
+  payrollAdvanceItems            PayrollAdvanceItem[]
+  payrollPeriodSettlements       PayrollPeriodSettlement[]
+  payrollSettlementLines         PayrollSettlementLine[]
+  payrollBankDisbursementBatches PayrollBankDisbursementBatch[]
+
   @@map("tenant")
 }
 

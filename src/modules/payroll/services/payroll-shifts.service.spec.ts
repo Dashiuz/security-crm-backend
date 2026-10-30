@@ -59,7 +59,7 @@ describe('PayrollShiftsService', () => {
             id: 'dep-1',
             name: 'Puesto Principal',
             code: 'PST-01',
-            employeeAssignments: [mockAssignment],
+            assignments: [mockAssignment],
           },
         ]),
       },

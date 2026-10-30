@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PayrollEmployeesService } from './payroll-employees.service';
 import { PayrollEmployeesRepository } from '../repositories/payroll-employees.repository';
 import { RenovaExcelExporterService } from './renova-excel-exporter.service';
+import { PayrollPayslipPdfService } from './payroll-payslip-pdf.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 describe('PayrollEmployeesService', () => {
   let service: PayrollEmployeesService;
@@ -21,10 +23,25 @@ describe('PayrollEmployeesService', () => {
       createInternalTraining: jest.fn(),
       deleteInternalTraining: jest.fn(),
       findDataForRenovaExport: jest.fn(),
+      applySalaryAdjustment: jest.fn(),
+      findSettlementForPayslip: jest.fn(),
     };
 
     const mockExporter: Partial<jest.Mocked<RenovaExcelExporterService>> = {
       generateRenovaExcelBuffer: jest.fn(),
+    };
+
+    const mockPdfService = {
+      generatePayslipsPdf: jest
+        .fn()
+        .mockResolvedValue(Buffer.from('%PDF-1.4 mock')),
+    };
+
+    const mockPrisma = {
+      employee: { findFirst: jest.fn() },
+      payrollPeriodSettlement: { findFirst: jest.fn() },
+      tenantProfile: { findFirst: jest.fn() },
+      tenant: { findUnique: jest.fn() },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -32,6 +49,8 @@ describe('PayrollEmployeesService', () => {
         PayrollEmployeesService,
         { provide: PayrollEmployeesRepository, useValue: mockRepo },
         { provide: RenovaExcelExporterService, useValue: mockExporter },
+        { provide: PayrollPayslipPdfService, useValue: mockPdfService },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 

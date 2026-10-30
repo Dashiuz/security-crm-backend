@@ -535,3 +535,52 @@ export class QueryPayrollEmployeesDto {
   @IsBoolean()
   isActive?: boolean;
 }
+
+export class ApplySalaryAdjustmentDto {
+  @ApiProperty({
+    enum: EmployeeSalaryMode,
+    description: 'Nuevo modo salarial del trabajador',
+    default: EmployeeSalaryMode.CUSTOM_FIXED,
+  })
+  @IsEnum(EmployeeSalaryMode)
+  salaryMode: EmployeeSalaryMode;
+
+  @ApiProperty({
+    description: 'Tipo de ajuste: PERCENTAGE (+%) o FIXED_AMOUNT ($ COP)',
+    enum: ['PERCENTAGE', 'FIXED_AMOUNT'],
+    default: 'PERCENTAGE',
+  })
+  @IsString()
+  adjustmentType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+  @ApiPropertyOptional({
+    description: 'Porcentaje de aumento (ej: 8.5 para +8.5%)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  increasePct?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Nuevo salario fijo en COP (si adjustmentType es FIXED_AMOUNT)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  newSalary?: number;
+
+  @ApiProperty({
+    description: 'Fecha efectiva de aplicación del nuevo salario',
+    example: '2026-11-01',
+  })
+  @IsDateString()
+  effectiveDate: string;
+
+  @ApiProperty({
+    description: 'Motivo del ajuste salarial',
+    example: 'Ascenso a Supervisor Operativo',
+  })
+  @IsString()
+  reason: string;
+}

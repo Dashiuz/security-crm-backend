@@ -85,6 +85,7 @@ model PayrollLeaveAndAbsence {
   notes                    String?             @db.Text
 
   shiftRecords             PayrollShiftRecord[]
+  settlementLines          PayrollSettlementLine[]
 
   createdAt                DateTime            @default(now())
   updatedAt                DateTime            @updatedAt
@@ -129,6 +130,7 @@ model PayrollLoan {
   notes               String?                @db.Text
 
   installments        PayrollLoanInstallment[]
+  settlementLines     PayrollSettlementLine[]
 
   createdAt           DateTime               @default(now())
   updatedAt           DateTime               @updatedAt
