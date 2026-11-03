@@ -1334,6 +1334,37 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
         },
       });
 
+      // 14.2.b Generate 12 Payroll Periods for Fiscal Year 2026
+      const monthNames = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+      ];
+      for (let m = 1; m <= 12; m++) {
+        const periodCode = 2600 + m;
+        const lastDay = new Date(Date.UTC(2026, m, 0)).getUTCDate();
+        const startIso = `2026-${String(m).padStart(2, '0')}-01T00:00:00.000Z`;
+        const endIso = `2026-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T00:00:00.000Z`;
+        const payIso = `2026-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T00:00:00.000Z`;
+
+        await prisma.payrollPeriod.upsert({
+          where: { tenantId_code: { tenantId, code: periodCode } },
+          update: {},
+          create: {
+            tenantId,
+            code: periodCode,
+            label: `Nómina Mensual ${monthNames[m - 1]} 2026`,
+            year: 2026,
+            month: m,
+            periodNumber: 1,
+            startDate: new Date(startIso),
+            endDate: new Date(endIso),
+            paymentDate: new Date(payIso),
+            status: m <= 10 ? 'CLOSED' : 'OPEN',
+            notes: `Periodo oficial año gravable 2026 (${monthNames[m - 1]})`,
+          },
+        });
+      }
+
       // 14.3 Sample Payroll Period Settlement
       const octPeriod = await prisma.payrollPeriod.findFirst({
         where: { tenantId, year: 2026, month: 10 },
@@ -1440,7 +1471,7 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
                 employeeId: firstEmp.id,
                 conceptId: transConcept.id,
                 nature: 'DEVENGO',
-                origin: 'LEGAL_TRANSPORT',
+                origin: 'TRANSPORT_ALLOWANCE',
                 quantity: 30,
                 unitValue: 8303.17,
                 totalValue: 249095.0,
@@ -1456,7 +1487,7 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
                       employeeId: firstEmp.id,
                       conceptId: healthConcept.id,
                       nature: 'SEG_SOCIAL' as any,
-                      origin: 'LEGAL_HEALTH' as any,
+                      origin: 'SOCIAL_SECURITY' as any,
                       quantity: 1,
                       unitValue: 77436.0,
                       totalValue: 77436.0,
@@ -1474,7 +1505,7 @@ export async function seedPayroll(prisma: PrismaClient, tenantIds: string[]) {
                       employeeId: firstEmp.id,
                       conceptId: pensionConcept.id,
                       nature: 'SEG_SOCIAL' as any,
-                      origin: 'LEGAL_PENSION' as any,
+                      origin: 'SOCIAL_SECURITY' as any,
                       quantity: 1,
                       unitValue: 77436.0,
                       totalValue: 77436.0,

@@ -31,7 +31,12 @@ export class PayrollSettingsController {
   constructor(private readonly settingsService: PayrollSettingsService) {}
 
   @Get()
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:compliance:read',
+    'payroll:compliance:manage',
+  )
   @ApiOperation({ summary: 'Obtener parámetros globales y legales de nómina' })
   @ApiOkResponse({
     description: 'Parámetros legales y políticas operativas de nómina',
@@ -55,7 +60,12 @@ export class PayrollSettingsController {
   }
 
   @Get('holidays')
-  @RequirePermissions('payroll:settings:read', 'payroll:settings:manage')
+  @RequirePermissions(
+    'payroll:settings:read',
+    'payroll:settings:manage',
+    'payroll:compliance:read',
+    'payroll:compliance:manage',
+  )
   @ApiOperation({ summary: 'Listar días festivos oficiales colombianos' })
   @ApiOkResponse({
     description: 'Lista de días festivos calculados para el año',

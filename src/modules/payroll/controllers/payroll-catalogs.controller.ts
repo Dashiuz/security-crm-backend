@@ -259,6 +259,8 @@ export class PayrollCatalogsController {
     'payroll:settlement:manage',
     'payroll:benefits:read',
     'payroll:benefits:manage',
+    'payroll:compliance:read',
+    'payroll:compliance:manage',
   )
   @ApiOperation({
     summary: 'Listar periodos de nómina (quincenales y mensuales)',
