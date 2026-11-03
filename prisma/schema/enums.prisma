@@ -227,3 +227,320 @@ enum SnippetCategory {
   QUALITY_BASC           // Acuerdos de seguridad BASC, políticas de SG-SST
 }
 
+// ============================================================================
+// SPEC-ADM-028: ENUMS PARA NÓMINA, LIQUIDACIÓN LABORAL Y VIGILANCIA PRIVADA
+// ============================================================================
+
+enum PayrollPaymentFrequency {
+  MONTHLY_WITH_ADVANCE   // Liquidación mensual (día 30) con anticipo quincenal (día 15) - Estándar Vigilancia
+  BIWEEKLY_PURE          // Liquidación quincenal pura (cortes día 15 y día 30)
+  MONTHLY_PURE           // Liquidación mensual única (sin anticipo)
+  WEEKLY                 // Liquidación semanal
+}
+
+enum PayrollAdvanceMode {
+  FIXED_AMOUNT           // Valor fijo parametrizado en hoja de vida o puesto
+  PERCENTAGE_OF_BASE     // Porcentaje sobre el sueldo básico / garantizado (ej. 40% o 50%)
+  PROPORTIONAL_DAYS      // Proporcional a los días efectivamente laborados en la 1ra quincena
+}
+
+enum PayrollConceptNature {
+  DEVENGO                // Rango 1 - 99: Pagos salariales y no salariales
+  LICENCIA               // Rango 100 - 110: Licencias y permisos remunerados
+  INCAPACIDAD            // Rango 100 - 110: Incapacidades médicas (EG, AT, EP)
+  DEDUCCION              // Rango 500 - 599: Descuentos, préstamos, ausencias no remuneradas
+  SEG_SOCIAL             // Rango 600+: Aportes a Salud, Pensión y FSP
+  PROVISION              // Provisiones patronales y parafiscales
+}
+
+enum PayrollProportionality {
+  DAYS                   // Proporcional a los días laborados (DIAS)
+  NON_PROPORTIONAL       // Valor fijo / no proporcional (NO PROP.)
+  HOURS                  // Calculado por cantidad de horas (HORAS)
+}
+
+enum SocialSecurityEntityType {
+  EPS                    // Entidad Promotora de Salud
+  AFP                    // Administradora de Fondos de Pensiones y Cesantías
+  CCF                    // Caja de Compensación Familiar
+  ARL                    // Administradora de Riesgos Laborales
+}
+
+enum ArlRiskClass {
+  RISK_I                 // Clase I: 0.522% (Administrativo)
+  RISK_II                // Clase II: 1.044%
+  RISK_III               // Clase III: 2.436%
+  RISK_IV                // Clase IV: 4.350% (Vigilancia sin arma / medios tecnológicos)
+  RISK_V                 // Clase V: 6.960% (Vigilancia armada / escoltas)
+}
+
+enum DependencySettlementType {
+  BY_AVERAGE_GUARANTEED  // Por Promedio (Salario Garantizado desglosado por Modalidad)
+  BY_SCHEDULE            // Por Programación Real (Horas reales laboradas en malla)
+  FIXED_ADMIN            // Fijo Administrativo (Sueldo básico contractual de hoja de vida)
+}
+
+enum ShiftModalityClass {
+  ROTATING               // Rotativo (Turnos diurnos y nocturnos, ej. 2X2X2 24H)
+  DAY_SHIFT              // Diurno exclusivo (ej. 12H Diurno)
+  NIGHT_SHIFT            // Nocturno exclusivo (ej. 12H Nocturno)
+  ADMINISTRATIVE         // Horario de oficina / administrativo
+}
+
+enum PayrollPeriodStatus {
+  OPEN                   // Abierto para registro de novedades y pre-nómina
+  CLOSED                 // Liquidado y cerrado para dispersión
+  LOCKED                 // Bloqueado definitivamente (impide alterar turnos/novedades)
+}
+
+// ============================================================================
+// SPEC-ADM-029: ENUMS PARA EXPEDIENTE LABORAL 360°, CONTRATACIÓN Y SVSP
+// ============================================================================
+
+enum EmploymentContractType {
+  FIXED_TERM             // Contrato a Término Fijo (requiere control de preaviso 30 días Art. 46 CST)
+  INDEFINITE             // Contrato a Término Indefinido
+  WORK_OR_LABOR          // Contrato por Obra o Labor Contratada
+  APPRENTICE_LECTIVE     // Aprendiz SENA - Etapa Lectiva (Cotizante PILA 12)
+  APPRENTICE_PRODUCTIVE  // Aprendiz SENA - Etapa Productiva (Cotizante PILA 19)
+}
+
+enum EmployeeSalaryMode {
+  BY_DEPENDENCY          // Liquida según el Valor Pagado / Modalidad de la Dependencia donde labore
+  MINIMUM_WAGE           // Liquida con 1 SMMLV vigente y se actualiza automáticamente al modificar el SMMLV general
+  CUSTOM_FIXED           // Liquida según el Sueldo Básico Fijo pactado en la Hoja de Vida
+}
+
+enum BankAccountType {
+  SAVINGS                // Cuenta de Ahorros
+  CHECKING               // Cuenta Corriente
+  ELECTRONIC_DEPOSIT     // Depósito Electrónico (Nequi, Daviplata, Dale)
+  CASH_OR_CHECK          // Pago por Ventanilla / Efectivo / Cheque
+}
+
+enum MilitaryCardClass {
+  FIRST_CLASS            // Libreta Militar de Primera Clase
+  SECOND_CLASS           // Libreta Militar de Segunda Clase
+  PROVISIONAL            // Tarjeta Provisional
+  NOT_APPLICABLE         // No Aplica / Exento
+}
+
+enum MaritalStatus {
+  SINGLE                 // Soltero(a)
+  MARRIED                // Casado(a)
+  FREE_UNION             // Unión Libre / Compañero(a) Permanente
+  DIVORCED               // Divorciado(a) / Separado(a)
+  WIDOWED                // Viudo(a)
+}
+
+enum EducationLevel {
+  PRIMARY                // Básica Primaria
+  HIGH_SCHOOL            // Bachiller Académico / Técnico
+  TECHNICAL              // Técnico Profesional
+  TECHNOLOGIST           // Tecnólogo
+  PROFESSIONAL           // Profesional Universitario
+  POSTGRADUATE           // Especialización / Maestría
+}
+
+enum HousingType {
+  OWN                    // Propia
+  RENTED                 // Arrendada
+  FAMILY                 // Familiar
+  MORTGAGED              // En pago de hipoteca
+}
+
+enum FamilyRelationship {
+  SPOUSE                 // Cónyuge / Compañero(a) Permanente
+  CHILD                  // Hijo(a)
+  PARENT                 // Padre / Madre
+  SIBLING                // Hermano(a)
+  OTHER                  // Otro dependiente económico
+}
+
+enum HiringRequirementStatus {
+  PENDING                // Pendiente por entregar
+  VERIFIED               // Entregado, validado y vigente
+  EXPIRED                // Documento vencido (ej. Psicofísico o Antecedentes)
+  WAIVED                 // Exonerado / No aplica para este cargo
+}
+
+
+
+
+// ============================================================================
+// SPEC-ADM-030: GESTIÓN DE NOVEDADES, TURNOS, INCAPACIDADES Y PRÉSTAMOS
+// ============================================================================
+
+enum LeaveAndAbsenceType {
+  SICK_LEAVE_EG               // Incapacidad Enfermedad General (Concepto 100 - Días 1-2 Empresa, 3+ EPS)
+  WORK_ACCIDENT_AT            // Accidente de Trabajo / Enfermedad Laboral (Concepto 101 - 100% ARL desde día 1)
+  MATERNITY_PATERNITY_LMA     // Licencia Maternidad / Paternidad (Concepto 102 - 100% EPS)
+  PAID_LEAVE_LR               // Licencia Remunerada / Luto / Calamidad / Día Familia 110 (Concepto 103/110 - 100% Empresa)
+  UNPAID_LEAVE_LNR            // Licencia No Remunerada (Afecta días trabajados e IBC según bandera LNR)
+  DISCIPLINARY_SUSPENSION_SAN // Sanción Disciplinaria (Concepto 505 - Descuenta día y séptimo día)
+  UNJUSTIFIED_ABSENCE_AUS     // Ausencia Injustificada / Turno No Laborado (Concepto 504 - Descuenta día y séptimo día)
+  VACATION_TIME_VAC           // Vacaciones Disfrutadas en Tiempo (Concepto 105)
+}
+
+enum EpsClaimStatus {
+  NOT_APPLICABLE              // No requiere recobro (ej. <= 2 días EG, Luto, Ausencia, Sanción)
+  PENDING_FILING              // Pendiente de radicar ante EPS / ARL
+  FILED_IN_AUDIT              // Radicada en auditoría médica / transcripción
+  APPROVED_PENDING_PAYMENT    // Reconocida / Autorizada pendiente de giro
+  PAID_RECOVERED              // Pagada por la EPS / ARL (Recobro exitoso)
+  REJECTED                    // Negada / Glosada por la entidad
+}
+
+enum PayrollLoanStatus {
+  ACTIVE                      // Vigente descontando en nómina
+  PAUSED                      // Suspendido temporalmente para el próximo periodo
+  PAID_OFF                    // Pagado en su totalidad (Saldo = 0)
+  CANCELLED                   // Anulado
+}
+
+enum NoveltyPeriodicityRule {
+  FIRST_FORTNIGHT             // Aplicar solo en 1ra Quincena / Anticipo
+  SECOND_FORTNIGHT            // Aplicar solo en 2da Quincena / Cierre de Mes
+  ALL_PERIODS                 // Aplicar en cada liquidación (Quincenal o Mensual)
+}
+
+enum PermanentConceptScope {
+  BY_EMPLOYEE                 // Asignado directamente a un trabajador específico
+  BY_DEPENDENCY               // Asignado a un puesto/dependencia (se liquida proporcional a días en ese puesto)
+}
+
+enum NoveltyOriginType {
+  MANUAL                      // Digitada manualmente por analista
+  CSV_IMPORT                  // Cargada mediante importador masivo
+  SHIFT_ENGINE                // Generada automáticamente desde la Malla de Turnos
+  LEAVE_ENGINE                // Generada por el liquidador de incapacidades/licencias
+  LOAN_ENGINE                 // Cuota generada por el motor de préstamos
+  BENEFITS_ENGINE             // Inyectada desde el motor de Prestaciones / Vacaciones (Fase 5)
+}
+
+enum DependencyAssignmentRole {
+  TITULAR                     // Guarda fijo / titular del puesto
+  RELEVANTE                   // Guarda relevante / descansero (cubre descansos)
+  SUPERVISOR                  // Supervisor / Coordinador asignado
+  REFUERZO                    // Guarda enviado como refuerzo temporal o adicional
+}
+
+enum ShiftDayCode {
+  D                           // Turno Diurno (ej. 06:00 a 18:00 - 12h)
+  N                           // Turno Nocturno (ej. 18:00 a 06:00 - 12h)
+  X                           // Descanso programado remunerado
+  R                           // Turno de Refuerzo / Apoyo adicional (Facturable / Extra)
+  INC                         // Incapacidad Enfermedad General
+  AT                          // Incapacidad Accidente de Trabajo
+  LMA                         // Licencia Maternidad / Paternidad
+  LR                          // Licencia Remunerada / Día de la Familia
+  LNR                         // Licencia No Remunerada
+  SAN                         // Sanción Disciplinaria
+  AUS                         // Ausencia Injustificada (Turno No Laborado 504)
+  VAC                         // Vacaciones en tiempo
+}
+
+// ============================================================================
+// SPEC-ADM-031: MOTOR DE LIQUIDACIÓN DE NÓMINA, ANTICIPOS, PDF Y BANCOS ACH
+// ============================================================================
+
+enum SalaryAdjustmentOrigin {
+  INITIAL_CONTRACT       // Asignación salarial al crear o configurar el contrato
+  INDIVIDUAL_INCREASE    // Aumento o ajuste salarial individual (% o valor fijo)
+  SMMLV_GLOBAL_UPDATE    // Nivelación automática por actualización de SMMLV en Configuración Legal
+}
+
+enum PayrollSettlementStatus {
+  DRAFT                  // Pre-nómina en borrador (editable y reliquidable)
+  APPROVED               // Aprobada lista para dispersión bancaria
+  PAID                   // Cerrada, pagada y bloqueada
+  ANNULLED               // Anulada
+}
+
+enum PayrollLineOrigin {
+  DEPENDENCY_SPAN        // Sueldo básico proporcional por tramo de puesto
+  MODALITY_GUARANTEED    // Desglose porcentual de modalidad de turno garantizada
+  SHIFT_SCHEDULE         // Horas reales de recargos/extras desde malla 1..31
+  REINFORCEMENT          // Turnos adicionales de refuerzo (R)
+  TRANSPORT_ALLOWANCE    // Auxilio de transporte legal proporcional
+  SEVENTH_DAY_DEDUCTION  // Descuento dominical por sanción o ausencia (Art. 173 CST)
+  LEAVE_OR_INCAPACITY    // Incapacidad CIE-10, licencia o vacaciones disfrutadas
+  PERMANENT_CONCEPT      // Concepto fijo por empleado o por dependencia
+  PERIOD_NOVELTY         // Novedad variable puntual o importada por CSV
+  LOAN_INSTALLMENT       // Cuota descontada de préstamo o libranza
+  FORTNIGHT_ADVANCE      // Descuento de anticipo quincenal del día 15 (Concepto 509)
+  SOCIAL_SECURITY        // Aporte Salud, Pensión, FSP o Retención en la Fuente
+  MANUAL_OVERRIDE        // Ajuste manual aplicado por el analista en Pre-Nómina
+}
+
+enum PayslipDeliveryStatus {
+  NOT_SENT               // Pendiente de envío por correo
+  SENT                   // Enviado exitosamente con PDF adjunto
+  FAILED                 // Falló el despacho al correo
+  NO_EMAIL               // El empleado no tiene correo electrónico registrado
+}
+
+enum PayrollDisbursementType {
+  PAYROLL_PERIOD         // Dispersión de Nómina del Periodo
+  FORTNIGHT_ADVANCE      // Dispersión de Anticipo Quincenal (Día 15)
+  SOCIAL_BENEFITS        // Dispersión de Prima de Servicios o Intereses de Cesantías
+  VACATION_SETTLEMENT    // Dispersión de Vacaciones
+  FINAL_LIQUIDATION      // Dispersión de Liquidación Definitiva de Contrato
+}
+
+// ============================================================================
+// SPEC-ADM-032: MOTOR DE PRESTACIONES SOCIALES, VACACIONES Y LIQUIDACIÓN TOTAL
+// ============================================================================
+
+enum VacationSettlementType {
+  ENJOYED_IN_TIME             // Vacaciones disfrutadas en tiempo (Sincroniza con Turnos y Novedades)
+  COMPENSATED_IN_CASH         // Vacaciones compensadas en dinero en vigencia del contrato (Art. 189 CST)
+}
+
+enum SocialBenefitType {
+  PRIMA_FIRST_SEMESTER        // Prima de Servicios 1er Semestre (Enero - Junio)
+  PRIMA_SECOND_SEMESTER       // Prima de Servicios 2do Semestre (Julio - Diciembre)
+  SEVERANCE_ANNUAL            // Cesantías Anuales (Enero - Diciembre)
+  SEVERANCE_INTERESTS         // Intereses sobre las Cesantías (12% Anual)
+}
+
+// ============================================================================
+// SPEC-ADM-033: ENUMS PARA PILA, NÓMINA ELECTRÓNICA DIAN, CONTABILIDAD Y BI
+// ============================================================================
+
+enum PilaBatchStatus {
+  DRAFT                       // Generada en borrador / pre-liquidación
+  VALIDATED                   // Validada sin inconsistencias de IBC
+  EXPORTED                    // Archivo plano .TXT / .CSV descargado
+  PAID_FILED                  // Planilla radicada y pagada en operador PILA
+}
+
+enum DianProviderMode {
+  INTERNAL_DIAN_STANDARD      // Estándar Nativo DIAN (XML UBL 2.1 + CUNE SHA-384)
+  DATAICO                     // Proveedor Tecnológico Dataico API
+  THE_FACTORY_HKA             // Proveedor Tecnológico The Factory HKA Colombia API
+}
+
+enum DianEnvironmentType {
+  HABILITACION_2              // Ambiente de Pruebas / Habilitación DIAN (TipoAmb = 2)
+  PRODUCCION_1                // Ambiente de Producción DIAN (TipoAmb = 1)
+}
+
+enum ElectronicPayrollStatus {
+  DRAFT                       // Consolidado pendiente de validar
+  VALIDATED                   // Validado sin errores de estructura NIE
+  TRANSMITTED_ACCEPTED        // Emitido con CUNE válido y aceptado
+  REJECTED                    // Rechazado por validación DIAN / Proveedor Tecnológico
+  REPLACED_BY_NOTE            // Reemplazado o anulado por Nota de Ajuste (103)
+}
+
+enum ElectronicDocumentType {
+  INDIVIDUAL_PAYROLL          // Documento Soporte de Pago de Nómina Electrónica (Código 102)
+  ADJUSTMENT_NOTE_REPLACE     // Nota de Ajuste de Nómina Electrónica - Reemplazar (Código 103 - Tipo 1)
+  ADJUSTMENT_NOTE_DELETE      // Nota de Ajuste de Nómina Electrónica - Eliminar (Código 103 - Tipo 2)
+}
+
+enum AccountingExportFormat {
+  WORLD_OFFICE                // Plantilla Oficial World Office (.CSV / .XLSX)
+  HELISA                      // Plantilla Oficial Helisa (.CSV / .TXT)
+}

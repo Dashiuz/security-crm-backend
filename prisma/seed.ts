@@ -1,3 +1,4 @@
+import { seedPayroll } from './seed-payroll';
 import {
   PrismaClient,
   PlanTier,
@@ -496,6 +497,11 @@ async function main() {
     },
     // Commercial Proposals & P&L (SPEC-ADM-020)
     {
+      id: 'commercial_proposals_manage_perm_id',
+      key: 'commercial:proposals:manage',
+      desc: 'Control total de propuestas comerciales y cotizaciones',
+    },
+    {
       id: 'commercial_proposals_read_perm_id',
       key: 'commercial:proposals:read',
       desc: 'Consultar propuestas comerciales y cotizaciones',
@@ -511,6 +517,11 @@ async function main() {
       desc: 'Modificar líneas y borradores de propuestas',
     },
     {
+      id: 'commercial_proposals_delete_perm_id',
+      key: 'commercial:proposals:delete',
+      desc: 'Eliminar borradores de propuestas comerciales',
+    },
+    {
       id: 'commercial_proposals_issue_perm_id',
       key: 'commercial:proposals:issue',
       desc: 'Emitir oficialmente propuestas congelando PDF en S3',
@@ -522,6 +533,11 @@ async function main() {
     },
     // Commercial Service Orders (SPEC-ADM-021)
     {
+      id: 'commercial_orders_manage_perm_id',
+      key: 'commercial:orders:manage',
+      desc: 'Control total y reintentos de despacho de órdenes de servicio',
+    },
+    {
       id: 'commercial_orders_read_perm_id',
       key: 'commercial:orders:read',
       desc: 'Consultar órdenes de servicio e histórico',
@@ -532,15 +548,45 @@ async function main() {
       desc: 'Crear órdenes de servicio, asignar código OMEGA y disparar despacho',
     },
     {
-      id: 'commercial_orders_manage_perm_id',
-      key: 'commercial:orders:manage',
-      desc: 'Control total y reintentos de despacho de órdenes de servicio',
+      id: 'commercial_orders_update_perm_id',
+      key: 'commercial:orders:update',
+      desc: 'Actualizar órdenes de servicio y su estado operativo',
+    },
+    {
+      id: 'commercial_orders_dispatch_perm_id',
+      key: 'commercial:orders:dispatch',
+      desc: 'Despachar órdenes de servicio a departamentos internos',
+    },
+    {
+      id: 'commercial_orders_delete_perm_id',
+      key: 'commercial:orders:delete',
+      desc: 'Eliminar órdenes de servicio en borrador',
     },
     // Commercial CRM & Legal (SPEC-ADM-022)
+    {
+      id: 'commercial_crm_manage_perm_id',
+      key: 'commercial:crm:manage',
+      desc: 'Control total de bitácora CRM y alertas de recaptación',
+    },
     {
       id: 'commercial_crm_read_perm_id',
       key: 'commercial:crm:read',
       desc: 'Consultar prospectos, pipeline y bitácora de seguimiento',
+    },
+    {
+      id: 'commercial_crm_create_perm_id',
+      key: 'commercial:crm:create',
+      desc: 'Crear registros de seguimiento en bitácora comercial',
+    },
+    {
+      id: 'commercial_crm_update_perm_id',
+      key: 'commercial:crm:update',
+      desc: 'Actualizar registros de seguimiento en bitácora comercial',
+    },
+    {
+      id: 'commercial_crm_delete_perm_id',
+      key: 'commercial:crm:delete',
+      desc: 'Eliminar registros de seguimiento en bitácora comercial',
     },
     {
       id: 'commercial_crm_followup_perm_id',
@@ -548,14 +594,29 @@ async function main() {
       desc: 'Registrar gestiones de contacto y cierres por pérdida',
     },
     {
+      id: 'commercial_legal_manage_perm_id',
+      key: 'commercial:legal:manage',
+      desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
+    },
+    {
       id: 'commercial_legal_read_perm_id',
       key: 'commercial:legal:read',
       desc: 'Consultar cartera legal 360, pólizas, otrosíes y compromisos ANS',
     },
     {
-      id: 'commercial_legal_manage_perm_id',
-      key: 'commercial:legal:manage',
-      desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
+      id: 'commercial_legal_create_perm_id',
+      key: 'commercial:legal:create',
+      desc: 'Registrar pólizas contractuales, otrosíes y compromisos ANS',
+    },
+    {
+      id: 'commercial_legal_update_perm_id',
+      key: 'commercial:legal:update',
+      desc: 'Actualizar pólizas contractuales, otrosíes y compromisos ANS',
+    },
+    {
+      id: 'commercial_legal_delete_perm_id',
+      key: 'commercial:legal:delete',
+      desc: 'Eliminar pólizas contractuales, otrosíes y compromisos ANS',
     },
     // Universal Document Format Engine (SPEC-CORE-010 / SPEC-ADM-024)
     {
@@ -567,6 +628,97 @@ async function main() {
       id: 'format_manage_perm_id',
       key: 'format:manage',
       desc: 'Diseñar, crear y actualizar formatos y variables transversales',
+    },
+    // Payroll Foundations & Dependencies (SPEC-ADM-028)
+    {
+      id: 'payroll_settings_read_perm_id',
+      key: 'payroll:settings:read',
+      desc: 'Consultar parámetros legales, conceptos, cuentas PUC, festivos y catálogos de nómina',
+    },
+    {
+      id: 'payroll_settings_manage_perm_id',
+      key: 'payroll:settings:manage',
+      desc: 'Crear y actualizar parámetros legales, conceptos, tablas base, cuentas PUC y catálogos oficiales',
+    },
+    {
+      id: 'payroll_dependencies_read_perm_id',
+      key: 'payroll:dependencies:read',
+      desc: 'Consultar sucursales, centros de costo, dependencias (puestos), modalidades de turno y periodos',
+    },
+    {
+      id: 'payroll_dependencies_manage_perm_id',
+      key: 'payroll:dependencies:manage',
+      desc: 'Crear, actualizar y sincronizar sucursales, dependencias operativas, modalidades de turno y periodos de nómina',
+    },
+    // Payroll Employee Dossier & SVSP (SPEC-ADM-029)
+    {
+      id: 'payroll_employees_read_perm_id',
+      key: 'payroll:employees:read',
+      desc: 'Consultar expedientes laborales 360°, afiliaciones PILA, requisitos de ingreso, cursos SVSP y capacitaciones',
+    },
+    {
+      id: 'payroll_employees_manage_perm_id',
+      key: 'payroll:employees:manage',
+      desc: 'Administrar expedientes laborales 360°, afiliaciones PILA, cuentas bancarias, grupo familiar, checklist de ingreso, cursos SVSP y Cap/SOMA',
+    },
+    {
+      id: 'payroll_svsp_export_perm_id',
+      key: 'payroll:svsp:export',
+      desc: 'Generar y descargar la plantilla oficial en Excel de acreditaciones y cursos SVSP para RENOVA (SuperVigilancia)',
+    },
+    // Payroll Phase 3: Novelties, Incapacities, Loans & Shifts (SPEC-ADM-030)
+    {
+      id: 'payroll_novelties_read_perm_id',
+      key: 'payroll:novelties:read',
+      desc: 'Consultar incapacidades CIE-10, licencias, ausentismos, préstamos, conceptos fijos y novedades variables',
+    },
+    {
+      id: 'payroll_novelties_manage_perm_id',
+      key: 'payroll:novelties:manage',
+      desc: 'Administrar incapacidades CIE-10, recobro EPS/ARL, préstamos, libranzas, cuotas, conceptos fijos y cargue masivo de novedades',
+    },
+    {
+      id: 'payroll_shifts_read_perm_id',
+      key: 'payroll:shifts:read',
+      desc: 'Consultar rotación de puestos, secuencias operativas y malla de turnos 24/7',
+    },
+    {
+      id: 'payroll_shifts_manage_perm_id',
+      key: 'payroll:shifts:manage',
+      desc: 'Administrar rotación de guardas por puesto, proyectar secuencias y editar celdas de turnos y refuerzos',
+    },
+    // Payroll Phase 4: Settlement Engine, Advances, ACH & Payslips (SPEC-ADM-031)
+    {
+      id: 'payroll_settlement_read_perm_id',
+      key: 'payroll:settlement:read',
+      desc: 'Consultar liquidación de nómina (pre-nómina), desprendibles PDF, anticipos quincenales y lotes ACH',
+    },
+    {
+      id: 'payroll_settlement_manage_perm_id',
+      key: 'payroll:settlement:manage',
+      desc: 'Ejecutar liquidación de nómina, edición manual de renglones, cálculo de anticipos día 15, cierre/reapertura de periodos, dispersión ACH y envío de desprendibles',
+    },
+    // Payroll Phase 5: Social Benefits, Vacations & Final Liquidation (SPEC-ADM-032)
+    {
+      id: 'payroll_benefits_read_perm_id',
+      key: 'payroll:benefits:read',
+      desc: 'Consultar Libro de Vacaciones, lotes de Prima, Cesantías e Intereses 12% y actas de liquidación definitiva de contrato',
+    },
+    {
+      id: 'payroll_benefits_manage_perm_id',
+      key: 'payroll:benefits:manage',
+      desc: 'Otorgar y liquidar vacaciones con sincronización 3-en-1, generar lotes de prestaciones, inyectar a nómina y aprobar liquidaciones definitivas con paz y salvo',
+    },
+    // Payroll Phase 6: PILA, DIAN Electronic Payroll, Accounting & Reporting (SPEC-ADM-033)
+    {
+      id: 'payroll_compliance_read_perm_id',
+      key: 'payroll:compliance:read',
+      desc: 'Consultar Planillas PILA Res. 2388, Nómina Electrónica DIAN, Interfaz Contable World Office/Helisa, Certificados 220 y Matriz BI',
+    },
+    {
+      id: 'payroll_compliance_manage_perm_id',
+      key: 'payroll:compliance:manage',
+      desc: 'Liquidar Planilla PILA, transmitir Nómina Electrónica DIAN, generar Interfaz Contable, emitir Certificados 220 y Constancias Laborales',
     },
   ];
 
@@ -910,7 +1062,20 @@ async function main() {
     seededRolesMap['p1vk4imb6ugp1z0flglw86pk:ADMIN'] ||
     'xv1937hvbe2zhh7a0slp2ug0';
 
-  const rolePermissions = [
+  // Query all ADMIN roles across tenants to ensure they get new permissions
+  const allAdminRoles = await prisma.role.findMany({
+    where: { name: 'ADMIN' },
+  });
+  const adminRoleIds = Array.from(
+    new Set([adminRoleId, ...allAdminRoles.map((r) => r.id)]),
+  );
+
+  const rolePermissions: Array<{
+    roleId: string;
+    permissionId: string;
+    assignedAt: Date;
+    assignedBy: string;
+  }> = [
     // GODLIKE gets all permissions including godlike:manage
     ...Object.values(seededPermissionsMap).map((permId) => ({
       roleId: godlikeRoleId,
@@ -918,16 +1083,21 @@ async function main() {
       assignedAt: new Date(),
       assignedBy: 'system',
     })),
-    // ADMIN gets manage & crud permissions
-    ...Object.entries(seededPermissionsMap)
-      .filter(([key]) => key !== 'godlike:manage')
-      .map(([, permId]) => ({
-        roleId: adminRoleId,
-        permissionId: permId,
-        assignedAt: new Date(),
-        assignedBy: 'system',
-      })),
   ];
+
+  // All ADMIN roles get all non-godlike permissions
+  for (const rid of adminRoleIds) {
+    for (const [key, permId] of Object.entries(seededPermissionsMap)) {
+      if (key !== 'godlike:manage') {
+        rolePermissions.push({
+          roleId: rid,
+          permissionId: permId,
+          assignedAt: new Date(),
+          assignedBy: 'system',
+        });
+      }
+    }
+  }
 
   console.log('Seeding Role Permissions...');
   for (const item of rolePermissions) {
@@ -1051,7 +1221,13 @@ async function main() {
 
   // 12. Commercial Settings & SVSP 2026 Reference
   console.log('Seeding Commercial Settings for active tenants...');
-  const tenantsToSeed = ['p1vk4imb6ugp1z0flglw86pk', 'system'];
+  const activeTenants = await prisma.tenant.findMany({
+    where: { isActive: true },
+    select: { id: true },
+  });
+  const tenantsToSeed = Array.from(
+    new Set(['p1vk4imb6ugp1z0flglw86pk', 'system', ...activeTenants.map((t) => t.id)]),
+  );
   for (const tenantId of tenantsToSeed) {
     const commercialSetting = await prisma.commercialSettings.upsert({
       where: { tenantId },
@@ -1176,6 +1352,9 @@ async function main() {
   }
 
   console.log('✅ Commercial settings and SVSP 2026 reference seeded');
+
+  // 13. Payroll Foundations & Catalogs (SPEC-ADM-028)
+  await seedPayroll(prisma, tenantsToSeed);
 
   console.log('🎉 Seed completed successfully!');
 }

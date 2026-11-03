@@ -171,3 +171,38 @@ Plataforma de gestión de solicitudes, quejas, reclamos y sugerencias orientada 
 
 - **Universal Cursor Pagination**: `CursorPaginationDto` estandarizado con ordenamiento determinista por `createdAt DESC`, cursor skip 1 y meta-envoltorio `nextCursor`.
 - **`ResponsiveDataView` & `UniversalMobileCard`**: En pantallas de escritorio (md+) se renderiza el DataGrid completo con menús contextuales kebab (`showInMenu: true`); en pantallas móviles (xs/sm) se activa una lista virtualizada (`react-virtuoso`) basada en tarjetas estructuradas (Avatar + Radicado + Chips de estado + Acciones).
+
+---
+
+## 13. Módulo Comercial y Cotizador de Seguridad (`commercial`)
+
+El módulo comercial (`src/modules/commercial`) gestiona el ciclo integral de venta y dimensionamiento de servicios de vigilancia:
+- **Matriz Salarial y Tarifas Regulatorias**: Parametrización de turnos (24h, 12h día/noche, administrativo), recargos de ley (nocturnos, festivos, dominicales), dotación y márgenes de administración conforme a los decretos anuales de la SuperVigilancia.
+- **Simulador de Rentabilidad Operativa**: Cálculo dinámico por puesto, arma/medio tecnológico y valores agregados con cálculo transparente de AIU y tarifas base.
+- **Canvas Proposal Workspace**: Espacio de trabajo bimodal interactivo para estructuración de propuestas técnicas y económicas mediante bloques modulares.
+
+---
+
+## 14. Motor de Formatos y Plantillas Dinámicas (`format-engine`)
+
+El motor transversal `format-engine` (`src/modules/format-engine`) administra la parametrización de documentos corporativos:
+- **Ámbitos de Visibilidad (`FormatVisibilityScope`)**: Plantillas universales de tenant o asignadas a clientes/categorías específicas.
+- **Interpolación Segura de Variables**: Diccionario de variables de sistema (`client.*`, `proposal.*`, `securityStudy.*`) con validación de tipo y escape preventivo.
+- **Pipeline de Exportación**: Renderizado reactivo y compilación a documentos PDF de alta fidelidad vía Puppeteer.
+
+---
+
+## 15. Nómina Operativa y Beneficios (`payroll`)
+
+Gestión especializada de compensaciones y bienestar para el contingente de vigilancia:
+- **Trazabilidad de Beneficios Extralegales y Prestaciones**: Liquidación de primas, cesantías y asignaciones operativas con validación de estados y auditoría.
+- **Generación Certificada de Comprobantes**: Emisión de volantes y certificados en PDF con estampados de auditoría y hashes de autenticidad.
+
+---
+
+## 16. Sistema de Firmas y Trazabilidad (`signatures`)
+
+Módulo transversal para la formalización vinculante de documentos y minutas:
+- **Firmas Vectoriales y Metadatos de Auditoría**: Captura en lienzo con registro de IP de conexión, User-Agent y timestamp UTC.
+- **Firmantes Registrados y Ad-hoc**: Soporte para representantes legales del tenant y firmantes externos designados puntualmente por propuesta o minuta.
+

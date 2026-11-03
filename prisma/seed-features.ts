@@ -23,6 +23,7 @@ async function main() {
     { key: 'pqrs', name: 'Módulo PQRS', description: 'Gestión B2B de Peticiones, Quejas, Reclamos, Sugerencias y Felicitaciones' },
     { key: 'signature', name: 'Motor de Firmas Digitales (Noxia Sign)', description: 'Gestión y emisión de documentos con firmas electrónicas y validez jurídica' },
     { key: 'commercial', name: 'Gestión Comercial', description: 'Motor tarifario SVSP, cotizaciones, propuestas y órdenes de servicio' },
+    { key: 'payroll', name: 'Nómina y Liquidación Laboral', description: 'Motor de nómina para vigilancia privada, dependencias operativas, turnos, PILA y Nómina Electrónica DIAN' },
   ];
 
   for (const f of featuresData) {
