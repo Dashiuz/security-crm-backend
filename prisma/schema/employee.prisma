@@ -72,6 +72,11 @@ model Employee {
   socialBenefitItems     PayrollSocialBenefitItem[]
   finalSettlements       PayrollFinalContractSettlement[]
 
+  // SPEC-ADM-033: PILA, Nómina Electrónica DIAN y Certificados 220
+  pilaRecordLines        PayrollPilaRecordLine[]
+  electronicDocuments    PayrollElectronicDocument[]
+  taxCertificates220     PayrollTaxCertificate220[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

@@ -1,0 +1,375 @@
+// ============================================================================
+// SPEC-ADM-033: PILA (RES. 2388), NÓMINA ELECTRÓNICA DIAN, INTERFAZ CONTABLE Y BI
+// ============================================================================
+
+/// 1. Cabecera de Lote de Planilla Única PILA por Periodo y Sucursal (Numeral 3.10 Pronos)
+model PayrollPilaBatch {
+  id                      String                  @id @default(cuid(2))
+  tenantId                String
+  tenant                  Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  periodId                String
+  period                  PayrollPeriod           @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  branchId                String?
+  branch                  PayrollBranch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  status                  PilaBatchStatus         @default(DRAFT)
+  operatorName            String                  @default("SOI") @db.VarChar(50)
+  payrollType             String                  @default("E") @db.VarChar(5) // E: Empleados empresa
+
+  totalEmployees          Int                     @default(0)
+  totalLines              Int                     @default(0) // Puede ser mayor que totalEmployees por novedades multi-línea
+
+  // Totales de IBC por Subsistema
+  totalIbcHealth          Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalIbcPension         Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalIbcArl             Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalIbcCcf             Decimal                 @default(0.00) @db.Decimal(16, 2)
+
+  // Aportes Consolidados
+  totalHealthEmployee     Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalHealthEmployer     Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalPensionEmployee    Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalPensionEmployer    Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalFsp                Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalArl                Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalCcf                Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalSena               Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalIcbf               Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalExoneratedLaw1607  Decimal                 @default(0.00) @db.Decimal(16, 2)
+  grandTotalAmount        Decimal                 @default(0.00) @db.Decimal(16, 2)
+
+  // Archivos generados
+  fileNameTxt             String?                 @db.VarChar(180)
+  fileNameCsv             String?                 @db.VarChar(180)
+  paymentReferencePila    String?                 @db.VarChar(50)
+  generatedAt             DateTime                @default(now())
+  notes                   String?                 @db.Text
+
+  lines                   PayrollPilaRecordLine[]
+
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  createdById             String?
+  updatedById             String?
+
+  @@unique([tenantId, periodId, branchId])
+  @@index([tenantId, periodId, status])
+  @@map("payroll_pila_batches")
+}
+
+/// 2. Registro Detallado Tipo 2 de Cotizante PILA con Partición Multi-Línea (Res. 2388)
+model PayrollPilaRecordLine {
+  id                      String                  @id @default(cuid(2))
+  tenantId                String
+  tenant                  Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  batchId                 String
+  batch                   PayrollPilaBatch        @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  employeeId              String
+  employee                Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  sequenceNumber          Int
+  lineType                Int                     @default(2) // 2: Registro Tipo 2
+
+  // Identificación Cotizante
+  documentType            String                  @default("CC") @db.VarChar(5)
+  documentNumber          String                  @db.VarChar(30)
+  contributorType         String                  @default("01") @db.VarChar(5)
+  contributorSubtype      String                  @default("00") @db.VarChar(5)
+  daneDepartmentCode      String                  @default("11") @db.VarChar(10)
+  daneCityCode            String                  @default("11001") @db.VarChar(10)
+  firstLastName           String                  @db.VarChar(80)
+  secondLastName          String?                 @db.VarChar(80)
+  firstName               String                  @db.VarChar(80)
+  secondName              String?                 @db.VarChar(80)
+
+  // Banderas de Novedades Oficiales PILA (Resolución 2388)
+  isIng                   Boolean                 @default(false)
+  isRet                   Boolean                 @default(false)
+  isTde                   Boolean                 @default(false)
+  isTae                   Boolean                 @default(false)
+  isTdp                   Boolean                 @default(false)
+  isTap                   Boolean                 @default(false)
+  isVsp                   Boolean                 @default(false)
+  isCor                   Boolean                 @default(false)
+  isVst                   Boolean                 @default(false)
+  isSln                   Boolean                 @default(false) // Suspensión temporal / Licencia No Remunerada
+  isIge                   Boolean                 @default(false) // Incapacidad General
+  isLma                   Boolean                 @default(false) // Licencia Maternidad / Paternidad
+  isVacLr                 Boolean                 @default(false) // Vacaciones / Licencia Remunerada
+  isAvp                   Boolean                 @default(false)
+  isVct                   Boolean                 @default(false)
+  isIrl                   Boolean                 @default(false) // Días Incapacidad Riesgos Laborales / Accidente de Trabajo
+
+  // Fechas de Novedades
+  ingDate                 DateTime?               @db.Date
+  retDate                 DateTime?               @db.Date
+  vspDate                 DateTime?               @db.Date
+  slnStartDate            DateTime?               @db.Date
+  slnEndDate              DateTime?               @db.Date
+  igeStartDate            DateTime?               @db.Date
+  igeEndDate              DateTime?               @db.Date
+  lmaStartDate            DateTime?               @db.Date
+  lmaEndDate              DateTime?               @db.Date
+  vacStartDate            DateTime?               @db.Date
+  vacEndDate              DateTime?               @db.Date
+  irlStartDate            DateTime?               @db.Date
+  irlEndDate              DateTime?               @db.Date
+
+  // Códigos de Entidades Oficiales (PLU / ADRES)
+  epsCodePlu              String?                 @db.VarChar(20)
+  afpCodePlu              String?                 @db.VarChar(20)
+  ccfCodePlu              String?                 @db.VarChar(20)
+  arlRiskClass            ArlRiskClass            @default(RISK_IV)
+  arlRatePct              Decimal                 @default(4.350) @db.Decimal(6, 4)
+
+  // Días Cotizados por Subsistema
+  workedDaysPension       Int                     @default(30)
+  workedDaysHealth        Int                     @default(30)
+  workedDaysArl           Int                     @default(30)
+  workedDaysCcf           Int                     @default(30)
+
+  // Salario e Ingreso Base de Cotización (IBC)
+  baseSalary              Decimal                 @db.Decimal(14, 2)
+  isIntegralSalary        Boolean                 @default(false)
+  ibcPension              Decimal                 @db.Decimal(14, 2)
+  ibcHealth               Decimal                 @db.Decimal(14, 2)
+  ibcArl                  Decimal                 @db.Decimal(14, 2)
+  ibcCcf                  Decimal                 @db.Decimal(14, 2)
+
+  // Tarifas y Aportes
+  pensionEmployeeRate     Decimal                 @default(4.00) @db.Decimal(5, 2)
+  pensionEmployerRate     Decimal                 @default(12.00) @db.Decimal(5, 2)
+  pensionTotalAmount      Decimal                 @default(0.00) @db.Decimal(14, 2)
+  fspRate                 Decimal                 @default(0.00) @db.Decimal(5, 2)
+  fspAmount               Decimal                 @default(0.00) @db.Decimal(14, 2)
+  healthEmployeeRate      Decimal                 @default(4.00) @db.Decimal(5, 2)
+  healthEmployerRate      Decimal                 @default(8.50) @db.Decimal(5, 2)
+  healthTotalAmount       Decimal                 @default(0.00) @db.Decimal(14, 2)
+  arlAmount               Decimal                 @default(0.00) @db.Decimal(14, 2)
+  ccfRate                 Decimal                 @default(4.00) @db.Decimal(5, 2)
+  ccfAmount               Decimal                 @default(0.00) @db.Decimal(14, 2)
+  senaAmount              Decimal                 @default(0.00) @db.Decimal(14, 2)
+  icbfAmount              Decimal                 @default(0.00) @db.Decimal(14, 2)
+  isExoneratedLaw1607     Boolean                 @default(true)
+  totalLineAmount         Decimal                 @default(0.00) @db.Decimal(14, 2)
+
+  rawPositionalRecord     String?                 @db.Text // Cadena posicional oficial para el archivo .TXT
+
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  createdById             String?
+  updatedById             String?
+
+  @@index([tenantId, batchId])
+  @@index([tenantId, employeeId])
+  @@map("payroll_pila_record_lines")
+}
+
+/// 3. Lote Mensual de Nómina Electrónica DIAN (Resolución 000013 de 2021)
+model PayrollElectronicBatch {
+  id                 String                  @id @default(cuid(2))
+  tenantId           String
+  tenant             Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  periodId           String
+  period             PayrollPeriod           @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  year               Int
+  month              Int                     // 1..12
+  providerMode       DianProviderMode        @default(INTERNAL_DIAN_STANDARD)
+  environment        DianEnvironmentType     @default(HABILITACION_2)
+  prefix             String                  @default("NE") @db.VarChar(10)
+
+  status             ElectronicPayrollStatus @default(DRAFT)
+  totalDocuments     Int                     @default(0)
+  validatedDocuments Int                     @default(0)
+  acceptedDocuments  Int                     @default(0)
+  rejectedDocuments  Int                     @default(0)
+
+  totalAccrued       Decimal                 @default(0.00) @db.Decimal(16, 2)
+  totalDeductions    Decimal                 @default(0.00) @db.Decimal(16, 2)
+  netAmount          Decimal                 @default(0.00) @db.Decimal(16, 2)
+
+  transmissionDate   DateTime?
+  notes              String?                 @db.Text
+
+  documents          PayrollElectronicDocument[]
+
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  createdById        String?
+  updatedById        String?
+
+  @@unique([tenantId, periodId, providerMode])
+  @@index([tenantId, year, month, status])
+  @@map("payroll_electronic_batches")
+}
+
+/// 4. Documento Individual de Nómina Electrónica / Nota de Ajuste por Empleado
+model PayrollElectronicDocument {
+  id                    String                  @id @default(cuid(2))
+  tenantId              String
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  batchId               String
+  batch                 PayrollElectronicBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  employeeId            String
+  employee              Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  consecutive           Int
+  documentNumber        String                  @db.VarChar(40) // Ej: "NE-102" o "NA-1"
+  documentType          ElectronicDocumentType  @default(INDIVIDUAL_PAYROLL)
+  providerMode          DianProviderMode        @default(INTERNAL_DIAN_STANDARD)
+  status                ElectronicPayrollStatus @default(DRAFT)
+
+  cune                  String?                 @db.VarChar(128)
+  qrUrl                 String?                 @db.VarChar(500)
+  issueDate             DateTime                @db.Date
+
+  workedDays            Int                     @default(30)
+  totalAccrued          Decimal                 @db.Decimal(14, 2)
+  totalDeductions       Decimal                 @db.Decimal(14, 2)
+  netAmount             Decimal                 @db.Decimal(14, 2)
+
+  // Desglose oficial por conceptos NIE
+  nieBreakdownJson      Json?
+  xmlContent            String?                 @db.Text
+  providerPayloadJson   Json?
+  rejectionErrorsJson   Json?
+
+  // Referencias para Notas de Ajuste (Tipo 103)
+  predecessorDocId      String?
+  predecessorCune       String?                 @db.VarChar(128)
+  predecessorIssueDate  DateTime?               @db.Date
+
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  createdById           String?
+  updatedById           String?
+
+  @@unique([tenantId, documentNumber])
+  @@index([tenantId, batchId, status])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, cune])
+  @@map("payroll_electronic_documents")
+}
+
+/// 5. Cabecera de Lote de Interfaz Contable (Numeral 1.8 Pronos - World Office y Helisa)
+model PayrollAccountingBatch {
+  id             String                 @id @default(cuid(2))
+  tenantId       String
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  periodId       String
+  period         PayrollPeriod          @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  exportFormat   AccountingExportFormat @default(WORLD_OFFICE)
+  batchNumber    String                 @db.VarChar(50)
+  accountingDate DateTime               @db.Date
+
+  totalDebit     Decimal                @default(0.00) @db.Decimal(16, 2)
+  totalCredit    Decimal                @default(0.00) @db.Decimal(16, 2)
+  isBalanced     Boolean                @default(true) // Débitos === Créditos
+  fileName       String?                @db.VarChar(180)
+  totalLines     Int                    @default(0)
+  notes          String?                @db.Text
+
+  lines          PayrollAccountingLine[]
+
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  createdById    String?
+  updatedById    String?
+
+  @@unique([tenantId, periodId, exportFormat])
+  @@index([tenantId, periodId])
+  @@map("payroll_accounting_batches")
+}
+
+/// 6. Renglón Detallado de Asiento Contable por Tercero y Centro de Costo
+model PayrollAccountingLine {
+  id             String                 @id @default(cuid(2))
+  tenantId       String
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  batchId        String
+  batch          PayrollAccountingBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  sequence       Int
+  pucAccount     String                 @db.VarChar(30)
+  accountName    String                 @db.VarChar(150)
+  thirdPartyNit  String                 @db.VarChar(30)
+  thirdPartyName String                 @db.VarChar(150)
+
+  costCenterCode String?                @db.VarChar(40)
+  costCenterName String?                @db.VarChar(150)
+  dependencyCode Int?
+  conceptCode    Int?
+
+  debitAmount    Decimal                @default(0.00) @db.Decimal(14, 2)
+  creditAmount   Decimal                @default(0.00) @db.Decimal(14, 2)
+  description    String                 @db.VarChar(255)
+
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  createdById    String?
+  updatedById    String?
+
+  @@index([tenantId, batchId])
+  @@index([tenantId, pucAccount])
+  @@map("payroll_accounting_lines")
+}
+
+/// 7. Certificado Anual de Ingresos y Retenciones Formulario 220 DIAN (Numeral 7.7 Pronos)
+model PayrollTaxCertificate220 {
+  id                              String   @id @default(cuid(2))
+  tenantId                        String
+  tenant                          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  employeeId                      String
+  employee                        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  year                            Int
+  issueDate                       DateTime @db.Date
+  certifiedFromDate               DateTime @db.Date // 01/01/YYYY
+  certifiedToDate                 DateTime @db.Date // 31/12/YYYY
+  expeditionCity                  String   @default("BOGOTÁ D.C.") @db.VarChar(100)
+
+  retentionAgentNit               String   @db.VarChar(30)
+  retentionAgentName              String   @db.VarChar(180)
+  employeeDocument                String   @db.VarChar(30)
+  employeeFullName                String   @db.VarChar(180)
+
+  // Renglones Oficiales Formato 220 DIAN
+  row36Salaries                   Decimal  @default(0.00) @db.Decimal(14, 2)
+  row37Honoraries                 Decimal  @default(0.00) @db.Decimal(14, 2)
+  row38SocialBenefits             Decimal  @default(0.00) @db.Decimal(14, 2)
+  row39AllowancesNonSalarial      Decimal  @default(0.00) @db.Decimal(14, 2)
+  row40OtherIncome                Decimal  @default(0.00) @db.Decimal(14, 2)
+  row41Indemnifications           Decimal  @default(0.00) @db.Decimal(14, 2)
+  row46SeverancePaid              Decimal  @default(0.00) @db.Decimal(14, 2)
+  row47PensionsIncome             Decimal  @default(0.00) @db.Decimal(14, 2)
+  row49TotalGrossIncome           Decimal  @default(0.00) @db.Decimal(14, 2)
+  row50HealthDeduction            Decimal  @default(0.00) @db.Decimal(14, 2)
+  row51PensionAndFspDeduction     Decimal  @default(0.00) @db.Decimal(14, 2)
+  row52VoluntaryPensionDeduction  Decimal  @default(0.00) @db.Decimal(14, 2)
+  row53AfcDeduction               Decimal  @default(0.00) @db.Decimal(14, 2)
+  row55WithholdingTax             Decimal  @default(0.00) @db.Decimal(14, 2)
+
+  qrCodeData                      String?  @db.Text
+
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+  createdById                     String?
+  updatedById                     String?
+
+  @@unique([tenantId, employeeId, year])
+  @@index([tenantId, year])
+  @@map("payroll_tax_certificates_220")
+}
+

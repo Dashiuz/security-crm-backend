@@ -58,7 +58,12 @@ export class ProspectController {
   }
 
   @Get()
-  @RequirePermissions('client:manage', 'client:read')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_general',
+  )
   @ApiOperation({ summary: 'List prospects' })
   @ApiOkResponse({ type: [ProspectResponseDto] })
   findAll(@Request() req) {
@@ -66,7 +71,12 @@ export class ProspectController {
   }
 
   @Get(':id')
-  @RequirePermissions('client:manage', 'client:read')
+  @RequirePermissions(
+    'client:manage',
+    'client:read_all',
+    'client:read_assigned',
+    'client:read_general',
+  )
   @ApiOperation({ summary: 'Get prospect by id' })
   @ApiOkResponse({ type: ProspectResponseDto })
   findOne(@Param('id') id: string, @Request() req) {

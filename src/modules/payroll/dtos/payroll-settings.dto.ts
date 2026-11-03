@@ -9,7 +9,13 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { PayrollPaymentFrequency, PayrollAdvanceMode } from '@prisma/client';
+import {
+  PayrollPaymentFrequency,
+  PayrollAdvanceMode,
+  DianProviderMode,
+  DianEnvironmentType,
+  AccountingExportFormat,
+} from '@prisma/client';
 
 export class UpdatePayrollSettingsDto {
   @ApiProperty({ example: 'EMPRESA DE SEGURIDAD LTDA', required: false })
@@ -258,4 +264,64 @@ export class UpdatePayrollSettingsDto {
   @IsOptional()
   @IsNumber()
   icbfPct?: number;
+
+  @ApiProperty({ example: 66.67, required: false })
+  @IsOptional()
+  @IsNumber()
+  employerSickLeaveRatePct?: number;
+
+  @ApiProperty({ example: 66.67, required: false })
+  @IsOptional()
+  @IsNumber()
+  epsSickLeaveRateDays3To90Pct?: number;
+
+  @ApiProperty({ example: 50.0, required: false })
+  @IsOptional()
+  @IsNumber()
+  epsSickLeaveRateDays91To180Pct?: number;
+
+  @ApiProperty({ enum: DianProviderMode, required: false })
+  @IsOptional()
+  @IsEnum(DianProviderMode)
+  defaultDianProviderMode?: DianProviderMode;
+
+  @ApiProperty({ enum: AccountingExportFormat, required: false })
+  @IsOptional()
+  @IsEnum(AccountingExportFormat)
+  defaultAccountingFormat?: AccountingExportFormat;
+
+  @ApiProperty({ enum: DianEnvironmentType, required: false })
+  @IsOptional()
+  @IsEnum(DianEnvironmentType)
+  dianEnvironment?: DianEnvironmentType;
+
+  @ApiProperty({ example: 'NE', required: false })
+  @IsOptional()
+  @IsString()
+  dianPrefix?: string;
+
+  @ApiProperty({ example: 'NA', required: false })
+  @IsOptional()
+  @IsString()
+  dianAdjustmentPrefix?: string;
+
+  @ApiProperty({ example: 1, required: false })
+  @IsOptional()
+  @IsNumber()
+  dianNextConsecutive?: number;
+
+  @ApiProperty({ example: 'dian-sw-1234', required: false })
+  @IsOptional()
+  @IsString()
+  dianSoftwareId?: string;
+
+  @ApiProperty({ example: '12345', required: false })
+  @IsOptional()
+  @IsString()
+  dianSoftwarePin?: string;
+
+  @ApiProperty({ example: 'token-api-xyz', required: false })
+  @IsOptional()
+  @IsString()
+  dianApiToken?: string;
 }

@@ -112,6 +112,15 @@ model Tenant {
   payrollSocialBenefitItems      PayrollSocialBenefitItem[]
   payrollFinalSettlements        PayrollFinalContractSettlement[]
 
+  // Payroll Phase 6 Relations (SPEC-ADM-033)
+  payrollPilaBatches             PayrollPilaBatch[]
+  payrollPilaRecordLines         PayrollPilaRecordLine[]
+  payrollElectronicBatches       PayrollElectronicBatch[]
+  payrollElectronicDocuments     PayrollElectronicDocument[]
+  payrollAccountingBatches       PayrollAccountingBatch[]
+  payrollAccountingLines         PayrollAccountingLine[]
+  payrollTaxCertificates220      PayrollTaxCertificate220[]
+
   @@map("tenant")
 }
 

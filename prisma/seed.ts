@@ -497,6 +497,11 @@ async function main() {
     },
     // Commercial Proposals & P&L (SPEC-ADM-020)
     {
+      id: 'commercial_proposals_manage_perm_id',
+      key: 'commercial:proposals:manage',
+      desc: 'Control total de propuestas comerciales y cotizaciones',
+    },
+    {
       id: 'commercial_proposals_read_perm_id',
       key: 'commercial:proposals:read',
       desc: 'Consultar propuestas comerciales y cotizaciones',
@@ -512,6 +517,11 @@ async function main() {
       desc: 'Modificar líneas y borradores de propuestas',
     },
     {
+      id: 'commercial_proposals_delete_perm_id',
+      key: 'commercial:proposals:delete',
+      desc: 'Eliminar borradores de propuestas comerciales',
+    },
+    {
       id: 'commercial_proposals_issue_perm_id',
       key: 'commercial:proposals:issue',
       desc: 'Emitir oficialmente propuestas congelando PDF en S3',
@@ -523,6 +533,11 @@ async function main() {
     },
     // Commercial Service Orders (SPEC-ADM-021)
     {
+      id: 'commercial_orders_manage_perm_id',
+      key: 'commercial:orders:manage',
+      desc: 'Control total y reintentos de despacho de órdenes de servicio',
+    },
+    {
       id: 'commercial_orders_read_perm_id',
       key: 'commercial:orders:read',
       desc: 'Consultar órdenes de servicio e histórico',
@@ -533,15 +548,45 @@ async function main() {
       desc: 'Crear órdenes de servicio, asignar código OMEGA y disparar despacho',
     },
     {
-      id: 'commercial_orders_manage_perm_id',
-      key: 'commercial:orders:manage',
-      desc: 'Control total y reintentos de despacho de órdenes de servicio',
+      id: 'commercial_orders_update_perm_id',
+      key: 'commercial:orders:update',
+      desc: 'Actualizar órdenes de servicio y su estado operativo',
+    },
+    {
+      id: 'commercial_orders_dispatch_perm_id',
+      key: 'commercial:orders:dispatch',
+      desc: 'Despachar órdenes de servicio a departamentos internos',
+    },
+    {
+      id: 'commercial_orders_delete_perm_id',
+      key: 'commercial:orders:delete',
+      desc: 'Eliminar órdenes de servicio en borrador',
     },
     // Commercial CRM & Legal (SPEC-ADM-022)
+    {
+      id: 'commercial_crm_manage_perm_id',
+      key: 'commercial:crm:manage',
+      desc: 'Control total de bitácora CRM y alertas de recaptación',
+    },
     {
       id: 'commercial_crm_read_perm_id',
       key: 'commercial:crm:read',
       desc: 'Consultar prospectos, pipeline y bitácora de seguimiento',
+    },
+    {
+      id: 'commercial_crm_create_perm_id',
+      key: 'commercial:crm:create',
+      desc: 'Crear registros de seguimiento en bitácora comercial',
+    },
+    {
+      id: 'commercial_crm_update_perm_id',
+      key: 'commercial:crm:update',
+      desc: 'Actualizar registros de seguimiento en bitácora comercial',
+    },
+    {
+      id: 'commercial_crm_delete_perm_id',
+      key: 'commercial:crm:delete',
+      desc: 'Eliminar registros de seguimiento en bitácora comercial',
     },
     {
       id: 'commercial_crm_followup_perm_id',
@@ -549,14 +594,29 @@ async function main() {
       desc: 'Registrar gestiones de contacto y cierres por pérdida',
     },
     {
+      id: 'commercial_legal_manage_perm_id',
+      key: 'commercial:legal:manage',
+      desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
+    },
+    {
       id: 'commercial_legal_read_perm_id',
       key: 'commercial:legal:read',
       desc: 'Consultar cartera legal 360, pólizas, otrosíes y compromisos ANS',
     },
     {
-      id: 'commercial_legal_manage_perm_id',
-      key: 'commercial:legal:manage',
-      desc: 'Gestionar pólizas, adiciones OSI y cumplimiento ANS',
+      id: 'commercial_legal_create_perm_id',
+      key: 'commercial:legal:create',
+      desc: 'Registrar pólizas contractuales, otrosíes y compromisos ANS',
+    },
+    {
+      id: 'commercial_legal_update_perm_id',
+      key: 'commercial:legal:update',
+      desc: 'Actualizar pólizas contractuales, otrosíes y compromisos ANS',
+    },
+    {
+      id: 'commercial_legal_delete_perm_id',
+      key: 'commercial:legal:delete',
+      desc: 'Eliminar pólizas contractuales, otrosíes y compromisos ANS',
     },
     // Universal Document Format Engine (SPEC-CORE-010 / SPEC-ADM-024)
     {
@@ -648,6 +708,17 @@ async function main() {
       id: 'payroll_benefits_manage_perm_id',
       key: 'payroll:benefits:manage',
       desc: 'Otorgar y liquidar vacaciones con sincronización 3-en-1, generar lotes de prestaciones, inyectar a nómina y aprobar liquidaciones definitivas con paz y salvo',
+    },
+    // Payroll Phase 6: PILA, DIAN Electronic Payroll, Accounting & Reporting (SPEC-ADM-033)
+    {
+      id: 'payroll_compliance_read_perm_id',
+      key: 'payroll:compliance:read',
+      desc: 'Consultar Planillas PILA Res. 2388, Nómina Electrónica DIAN, Interfaz Contable World Office/Helisa, Certificados 220 y Matriz BI',
+    },
+    {
+      id: 'payroll_compliance_manage_perm_id',
+      key: 'payroll:compliance:manage',
+      desc: 'Liquidar Planilla PILA, transmitir Nómina Electrónica DIAN, generar Interfaz Contable, emitir Certificados 220 y Constancias Laborales',
     },
   ];
 

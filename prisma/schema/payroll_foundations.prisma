@@ -73,6 +73,17 @@ model PayrollSettings {
   epsSickLeaveRateDays3To90Pct   Decimal                 @default(66.67) @db.Decimal(5, 2) // Días 3 a 90 a cargo EPS (66.67% con piso 1 SMMLV)
   epsSickLeaveRateDays91To180Pct Decimal                 @default(50.00) @db.Decimal(5, 2) // Días 91 a 180 a cargo EPS (50.00% con piso 1 SMMLV)
 
+  // Preferencias por Omisión de Cumplimiento Externo (Fase 6 - SPEC-ADM-033)
+  defaultDianProviderMode        DianProviderMode        @default(INTERNAL_DIAN_STANDARD)
+  defaultAccountingFormat        AccountingExportFormat  @default(WORLD_OFFICE)
+  dianEnvironment                DianEnvironmentType     @default(HABILITACION_2)
+  dianPrefix                     String                  @default("NE") @db.VarChar(10)
+  dianAdjustmentPrefix           String                  @default("NA") @db.VarChar(10)
+  dianNextConsecutive            Int                     @default(1)
+  dianSoftwareId                 String?                 @db.VarChar(120)
+  dianSoftwarePin                String?                 @db.VarChar(30)
+  dianApiToken                   String?                 @db.VarChar(255)
+
   createdAt                 DateTime                @default(now())
   updatedAt                 DateTime                @updatedAt
   createdById               String?
@@ -365,6 +376,7 @@ model PayrollBranch {
   employeeProfiles EmployeePayrollProfile[]
   dependencyAssignments EmployeeDependencyAssignment[]
   periodSettlements PayrollPeriodSettlement[]
+  pilaBatches       PayrollPilaBatch[]
 
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -513,6 +525,9 @@ model PayrollPeriod {
   periodSettlements PayrollPeriodSettlement[]
   settlementLines  PayrollSettlementLine[]
   achBatches       PayrollBankDisbursementBatch[]
+  pilaBatches       PayrollPilaBatch[]
+  electronicBatches PayrollElectronicBatch[]
+  accountingBatches PayrollAccountingBatch[]
 
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt

@@ -99,6 +99,14 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollSocialBenefitBatch',
               'PayrollSocialBenefitItem',
               'PayrollFinalContractSettlement',
+              // SPEC-ADM-033: Payroll Phase 6 Models
+              'PayrollPilaBatch',
+              'PayrollPilaRecordLine',
+              'PayrollElectronicBatch',
+              'PayrollElectronicDocument',
+              'PayrollAccountingBatch',
+              'PayrollAccountingLine',
+              'PayrollTaxCertificate220',
             ];
             const multiTenantModels = [
               'User',
@@ -192,6 +200,14 @@ export const auditExtension = (contextService: RequestContextService) => {
               'PayrollSocialBenefitBatch',
               'PayrollSocialBenefitItem',
               'PayrollFinalContractSettlement',
+              // SPEC-ADM-033: Payroll Phase 6 Models
+              'PayrollPilaBatch',
+              'PayrollPilaRecordLine',
+              'PayrollElectronicBatch',
+              'PayrollElectronicDocument',
+              'PayrollAccountingBatch',
+              'PayrollAccountingLine',
+              'PayrollTaxCertificate220',
             ];
 
             const isAuditable = (auditableModels as any[]).includes(model);
@@ -506,6 +522,14 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'PayrollSocialBenefitBatch',
                 'PayrollSocialBenefitItem',
                 'PayrollFinalContractSettlement',
+                // SPEC-ADM-033: Payroll Phase 6 Models
+                'PayrollPilaBatch',
+                'PayrollPilaRecordLine',
+                'PayrollElectronicBatch',
+                'PayrollElectronicDocument',
+                'PayrollAccountingBatch',
+                'PayrollAccountingLine',
+                'PayrollTaxCertificate220',
               ];
               const isCommercialAudit = commercialAuditModels.includes(model);
 

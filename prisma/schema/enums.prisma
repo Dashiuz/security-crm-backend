@@ -503,3 +503,44 @@ enum SocialBenefitType {
   SEVERANCE_ANNUAL            // Cesantías Anuales (Enero - Diciembre)
   SEVERANCE_INTERESTS         // Intereses sobre las Cesantías (12% Anual)
 }
+
+// ============================================================================
+// SPEC-ADM-033: ENUMS PARA PILA, NÓMINA ELECTRÓNICA DIAN, CONTABILIDAD Y BI
+// ============================================================================
+
+enum PilaBatchStatus {
+  DRAFT                       // Generada en borrador / pre-liquidación
+  VALIDATED                   // Validada sin inconsistencias de IBC
+  EXPORTED                    // Archivo plano .TXT / .CSV descargado
+  PAID_FILED                  // Planilla radicada y pagada en operador PILA
+}
+
+enum DianProviderMode {
+  INTERNAL_DIAN_STANDARD      // Estándar Nativo DIAN (XML UBL 2.1 + CUNE SHA-384)
+  DATAICO                     // Proveedor Tecnológico Dataico API
+  THE_FACTORY_HKA             // Proveedor Tecnológico The Factory HKA Colombia API
+}
+
+enum DianEnvironmentType {
+  HABILITACION_2              // Ambiente de Pruebas / Habilitación DIAN (TipoAmb = 2)
+  PRODUCCION_1                // Ambiente de Producción DIAN (TipoAmb = 1)
+}
+
+enum ElectronicPayrollStatus {
+  DRAFT                       // Consolidado pendiente de validar
+  VALIDATED                   // Validado sin errores de estructura NIE
+  TRANSMITTED_ACCEPTED        // Emitido con CUNE válido y aceptado
+  REJECTED                    // Rechazado por validación DIAN / Proveedor Tecnológico
+  REPLACED_BY_NOTE            // Reemplazado o anulado por Nota de Ajuste (103)
+}
+
+enum ElectronicDocumentType {
+  INDIVIDUAL_PAYROLL          // Documento Soporte de Pago de Nómina Electrónica (Código 102)
+  ADJUSTMENT_NOTE_REPLACE     // Nota de Ajuste de Nómina Electrónica - Reemplazar (Código 103 - Tipo 1)
+  ADJUSTMENT_NOTE_DELETE      // Nota de Ajuste de Nómina Electrónica - Eliminar (Código 103 - Tipo 2)
+}
+
+enum AccountingExportFormat {
+  WORLD_OFFICE                // Plantilla Oficial World Office (.CSV / .XLSX)
+  HELISA                      // Plantilla Oficial Helisa (.CSV / .TXT)
+}

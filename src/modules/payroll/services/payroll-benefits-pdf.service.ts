@@ -404,8 +404,9 @@ export class PayrollBenefitsPdfService {
       const qrImage = await pdfDoc.embedPng(qrImageBytes);
       page.drawImage(qrImage, { x: 45, y: curY - 55, width: 60, height: 60 });
     } catch (e) {
-      this.logger.warn(
+      this.logger.error(
         `Could not render QR code for vacation PDF: ${(e as Error).message}`,
+        (e as Error).stack,
       );
     }
 
@@ -818,8 +819,9 @@ export class PayrollBenefitsPdfService {
       const qrImage = await pdfDoc.embedPng(qrImageBytes);
       page.drawImage(qrImage, { x: 45, y: curY - 45, width: 50, height: 50 });
     } catch (e) {
-      this.logger.warn(
+      this.logger.error(
         `Could not render QR for final settlement PDF: ${(e as Error).message}`,
+        (e as Error).stack,
       );
     }
 

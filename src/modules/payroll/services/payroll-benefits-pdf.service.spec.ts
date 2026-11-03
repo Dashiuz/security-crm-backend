@@ -113,4 +113,3 @@ describe('PayrollBenefitsPdfService', () => {
     expect(buffer.subarray(0, 4).toString()).toBe('%PDF');
   });
 });
-

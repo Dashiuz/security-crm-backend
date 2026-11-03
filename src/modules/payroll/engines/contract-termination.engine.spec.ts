@@ -99,4 +99,3 @@ describe('ContractTerminationEngine', () => {
     expect(res.netPayAmount).toBeGreaterThan(0);
   });
 });
-
