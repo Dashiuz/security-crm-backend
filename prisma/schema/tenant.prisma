@@ -64,6 +64,63 @@ model Tenant {
   universalDocumentFormats       UniversalDocumentFormat[]
   formatVariables                FormatVariable[]
 
+  // Payroll Relations (SPEC-ADM-028)
+  payrollSettings                PayrollSettings?
+  payrollHolidays                PayrollHoliday[]
+  payrollConcepts                PayrollConcept[]
+  payrollEntities                PayrollEntity[]
+  payrollBanks                   PayrollBank[]
+  payrollExitReasons             PayrollExitReason[]
+  payrollCie10Codes              PayrollCie10[]
+  payrollHiringRequirements      PayrollHiringRequirement[]
+  payrollSvspLevels              PayrollSvspLevel[]
+  payrollSecurityAcademies       PayrollSecurityAcademy[]
+  payrollBranches                PayrollBranch[]
+  payrollShiftModalities         PayrollShiftModality[]
+  payrollModalityItems           PayrollModalityItem[]
+  payrollDependencies            PayrollDependency[]
+  payrollPeriods                 PayrollPeriod[]
+
+  // Payroll Phase 2 Relations (SPEC-ADM-029)
+  employeePayrollProfiles        EmployeePayrollProfile[]
+  employeeFamilyMembers          EmployeeFamilyMember[]
+  employeeRequirementChecks      EmployeeRequirementCheck[]
+  employeeSvspCourses            EmployeeSvspCourse[]
+  employeeInternalTrainings      EmployeeInternalTraining[]
+
+  // Payroll Phase 3 Relations (SPEC-ADM-030)
+  employeeDependencyAssignments  EmployeeDependencyAssignment[]
+  payrollLeavesAndAbsences       PayrollLeaveAndAbsence[]
+  payrollLoans                   PayrollLoan[]
+  payrollLoanInstallments        PayrollLoanInstallment[]
+  payrollPermanentConcepts       PayrollPermanentConcept[]
+  payrollPeriodNovelties         PayrollPeriodNovelty[]
+  payrollShiftSequences          PayrollShiftSequence[]
+  payrollShiftRecords            PayrollShiftRecord[]
+
+  // Payroll Phase 4 Relations (SPEC-ADM-031)
+  employeeSalaryHistories        EmployeeSalaryHistory[]
+  payrollAdvanceSettlements      PayrollAdvanceSettlement[]
+  payrollAdvanceItems            PayrollAdvanceItem[]
+  payrollPeriodSettlements       PayrollPeriodSettlement[]
+  payrollSettlementLines         PayrollSettlementLine[]
+  payrollBankDisbursementBatches PayrollBankDisbursementBatch[]
+
+  // Payroll Phase 5 Relations (SPEC-ADM-032)
+  payrollVacationSettlements     PayrollVacationSettlement[]
+  payrollSocialBenefitBatches    PayrollSocialBenefitBatch[]
+  payrollSocialBenefitItems      PayrollSocialBenefitItem[]
+  payrollFinalSettlements        PayrollFinalContractSettlement[]
+
+  // Payroll Phase 6 Relations (SPEC-ADM-033)
+  payrollPilaBatches             PayrollPilaBatch[]
+  payrollPilaRecordLines         PayrollPilaRecordLine[]
+  payrollElectronicBatches       PayrollElectronicBatch[]
+  payrollElectronicDocuments     PayrollElectronicDocument[]
+  payrollAccountingBatches       PayrollAccountingBatch[]
+  payrollAccountingLines         PayrollAccountingLine[]
+  payrollTaxCertificates220      PayrollTaxCertificate220[]
+
   @@map("tenant")
 }
 

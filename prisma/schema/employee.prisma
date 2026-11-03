@@ -46,6 +46,37 @@ model Employee {
   visitorControls        VisitorEntryControl[]
   correspondenceControls CorrespondenceReceivedControl[]
 
+  // SPEC-ADM-029: Expediente Laboral 360° y Cumplimiento SVSP
+  payrollProfile         EmployeePayrollProfile?
+  familyMembers          EmployeeFamilyMember[]
+  requirementChecks      EmployeeRequirementCheck[]
+  svspCourses            EmployeeSvspCourse[]
+  internalTrainings      EmployeeInternalTraining[]
+
+  // SPEC-ADM-030: Rotación de Puestos, Turnos, Novedades e Incapacidades
+  dependencyAssignments  EmployeeDependencyAssignment[]
+  leavesAndAbsences      PayrollLeaveAndAbsence[]
+  payrollLoans           PayrollLoan[]
+  permanentConcepts      PayrollPermanentConcept[]
+  periodNovelties        PayrollPeriodNovelty[]
+  shiftRecords           PayrollShiftRecord[]
+
+  // SPEC-ADM-031: Liquidación de Nómina, Historial Salarial y Anticipos
+  salaryHistories        EmployeeSalaryHistory[]
+  advanceItems           PayrollAdvanceItem[]
+  periodSettlements      PayrollPeriodSettlement[]
+  settlementLines        PayrollSettlementLine[]
+
+  // SPEC-ADM-032: Prestaciones Sociales, Vacaciones y Liquidación Definitiva
+  vacationSettlements    PayrollVacationSettlement[]
+  socialBenefitItems     PayrollSocialBenefitItem[]
+  finalSettlements       PayrollFinalContractSettlement[]
+
+  // SPEC-ADM-033: PILA, Nómina Electrónica DIAN y Certificados 220
+  pilaRecordLines        PayrollPilaRecordLine[]
+  electronicDocuments    PayrollElectronicDocument[]
+  taxCertificates220     PayrollTaxCertificate220[]
+
   @@unique([tenantId, document])
   @@unique([tenantId, email])
   @@index([tenantId])

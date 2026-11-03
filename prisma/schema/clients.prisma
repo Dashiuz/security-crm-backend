@@ -107,6 +107,7 @@ model Client {
   insurancePolicies     ClientInsurancePolicy[]
   contractAddendums     ContractAddendum[]
   ansCommitments        ClientAnsCommitment[]
+  payrollDependencies   PayrollDependency[]
 
   mapboxBaseImageS3Key String?
   geofence             Json?   @db.JsonB

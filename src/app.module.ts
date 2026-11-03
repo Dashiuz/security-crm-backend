@@ -31,6 +31,7 @@ import {
   SignaturesModule,
   CommercialModule,
   FormatEngineModule,
+  PayrollModule,
 } from './modules/index';
 
 @Module({
@@ -64,6 +65,7 @@ import {
     SignaturesModule,
     CommercialModule,
     FormatEngineModule,
+    PayrollModule,
   ],
   controllers: [AppController],
   providers: [

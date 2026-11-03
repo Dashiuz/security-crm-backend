@@ -102,3 +102,12 @@ export {
 } from './format-engine/services/format-interpolation.service';
 export * from './format-engine/controllers/format-engine.controller';
 export * from './format-engine/dtos';
+
+// Payroll & Labor Settlement (SPEC-ADM-028)
+export * from './payroll/payroll.module';
+export * from './payroll/engines/colombian-holiday.engine';
+export * from './payroll/engines/modality-breakdown.engine';
+export * from './payroll/services/payroll-settings.service';
+export * from './payroll/services/payroll-concepts.service';
+export * from './payroll/services/payroll-dependencies.service';
+export * from './payroll/services/payroll-catalogs.service';

@@ -75,7 +75,11 @@ src/
 │   │   ├── security-studies/ → Bounded Context: Mapbox georeferencing, Konva CAD canvas & attachments
 │   │   └── pqrs/          → Bounded Context: Tickets, sequential state transitions, comments & SLA
 │   ├── storage/           → AWS S3 multi-tenant media attachment management & 15-min presigned URLs
-│   └── notifications/     → Real-time Server-Sent Events (SSE) & user notifications
+│   ├── notifications/     → Real-time Server-Sent Events (SSE) & user notifications
+│   ├── commercial/        → Proposals, Tariff Matrix, SuperVigilancia calculations & CRM pipeline
+│   ├── payroll/           → Guard compensations, novelties, benefits & certified PDF reports
+│   ├── format-engine/     → Multi-tenant template builder, dynamic variable injection & PDF export
+│   └── signatures/        → Digital, biometric & ad-hoc document signers with forensic traceability
 ├── common/
 │   ├── context/           → RequestContextService (AsyncLocalStorage for tenant, client & multi-client scope)
 │   ├── guards/            → JwtAuthGuard, PermissionsGuard, FeatureGuard, SuperAdminGuard

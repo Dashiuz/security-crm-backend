@@ -113,6 +113,8 @@ model ServiceOrderPosition {
   requiresGalaUniform       Boolean                 @default(false)
   specificProfileTraits     Json?                   @db.JsonB        // Habilidades específicas, manejo CCTV, etc.
 
+  payrollDependency         PayrollDependency?
+
   createdAt                 DateTime                @default(now())
 
   @@index([tenantId, serviceOrderId])
