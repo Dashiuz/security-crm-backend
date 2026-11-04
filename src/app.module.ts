@@ -32,6 +32,8 @@ import {
   CommercialModule,
   FormatEngineModule,
   PayrollModule,
+  UniversalCodesModule,
+  DashboardModule,
 } from './modules/index';
 
 @Module({
@@ -66,6 +68,10 @@ import {
     CommercialModule,
     FormatEngineModule,
     PayrollModule,
+    UniversalCodesModule,
+    DashboardModule,
+    UniversalCodesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [

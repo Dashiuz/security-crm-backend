@@ -183,6 +183,25 @@ export class ProspectService {
     const { structureConfig, ...prospectFields } = dto as any;
     const data: any = { ...prospectFields };
 
+    delete data.coordinatorInChargeId;
+    delete data.commercialContactId;
+
+    if (prospectFields.coordinatorInChargeId) {
+      data.coordinatorInCharge = {
+        connect: { id: prospectFields.coordinatorInChargeId },
+      };
+    } else if (prospectFields.coordinatorInChargeId === null) {
+      data.coordinatorInCharge = { disconnect: true };
+    }
+
+    if (prospectFields.commercialContactId) {
+      data.commercialContact = {
+        connect: { id: prospectFields.commercialContactId },
+      };
+    } else if (prospectFields.commercialContactId === null) {
+      data.commercialContact = { disconnect: true };
+    }
+
     if (user.sub && user.sub !== 'system') {
       data.updatedBy = { connect: { id: user.sub } };
     }

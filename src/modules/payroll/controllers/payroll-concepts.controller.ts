@@ -96,7 +96,7 @@ export class PayrollConceptsController {
   @Patch('matrix/bulk')
   @RequirePermissions('payroll:settings:manage')
   @ApiOperation({
-    summary: 'Actualización masiva de banderas de Tablas de Base de Pronos',
+    summary: 'Actualización masiva de banderas de Tablas de Base de cálculo',
   })
   @ApiOkResponse({ description: 'Matriz de conceptos actualizada' })
   updateBaseMatrix(

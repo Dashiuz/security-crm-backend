@@ -56,6 +56,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientAnsCommitment',
               'UniversalDocumentFormat',
               'FormatVariable',
+              'UniversalCode',
               // SPEC-ADM-028: Payroll Models
               'PayrollSettings',
               'PayrollHoliday',
@@ -157,6 +158,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientAnsCommitment',
               'UniversalDocumentFormat',
               'FormatVariable',
+              'UniversalCode',
               // SPEC-ADM-028: Payroll Models
               'PayrollSettings',
               'PayrollHoliday',
@@ -479,6 +481,8 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'ServiceOrderDistributionRecipient',
                 'UniversalDocumentFormat',
                 'FormatVariable',
+                'SignatureRequest',
+                'UniversalCode',
                 // SPEC-ADM-028: Payroll Models
                 'PayrollSettings',
                 'PayrollHoliday',
@@ -549,17 +553,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                 scalarAuditStringModels.includes(model);
 
               if (operation === 'create') {
-                if (model === 'SignatureRequest') {
-                  const data = (args.data || {}) as any;
-                  if (
-                    !data.createdById &&
-                    !data.createdBy &&
-                    userId &&
-                    userId !== 'system'
-                  ) {
-                    args.data = { ...data, createdById: userId };
-                  }
-                } else if (isCommercialAudit) {
+                if (isCommercialAudit) {
                   const data = (args.data || {}) as any;
                   const actorId = userId && userId !== 'system' ? userId : null;
                   args.data = {
@@ -612,9 +606,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                   };
                 }
               } else if (operation === 'update') {
-                if (model === 'SignatureRequest') {
-                  // SignatureRequest has no updatedById or updatedBy fields (only updatedAt managed by Prisma)
-                } else if (isCommercialAudit) {
+                if (isCommercialAudit) {
                   const data = (args.data || {}) as any;
                   const actorId = userId && userId !== 'system' ? userId : null;
                   if (actorId && !data.updatedById) {
@@ -659,20 +651,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                   };
                 }
               } else if (operation === 'upsert') {
-                if (model === 'SignatureRequest') {
-                  const createData = (args as any).create || {};
-                  if (
-                    !createData.createdById &&
-                    !createData.createdBy &&
-                    userId &&
-                    userId !== 'system'
-                  ) {
-                    (args as any).create = {
-                      ...createData,
-                      createdById: userId,
-                    };
-                  }
-                } else if (isCommercialAudit) {
+                if (isCommercialAudit) {
                   const createData = (args as any).create || {};
                   const updateData = (args as any).update || {};
                   const actorId = userId && userId !== 'system' ? userId : null;

@@ -629,6 +629,28 @@ async function main() {
       key: 'format:manage',
       desc: 'Diseñar, crear y actualizar formatos y variables transversales',
     },
+    // Universal Code Generator & Identification Registry (SPEC-CORE-013)
+    {
+      id: 'tools_codes_read_perm_id',
+      key: 'tools:codes:read',
+      desc: 'Consultar registro de códigos QR y códigos de barra',
+    },
+    {
+      id: 'tools_codes_create_perm_id',
+      key: 'tools:codes:create',
+      desc: 'Generar y registrar códigos QR y códigos de barra',
+    },
+    {
+      id: 'tools_codes_manage_perm_id',
+      key: 'tools:codes:manage',
+      desc: 'Gestión total, edición y revocación de códigos de marcación y activos',
+    },
+    // Executive Dashboard (SPEC-CORE-013)
+    {
+      id: 'dashboard_read_perm_id',
+      key: 'dashboard:read',
+      desc: 'Consultar métricas KPI, gráficos y recordatorios del dashboard',
+    },
     // Payroll Foundations & Dependencies (SPEC-ADM-028)
     {
       id: 'payroll_settings_read_perm_id',

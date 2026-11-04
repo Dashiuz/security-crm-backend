@@ -62,7 +62,8 @@ export class PayrollCatalogsController {
     summary: 'Listar entidades de seguridad social (EPS, AFP, CCF, ARL)',
   })
   @ApiOkResponse({
-    description: 'Lista de entidades con códigos PILA y equivalencias Pronos',
+    description:
+      'Lista de entidades con códigos PILA y equivalencias del sistema',
   })
   listEntities(
     @Request() req: any,
@@ -176,7 +177,7 @@ export class PayrollCatalogsController {
     'payroll:benefits:read',
   )
   @ApiOperation({
-    summary: 'Listar motivos de retiro de personal (B.D.N Pronos)',
+    summary: 'Listar motivos de retiro de personal (B.D.N)',
   })
   @ApiOkResponse({
     description: 'Lista de causales de retiro e indemnización CST Art. 64',
