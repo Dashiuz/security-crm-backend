@@ -70,8 +70,6 @@ import {
     PayrollModule,
     UniversalCodesModule,
     DashboardModule,
-    UniversalCodesModule,
-    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
