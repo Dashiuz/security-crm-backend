@@ -136,6 +136,9 @@ jobs:
       - name: Apply Pending Migrations to Supabase Production
         run: npx prisma migrate deploy
 
+      - name: Synchronize Canonical Permissions Catalog & Roles
+        run: npx ts-node prisma/seed-permissions.ts
+
       - name: Verify Post-Deployment Database Integrity
         run: npx prisma migrate status
 
