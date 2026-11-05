@@ -5,7 +5,7 @@ import { CodeType, CodePurpose, CodeStatus } from '@prisma/client';
 
 describe('UniversalCodesRepository', () => {
   let repository: UniversalCodesRepository;
-  let prisma: { universalCode: any };
+  let prisma: { universalCode: any; $transaction: any };
 
   const mockCode = {
     id: 'code-1',
