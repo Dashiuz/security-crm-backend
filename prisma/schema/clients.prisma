@@ -108,6 +108,7 @@ model Client {
   contractAddendums     ContractAddendum[]
   ansCommitments        ClientAnsCommitment[]
   payrollDependencies   PayrollDependency[]
+  universalCodes        UniversalCode[]
 
   mapboxBaseImageS3Key String?
   geofence             Json?   @db.JsonB

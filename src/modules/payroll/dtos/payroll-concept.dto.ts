@@ -10,7 +10,7 @@ import {
 import { PayrollConceptNature, PayrollProportionality } from '@prisma/client';
 
 export class CreatePayrollConceptDto {
-  @ApiProperty({ example: 1, description: 'Código consecutivo de Pronos' })
+  @ApiProperty({ example: 1, description: 'Código consecutivo del concepto' })
   @IsNumber()
   code: number;
 
@@ -83,7 +83,7 @@ export class CreatePayrollConceptDto {
   @IsString()
   dianNieFieldName?: string;
 
-  // 10 Pronos Base Grouping Tables + UGPP
+  // 10 Base Grouping Tables + UGPP
   @ApiProperty({ example: true, required: false })
   @IsOptional()
   @IsBoolean()

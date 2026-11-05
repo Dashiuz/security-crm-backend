@@ -477,7 +477,7 @@ export class CreateInternalTrainingDto {
   durationHours?: number;
 
   @ApiPropertyOptional({
-    description: 'Calificación escala Pronos 1.0 a 5.0',
+    description: 'Calificación escala 1.0 a 5.0',
     default: 5.0,
   })
   @IsOptional()

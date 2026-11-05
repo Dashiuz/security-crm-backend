@@ -56,6 +56,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientAnsCommitment',
               'UniversalDocumentFormat',
               'FormatVariable',
+              'UniversalCode',
               // SPEC-ADM-028: Payroll Models
               'PayrollSettings',
               'PayrollHoliday',
@@ -157,6 +158,7 @@ export const auditExtension = (contextService: RequestContextService) => {
               'ClientAnsCommitment',
               'UniversalDocumentFormat',
               'FormatVariable',
+              'UniversalCode',
               // SPEC-ADM-028: Payroll Models
               'PayrollSettings',
               'PayrollHoliday',
@@ -479,6 +481,7 @@ export const auditExtension = (contextService: RequestContextService) => {
                 'ServiceOrderDistributionRecipient',
                 'UniversalDocumentFormat',
                 'FormatVariable',
+                'UniversalCode',
                 // SPEC-ADM-028: Payroll Models
                 'PayrollSettings',
                 'PayrollHoliday',

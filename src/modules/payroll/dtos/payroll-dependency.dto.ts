@@ -13,7 +13,7 @@ import { DependencySettlementType, ArlRiskClass } from '@prisma/client';
 export class CreatePayrollDependencyDto {
   @ApiProperty({
     example: 243,
-    description: 'Código numérico de dependencia según Pronos',
+    description: 'Código numérico de dependencia operativa',
   })
   @IsNumber()
   code: number;

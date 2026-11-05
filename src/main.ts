@@ -17,8 +17,10 @@ async function bootstrap() {
   const swaggerConfig = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
-      .setTitle('Noxia CRM Backend')
-      .setDescription(`API documentation for Noxia CRM Backend`)
+      .setTitle('Loro ERP Backend API')
+      .setDescription(
+        `API documentation for Loro ERP - Enterprise Security & Operations Management`,
+      )
       .setVersion('1.0')
       .addBearerAuth(
         {

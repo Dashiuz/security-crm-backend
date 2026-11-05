@@ -32,6 +32,7 @@ describe('SecurityStudiesService', () => {
       discontinueStudy: jest.fn(),
       findActiveCurrentStudy: jest.fn(),
       updateClientGeofence: jest.fn(),
+      updateClientMapboxData: jest.fn().mockResolvedValue({ id: mockClientId }),
       updateStudyFiles: jest.fn(),
       getClientGeofence: jest.fn(),
       getClientBaseImageKey: jest.fn(),

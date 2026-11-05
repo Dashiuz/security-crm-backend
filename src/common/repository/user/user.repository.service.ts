@@ -309,6 +309,10 @@ export class UserRepositoryService {
       avatarUrl,
       tenant: {
         ...tenantData,
+        logoUrl:
+          tenantData.logoUrl && tenantData.logoUrl.includes('amazonaws.com/')
+            ? `/api/tenants/${tenantData.id}/logo`
+            : tenantData.logoUrl || null,
         enabledFeatures: features.map((f) => f.key),
       },
     };

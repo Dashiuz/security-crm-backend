@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantRepositoryService } from '../../../common/repository/index';
+import { S3Service } from '../../storage/services/s3.service';
 import {
   CreateTenantDto,
   UpdateTenantDto,
@@ -17,11 +18,20 @@ import {
 
 @Injectable()
 export class TenantService {
-  constructor(private readonly tenantRepository: TenantRepositoryService) {}
+  constructor(
+    private readonly tenantRepository: TenantRepositoryService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   private mapTenant(t: any): TenantResponseDto {
+    let resolvedLogoUrl = t.logoUrl || null;
+    if (resolvedLogoUrl && resolvedLogoUrl.includes('amazonaws.com/')) {
+      resolvedLogoUrl = `/api/tenants/${t.id}/logo`;
+    }
+
     return {
       ...t,
+      logoUrl: resolvedLogoUrl,
       features: t.features?.map((f: any) => f.key) || [],
       profile: t.profile || null,
       subscription: t.subscription || null,
@@ -110,7 +120,16 @@ export class TenantService {
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.slug !== undefined) updateData.slug = dto.slug;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
-    if (dto.logoUrl !== undefined) updateData.logoUrl = dto.logoUrl;
+    if (dto.logoUrl !== undefined) {
+      if (!dto.logoUrl || dto.logoUrl.trim() === '') {
+        updateData.logoUrl = null;
+      } else if (
+        !dto.logoUrl.startsWith('/api/tenants/') &&
+        !dto.logoUrl.includes('/api/tenants/')
+      ) {
+        updateData.logoUrl = dto.logoUrl;
+      }
+    }
     if (dto.primaryColor !== undefined)
       updateData.primaryColor = dto.primaryColor;
     if (dto.secondaryColor !== undefined)
@@ -251,5 +270,87 @@ export class TenantService {
     await this.findOne(id);
     const updated = await this.tenantRepository.syncFeatures(id, featureKeys);
     return this.mapTenant(updated);
+  }
+
+  async uploadLogo(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<{ success: boolean; logoUrl: string }> {
+    const tenant = await this.findOne(id);
+
+    if (!file || !file.buffer) {
+      throw new BadRequestException('Archivo de imagen no proporcionado');
+    }
+
+    const rawExt = file.originalname?.split('.').pop()?.toLowerCase() || 'png';
+    const ext = ['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(rawExt)
+      ? rawExt
+      : 'png';
+
+    const cleanName = file.originalname
+      ? file.originalname.toLowerCase().replace(/[^a-z0-9.-]/g, '_')
+      : `logo.${ext}`;
+    const s3Key = `tenants/${tenant.id}/brand/logo-${Date.now()}-${cleanName}`;
+
+    // Subir el archivo al bucket S3
+    const uploadResult = await this.s3Service.uploadFile(file, s3Key);
+
+    // Guardar la URL canónica de S3 en base de datos
+    await this.tenantRepository.update(tenant.id, {
+      logoUrl: uploadResult.url,
+    });
+
+    return {
+      success: true,
+      logoUrl: `/api/tenants/${tenant.id}/logo`,
+    };
+  }
+
+  async getLogoStreamOrUrl(
+    id: string,
+  ): Promise<
+    | { type: 'redirect'; url: string }
+    | { type: 'buffer'; buffer: Buffer; mimeType: string }
+  > {
+    let tenant = await this.tenantRepository.findById(id);
+    if (!tenant) {
+      tenant = await this.tenantRepository.findBySlug(id);
+    }
+    if (
+      !tenant ||
+      !tenant.logoUrl ||
+      tenant.logoUrl.startsWith('/api/tenants/') ||
+      tenant.logoUrl.includes('/api/tenants/')
+    ) {
+      throw new NotFoundException('Logotipo no encontrado');
+    }
+
+    // 1. Data URL
+    if (tenant.logoUrl.startsWith('data:')) {
+      const matches = tenant.logoUrl.match(/^data:([A-Za-z+-/]+);base64,(.+)$/);
+      if (matches) {
+        return {
+          type: 'buffer',
+          mimeType: matches[1],
+          buffer: Buffer.from(matches[2], 'base64'),
+        };
+      }
+    }
+
+    // 2. S3 URL: Extraer s3Key y generar Presigned URL fresca
+    if (tenant.logoUrl.includes('amazonaws.com/')) {
+      const s3Key = tenant.logoUrl.split('amazonaws.com/')[1];
+      const presigned = await this.s3Service.getPresignedUrl(s3Key);
+      return {
+        type: 'redirect',
+        url: presigned,
+      };
+    }
+
+    // 3. URL externa normal
+    return {
+      type: 'redirect',
+      url: tenant.logoUrl,
+    };
   }
 }
