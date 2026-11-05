@@ -4,6 +4,7 @@ import { PrismaService } from '../../../../prisma/prisma.service';
 @Injectable()
 export class SecurityStudiesRepository {
   private readonly logger = new Logger(SecurityStudiesRepository.name);
+  private hasBoundaryColumn: boolean | null = null;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -204,34 +205,52 @@ export class SecurityStudiesRepository {
       },
     });
 
-    if (tenantId) {
+    // Solo sincronizar hacia columna PostGIS 'boundary' si la columna existe físicamente en la BD
+    if (this.hasBoundaryColumn === null) {
       try {
-        const geoJsonStr = JSON.stringify(geofence);
-        await this.prisma.$executeRawUnsafe(
-          `UPDATE client SET boundary = ST_SetSRID(ST_GeomFromGeoJSON($1), 4326) WHERE id = $2 AND "tenantId" = $3`,
-          geoJsonStr,
-          clientId,
-          tenantId,
+        const check = await this.prisma.$queryRawUnsafe<any[]>(
+          `SELECT 1 FROM information_schema.columns WHERE table_name = 'client' AND column_name = 'boundary' LIMIT 1;`,
         );
+        this.hasBoundaryColumn = Array.isArray(check) && check.length > 0;
       } catch (err: any) {
         this.logger.error(
-          `PostGIS boundary update skipped: ${err?.message || err}`,
+          `Error comprobando soporte de columna boundary: ${err?.message || err}`,
           err?.stack,
         );
+        this.hasBoundaryColumn = false;
       }
-    } else {
-      try {
-        const geoJsonStr = JSON.stringify(geofence);
-        await this.prisma.$executeRawUnsafe(
-          `UPDATE client SET boundary = ST_SetSRID(ST_GeomFromGeoJSON($1), 4326) WHERE id = $2`,
-          geoJsonStr,
-          clientId,
-        );
-      } catch (err: any) {
-        this.logger.error(
-          `PostGIS boundary update skipped (optional): ${err?.message || err}`,
-          err?.stack,
-        );
+    }
+
+    if (this.hasBoundaryColumn) {
+      if (tenantId) {
+        try {
+          const geoJsonStr = JSON.stringify(geofence);
+          await this.prisma.$executeRawUnsafe(
+            `UPDATE client SET boundary = ST_SetSRID(ST_GeomFromGeoJSON($1), 4326) WHERE id = $2 AND "tenantId" = $3`,
+            geoJsonStr,
+            clientId,
+            tenantId,
+          );
+        } catch (err: any) {
+          this.logger.error(
+            `PostGIS boundary update skipped: ${err?.message || err}`,
+            err?.stack,
+          );
+        }
+      } else {
+        try {
+          const geoJsonStr = JSON.stringify(geofence);
+          await this.prisma.$executeRawUnsafe(
+            `UPDATE client SET boundary = ST_SetSRID(ST_GeomFromGeoJSON($1), 4326) WHERE id = $2`,
+            geoJsonStr,
+            clientId,
+          );
+        } catch (err: any) {
+          this.logger.error(
+            `PostGIS boundary update skipped (optional): ${err?.message || err}`,
+            err?.stack,
+          );
+        }
       }
     }
 
@@ -274,6 +293,28 @@ export class SecurityStudiesRepository {
   /**
    * Obtiene la clave de imagen satelital del cliente
    */
+  /**
+   * Persiste la imagen satelital base y coordenadas Bounding Box en el Cliente (SSOT)
+   */
+  async updateClientMapboxData(
+    clientId: string,
+    data: {
+      mapboxBaseImageS3Key: string;
+      mapboxCenterLat: number;
+      mapboxCenterLng: number;
+      mapboxZoom: number;
+      mapboxBboxMinLat: number;
+      mapboxBboxMinLng: number;
+      mapboxBboxMaxLat: number;
+      mapboxBboxMaxLng: number;
+    },
+  ) {
+    return this.prisma.client.update({
+      where: { id: clientId },
+      data,
+    });
+  }
+
   async getClientBaseImageKey(clientId: string) {
     return this.prisma.client.findFirst({
       where: { id: clientId, deletedAt: null },

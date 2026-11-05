@@ -63,6 +63,7 @@ model Tenant {
   clientAnsCommitments           ClientAnsCommitment[]
   universalDocumentFormats       UniversalDocumentFormat[]
   formatVariables                FormatVariable[]
+  universalCodes                 UniversalCode[]
 
   // Payroll Relations (SPEC-ADM-028)
   payrollSettings                PayrollSettings?

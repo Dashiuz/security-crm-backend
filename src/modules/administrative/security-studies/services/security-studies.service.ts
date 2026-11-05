@@ -96,6 +96,26 @@ export class SecurityStudiesService {
 
     const presignedUrl = await this.s3Service.getPresignedUrl(s3Key);
 
+    // Persist satellite image and calculated Web Mercator BBox directly in the Client (SSOT)
+    try {
+      await this.repository.updateClientMapboxData(dto.clientId, {
+        mapboxBaseImageS3Key: s3Key,
+        mapboxCenterLat: dto.lat,
+        mapboxCenterLng: dto.lng,
+        mapboxZoom: dto.zoom,
+        mapboxBboxMinLat: bbox.minLat,
+        mapboxBboxMinLng: bbox.minLng,
+        mapboxBboxMaxLat: bbox.maxLat,
+        mapboxBboxMaxLng: bbox.maxLng,
+      });
+    } catch (err: any) {
+      this.logger.error(
+        `Error al persistir metadatos satelitales en el Cliente [${dto.clientId}]: ${err?.message || err}`,
+        err?.stack,
+      );
+      throw err;
+    }
+
     return {
       baseImageS3Key: s3Key,
       presignedUrl,

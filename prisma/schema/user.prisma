@@ -88,6 +88,7 @@ model User {
 
   // Signature Requests
   signatureRequestsCreated SignatureRequest[] @relation("SignatureRequestsCreated")
+  signatureRequestsUpdated SignatureRequest[] @relation("SignatureRequestsUpdated")
 
   // Commercial relations
   commercialProposalsCreated CommercialProposal[] @relation("CommercialProposalCreatedBy")
@@ -98,6 +99,8 @@ model User {
   // Format Engine relations
   formatVariablesCreated  FormatVariable[]          @relation("FormatVariablesCreated")
   universalFormatsCreated UniversalDocumentFormat[] @relation("UniversalFormatsCreated")
+  universalCodesCreated   UniversalCode[]           @relation("UniversalCodeCreatedBy")
+  universalCodesUpdated   UniversalCode[]           @relation("UniversalCodeUpdatedBy")
 
   @@index([tenantId])
   @@index([clientId])

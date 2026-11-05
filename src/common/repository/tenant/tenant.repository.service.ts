@@ -57,6 +57,18 @@ export class TenantRepositoryService {
     });
   }
 
+  async findBySlug(slug: string) {
+    return this.prisma.tenant.findUnique({
+      where: { slug },
+      include: {
+        features: { select: { key: true } },
+        profile: true,
+        subscription: true,
+        settings: true,
+      },
+    });
+  }
+
   async update(id: string, data: Prisma.TenantUpdateInput) {
     try {
       return await this.prisma.tenant.update({

@@ -13,6 +13,8 @@ describe('TenantController', () => {
     updateSettings: jest.Mock;
     remove: jest.Mock;
     syncFeatures: jest.Mock;
+    uploadLogo: jest.Mock;
+    getLogoStreamOrUrl: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -25,6 +27,8 @@ describe('TenantController', () => {
       updateSettings: jest.fn(),
       remove: jest.fn(),
       syncFeatures: jest.fn(),
+      uploadLogo: jest.fn(),
+      getLogoStreamOrUrl: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -132,6 +136,21 @@ describe('TenantController', () => {
       const result = await controller.remove('t1');
       expect(service.remove).toHaveBeenCalledWith('t1');
       expect(result).toEqual({ id: 't1' });
+    });
+
+    it('should delegate uploadLogo', async () => {
+      const mockFile = { buffer: Buffer.from('img') } as Express.Multer.File;
+      service.uploadLogo.mockResolvedValue({
+        success: true,
+        logoUrl: '/api/tenants/t1/logo',
+      });
+
+      const result = await controller.uploadLogo('t1', mockFile);
+      expect(service.uploadLogo).toHaveBeenCalledWith('t1', mockFile);
+      expect(result).toEqual({
+        success: true,
+        logoUrl: '/api/tenants/t1/logo',
+      });
     });
   });
 });

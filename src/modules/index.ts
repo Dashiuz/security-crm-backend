@@ -111,3 +111,15 @@ export * from './payroll/services/payroll-settings.service';
 export * from './payroll/services/payroll-concepts.service';
 export * from './payroll/services/payroll-dependencies.service';
 export * from './payroll/services/payroll-catalogs.service';
+
+// Universal Toolbox & Codes (SPEC-CORE-013)
+export * from './tools/universal-codes/universal-codes.module';
+export * from './tools/universal-codes/services/universal-codes.service';
+export * from './tools/universal-codes/controllers/universal-codes.controller';
+export * from './tools/universal-codes/dtos/universal-code.dto';
+
+// Administrative: Executive Dashboard (SPEC-CORE-013)
+export * from './administrative/dashboard/dashboard.module';
+export * from './administrative/dashboard/services/dashboard.service';
+export * from './administrative/dashboard/controllers/dashboard.controller';
+export * from './administrative/dashboard/dtos/dashboard.dto';

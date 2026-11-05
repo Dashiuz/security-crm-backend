@@ -9,7 +9,12 @@ import {
   Delete,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -18,6 +23,8 @@ import {
   ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { TenantService } from './tenant.service';
 import {
@@ -118,6 +125,36 @@ export class TenantController {
   })
   update(@Param('id') id: string, @Body() dto: UpdateTenantDto) {
     return this.tenantService.update(id, dto);
+  }
+
+  @Post(':id/logo')
+  @UseGuards(SuperAdminGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Subir logotipo corporativo de la empresa (GODLIKE only)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiOkResponse({ description: 'Logotipo subido exitosamente' })
+  uploadLogo(
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 })],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.tenantService.uploadLogo(id, file);
   }
 
   @Put(':id/features')

@@ -1,0 +1,57 @@
+enum CodeType {
+  QR_CODE
+  BARCODE_128
+  BARCODE_EAN13
+}
+
+enum CodePurpose {
+  PATROL_CHECKPOINT      // Punto de marcacion / ronda fisica
+  INVENTORY_ASSET        // Activo / equipo / radio / dotacion
+  EMPLOYEE_CREDENTIAL    // Carnet de guardia / empleado
+  RESIDENT_VEHICLE       // Bicicleta / vehiculo de residente
+  VISITOR_PASS           // Pase / escarapela de visitante
+  DOCUMENT_VERIFICATION  // Radicado / verificacion de documento
+  CORRESPONDENCE_PACKAGE // Paquete de correspondencia
+  OTHER_CUSTOM           // Finalidad personalizada
+}
+
+enum CodeStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+model UniversalCode {
+  id          String      @id @default(cuid())
+  tenantId    String
+  code        String      @db.VarChar(100)
+  codeType    CodeType    @default(QR_CODE)
+  purpose     CodePurpose @default(PATROL_CHECKPOINT)
+  title       String      @db.VarChar(200)
+  description String?     @db.Text
+  department  String?     @db.VarChar(100)
+  clientId    String?
+  batchId     String?     @db.VarChar(100)
+  status      CodeStatus  @default(ACTIVE)
+  metadata    Json?       @db.JsonB
+
+  createdById String?
+  createdBy   User?       @relation("UniversalCodeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy   User?       @relation("UniversalCodeUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  client      Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([tenantId, code])
+  @@index([tenantId, purpose])
+  @@index([tenantId, clientId])
+  @@index([tenantId, batchId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@map("universal_codes")
+}
+

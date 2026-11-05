@@ -140,7 +140,10 @@ export class UpdatePayrollSvspLevelDto extends PartialType(
 ) {}
 
 export class CreatePayrollAcademyDto {
-  @ApiProperty({ example: 1, description: 'Código de la academia en Pronos' })
+  @ApiProperty({
+    example: 1,
+    description: 'Código de la academia de capacitación',
+  })
   @IsNumber()
   @IsNotEmpty()
   code: number;
